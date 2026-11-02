@@ -165,14 +165,49 @@ const FOES = {
   megabot: { act: 4, n: "Megabot 9000", t: "boss · obří robot", hp: 14600, atk: 296, cd: 4, boss: 3, d: "Raketové pěsti a nekonečné baterky." },
   brickrex: { act: 4, n: "Kostkozaur", t: "boss · kostkový dinosaurus", hp: 15400, atk: 304, cd: 4, boss: 4, d: "Postavený z tisíce kostiček. Každá šlape." },
   puppeteer: { act: 4, n: "Loutkář Provázek", t: "boss · loutkář", hp: 14000, atk: 318, cd: 3, boss: 5, d: "Tahá za všechny provázky v pokoji." },
-  toyking: { act: 4, n: "Hračkokrál", t: "boss · král hraček", hp: 17000, atk: 330, cd: 3, boss: 6, d: "Vládce všech hraček. Poslední a nejsilnější soupeř celé hry." },
+  toyking: { act: 4, n: "Hračkokrál", t: "boss · král hraček", hp: 17000, atk: 330, cd: 3, boss: 6, d: "Vládce všech hraček. Poslední soupeř uvnitř domu." },
+  // ---- Sezónní kampaň: Halloween (act 90, season) ----
+  pumpkin: { act: 90, season: "halloween", n: "Dýňák", t: "zlá dýně", hp: 640, atk: 92, cd: 3, from: 1, d: "Vyřezaný úsměv, oheň v očích a vztek v jádřincích." },
+  ghost: { act: 90, season: "halloween", n: "Strašidýlko", t: "strašidlo", hp: 560, atk: 96, cd: 2, from: 1, d: "Prostěradlo, dvě díry a hrozné BÚÚ." },
+  hbat: { act: 90, season: "halloween", n: "Upíří netopýr", t: "netopýr", hp: 540, atk: 104, cd: 2, from: 2, d: "Kouše a sosá. Ve tmě ho neuvidíš." },
+  skeleton: { act: 90, season: "halloween", n: "Kostlivec Chrastík", t: "kostlivec", hp: 660, atk: 98, cd: 3, from: 2, d: "Chrastí kostmi a kryje kamarády štítem." },
+  zombie: { act: 90, season: "halloween", n: "Zombík Šourál", t: "zombie", hp: 780, atk: 94, cd: 3, from: 3, d: "Pomalý, ale nikdy se nevzdá." },
+  candy: { act: 90, season: "halloween", n: "Bonbónová kukuřice", t: "zlý bonbón", hp: 520, atk: 108, cd: 2, from: 4, d: "Sladká na pohled, kyselá v boji." },
+  mummy: { act: 90, season: "halloween", n: "Mumie Obvazka", t: "mumie", hp: 820, atk: 100, cd: 3, from: 6, d: "Tři tisíce let spala. Teď je naštvaná." },
+  witchcat: { act: 90, season: "halloween", n: "Čarodějná kočka", t: "kočka čarodějnice", hp: 600, atk: 112, cd: 2, from: 7, d: "Černá jako noc. Prý nosí smůlu – hlavně nepřátelům." },
+  witch: { act: 90, season: "halloween", n: "Čarodějnice Ježibaba", t: "boss · čarodějnice", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Z kotle jí bublá jed a z koštěte jiskry." },
+  vampire: { act: 90, season: "halloween", n: "Hrabě Upír", t: "boss · upír", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Vysaje sílu z celého týmu a uletí v hejnu netopýrů." },
+  pumpkinking: { act: 90, season: "halloween", n: "Dýňový král", t: "boss · vládce Halloweenu", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Král dýňového pole. Jednou za rok vstane z hlíny." },
+  // ---- Kampaň 5: Temný les ----
+  wisp: { act: 5, n: "Bludička Světluška", t: "bludička", hp: 900, atk: 130, cd: 2, from: 1, d: "Svítí jako lucerna a láká z cesty. Kdo jde za ní, usne." },
+  tick: { act: 5, n: "Klíště Krvinka", t: "lesní klíště", hp: 860, atk: 126, cd: 2, from: 1, d: "Malé, ale zákeřné. Přisaje se a nepustí." },
+  ant: { act: 5, n: "Mravenec Voják", t: "mravenec bojovník", hp: 940, atk: 132, cd: 2, from: 2, d: "Nosí listový štít a chrání každého z mraveniště." },
+  shroom: { act: 5, n: "Muchomůrka Jedovka", t: "jedovatá houba", hp: 1000, atk: 128, cd: 3, from: 3, d: "Její výtrusy léčí lesní havěť a dusí všechny ostatní." },
+  stump: { act: 5, n: "Pařezník", t: "živý pařez", hp: 1300, atk: 132, cd: 4, from: 5, d: "Stojí tu sto let. A sto let nikoho nepustil dál." },
+  viper: { act: 5, n: "Zmije Syčilka", t: "lesní zmije", hp: 960, atk: 150, cd: 3, from: 4, d: "Klikatá stopa v mechu – a pak rychlé kousnutí." },
+  boar: { act: 5, n: "Divočák Kňour", t: "divoké prase", hp: 1350, atk: 156, cd: 3, from: 6, d: "Rozryje celý les a ani se neohlédne." },
+  hornet: { act: 5, n: "Sršeň Bodalka", t: "sršeň", hp: 900, atk: 164, cd: 2, from: 7, d: "Její žihadlo pálí jako oheň." },
+  wolf: { act: 5, n: "Vlk Šedohřbet", t: "lesní vlk", hp: 1150, atk: 168, cd: 2, from: 8, d: "Loví ve smečce. Když padne druh, zuří." },
+  goblin: { act: 5, n: "Skřítek Bludník", t: "lesní skřítek", hp: 980, atk: 150, cd: 3, from: 9, d: "Přehází rozcestníky, schová cestu a uspí poutníky." },
+  lynx: { act: 5, n: "Rys Stínek", t: "rys", hp: 1050, atk: 176, cd: 2, from: 10, d: "Neslyšný stín mezi stromy." },
+  centipede: { act: 5, n: "Stonožka Ťapka", t: "obří stonožka", hp: 1180, atk: 170, cd: 2, from: 12, d: "Sto noh, sto kroků, sto kousnutí." },
+  root: { act: 5, n: "Kořenáč", t: "kořenová bytost", hp: 1300, atk: 168, cd: 3, from: 14, d: "Kořeny pod zemí – a najednou kolem tlapek." },
+  badger: { act: 5, n: "Jezevec Rypák", t: "jezevec", hp: 1250, atk: 180, cd: 3, from: 17, d: "Když ho vyrušíš v noře, je zle." },
+  mossgolem: { act: 5, n: "Mechový obr", t: "mechový golem", hp: 1600, atk: 186, cd: 4, from: 20, d: "Hromada mechu, kamení a polen, která se zvedla." },
+  tickqueen: { act: 5, n: "Klíšťová královna", t: "boss · královna klíšťat", hp: 13600, atk: 300, cd: 3, boss: 1, d: "Matka všech klíšťat. Saje sílu z celého týmu." },
+  wisplady: { act: 5, n: "Paní bludiček", t: "boss · vládkyně bludiček", hp: 14000, atk: 306, cd: 3, boss: 2, d: "Zpívá světlem a celý les jde za ní." },
+  greyfang: { act: 5, n: "Šedý Tesák", t: "boss · vůdce smečky", hp: 15000, atk: 316, cd: 3, boss: 3, d: "Vlčí vůdce s jizvou přes oko. Nikdy neútočí sám." },
+  grizzly: { act: 5, n: "Medvěd Grizlák", t: "boss · obří medvěd", hp: 16400, atk: 330, cd: 4, boss: 4, d: "Jedna tlapa a strom je pryč." },
+  willow: { act: 5, n: "Stará vrba Skřípalka", t: "boss · strašidelná vrba", hp: 15600, atk: 320, cd: 3, boss: 5, d: "Skřípe, šeptá a větvemi bičuje vše kolem." },
+  forestlord: { act: 5, n: "Pán Temného lesa", t: "boss · vládce lesa", hp: 18400, atk: 344, cd: 3, boss: 6, d: "Rohatý vládce noci a mlhy. Poslední a nejsilnější soupeř celé hry." },
   vet:       { n: "MUDr. Vratislav Píchal", t: "boss · veterinář",         hp: 5600, atk: 180, cd: 3, boss: 10, d: "Veterinář s obří injekcí. Poslední a nejhorší." },
 };
 // Kampaně: každá 30 úrovní s vlastním prostředím a nepřáteli (act = číslo kampaně u nepřátel). Další kampaň = nový řádek + nepřátelé s act.
 const ACTS = [{ n: "Kuchyně", sub: "Kampaň 1", bg: "bg", d: "Myši, vysavače a veterinář. Začátek výpravy." },
               { n: "Zahrada za soumraku", sub: "Kampaň 2", bg: "bg2", d: "Vosy, lišky, sovy a zlý zahradník." },
               { n: "Ložnice za noci", sub: "Kampaň 3", bg: "bg3", d: "Prachoví zajíčci, můry a král pod postelí." },
-              { n: "Dětský pokoj", sub: "Kampaň 4", bg: "bg4", d: "Zlé hračky a Hračkokrál. Finále celé výpravy." }], PER_ACT = 30, STAGES = PER_ACT * ACTS.length;
+              { n: "Dětský pokoj", sub: "Kampaň 4", bg: "bg4", d: "Zlé hračky a Hračkokrál." },
+              { n: "Temný les", sub: "Kampaň 5", bg: "bg5", d: "Bludičky, klíšťata a divá zvěř. Finále celé výpravy." }], PER_ACT = 30, STAGES = PER_ACT * ACTS.length;
 // Obtížnost: síla nepřátel a odměny; každá má svůj postup.
 const DIFF = { e: { n: "Lehká", hp: 0.72, atk: 0.72, rew: 1, col: "#3ddc84" }, h: { n: "Těžká", hp: 1.5, atk: 1.3, rew: 2.5, col: "#e5484d" } };
 let diff = "e";
@@ -180,10 +215,12 @@ const actOf = st => Math.ceil(st / PER_ACT), localSt = st => st - PER_ACT * (act
 const bossesOf = a => Object.keys(FOES).filter(k => FOES[k].boss && (FOES[k].act || 1) === a).sort((x, y) => FOES[x].boss - FOES[y].boss);
 const BOSSES = bossesOf(1);
 // Úroveň kampaně: 1–5 = 2 kola, 6–15 = 3 kola, 16–30 = 4 kola; poslední kolo vždy boss. Bossové po řadě, ve vyšších úrovních silnější.
-function roundsFor(st) { const l = localSt(st); return l <= 5 ? 2 : l <= 15 ? 3 : 4; }
+function roundsFor(st) { const l = localSt(st); return Math.min(4, (l <= 5 ? 2 : l <= 15 ? 3 : 4) + (diff === "h" ? 1 : 0)); }  // těžká o vlnu víc
 // násobek energie nepřátel pro úroveň st při aktuální obtížnosti
-function stageF(st) { const act = actOf(st), ls = localSt(st), [h0, h1] = HPT[act + diff] || HPT["1" + diff]; return h0 + (h1 - h0) * (ls - 1) / (PER_ACT - 1); }
-const HPT = { "1e": [0.8, 2.4], "1h": [1.7, 5.0], "2e": [3.4, 5.7], "2h": [6.0, 8.4], "3e": [6.4, 8.7], "3h": [8.0, 10.0], "4e": [8.3, 10.1], "4h": [9.4, 11.8] };
+function stageF(st) { const act = actOf(st), ls = localSt(st), [h0, h1] = HPT[act + diff] || HPT["1" + diff]; return (h0 + (h1 - h0) * (ls - 1) / (PER_ACT - 1)) * balK(st); }
+// Vyvážení 2. 11. 2026 (Petr: moc lehké): BAL.K násobí sílu všech úrovní, BAL.AS = jak rychle roste útok nepřátel; těžká navazuje na konec lehké
+const BAL = { K: [1.5, 1.35, 1.0, 1.08, 1.0], AS: [0.6, 0.56, 0.48, 0.46, 0.45] }, balK = st => BAL.K[actOf(st) - 1] || 1, balA = st => BAL.AS[actOf(st) - 1] || 0.45;
+const HPT = { "1e": [0.8, 2.4], "1h": [2.3, 4.4], "2e": [3.4, 5.7], "2h": [6.0, 8.4], "3e": [6.4, 8.7], "3h": [8.0, 10.0], "4e": [8.3, 10.1], "4h": [9.4, 11.8], "5e": [8.9, 10.3], "5h": [9.8, 11.6] };
 // kampaně 3+ mají silnější základní hodnoty v FOES – srovnat na průměr Zahrady, růst řídí jen HPT
 const avgF = (act, boss, f) => { const v = Object.values(FOES).filter(e => (e.act || 1) === act && !!e.boss === boss); return v.reduce((a, e) => a + e[f], 0) / v.length; };
 const NORM = (e, f) => (e.act || 1) <= 2 ? 1 : avgF(2, !!e.boss, f) / avgF(e.act, !!e.boss, f);
@@ -192,16 +229,16 @@ function stageWaves(st) {
   const act = actOf(st), ls = localSt(st), BS = bossesOf(act);
   const pool = Object.keys(FOES).filter(k => !FOES[k].boss && (FOES[k].act || 1) === act && FOES[k].from <= ls);
   // síla nepřátel: každá kampaň+obtížnost má rozsah [začátek, konec] (viz VYVAZENI.md), útok roste pomaleji než energie
-  const [h0, h1] = HPT[act + diff] || HPT["1" + diff], F = h0 + (h1 - h0) * (ls - 1) / (PER_ACT - 1), A = F <= 1 ? F : 1 + (F - 1) * 0.45;
+  const F = stageF(st), A = F <= 1 ? F : 1 + (F - 1) * balA(st);
   const mk = (k, m = 1) => { const f = FOES[k], nh = NORM(f, "hp"), na = NORM(f, "atk"); return { ...f, k, hp: Math.round(f.hp * nh * F * m), atk: Math.round(f.atk * na * A * (f.boss ? 0.85 : 0.75)) }; };
   const waves = [], n = roundsFor(st);
   for (let w = 0; w < n - 1; w++) {
     const wv = [];
-    for (let i = 0; i < 5; i++) wv.push(mk(pool[R(pool.length)], (st <= 2 ? 0.5 : act >= 2 ? 0.45 : 0.6) + 0.08 * w));
+    for (let i = 0; i < 5; i++) wv.push(mk(pool[R(pool.length)], (st <= 2 && diff === "e" ? 0.5 : act >= 2 ? 0.45 : 0.6) + 0.08 * w));
     waves.push(wv);
   }
   const nb = ls >= 16 ? 3 : 2, tier = Math.floor((ls - 1) / BS.length), bw = [];
-  for (let i = 0; i < nb; i++) bw.push(mk(BS[(ls - 1 + i) % BS.length], (st <= 3 ? 0.35 : act >= 2 ? 0.3 : 0.5) * (1 + 0.08 * tier) * (nb === 3 ? 0.85 : 1)));
+  for (let i = 0; i < nb; i++) bw.push(mk(BS[(ls - 1 + i) % BS.length], (st <= 3 && diff === "e" ? 0.35 : act >= 2 ? 0.3 : 0.5) * (1 + 0.08 * tier) * (nb === 3 ? 0.85 : 1)));
   waves.push(bw);
   return waves;
 }
@@ -271,8 +308,8 @@ const QT = [
 // Velké výzvy: dlouhodobé cíle na celou hru (celá obtížnost, celý pokoj, všechny hvězdy, titáni, bestiář…) s velkou odměnou
 const stars3In = (a, df) => { let n = 0; for (let l = 1; l <= PER_ACT; l++) if (((save.stars || {})[a + df + l] || 0) >= 3) n++; return n; };
 const CHAL = [
-  { id: "easyAll", t: "Celá lehká obtížnost", d: "Dohraj všechny 4 pokoje na lehkou", n: 4 * PER_ACT, v: () => ACTS.reduce((a, _, i) => a + Math.min(PER_ACT, progOf(i + 1, "e")), 0), rew: { g: 3000, c: 15, s: 3, h: 30 } },
-  { id: "hardAll", t: "Celá těžká obtížnost", d: "Dohraj všechny 4 pokoje na těžkou", n: 4 * PER_ACT, v: () => ACTS.reduce((a, _, i) => a + Math.min(PER_ACT, progOf(i + 1, "h")), 0), rew: { g: 8000, c: 40, s: 8, h: 80 } },
+  { id: "easyAll", t: "Celá lehká obtížnost", d: "Dohraj všech " + ACTS.length + " kampaní na lehkou", n: ACTS.length * PER_ACT, v: () => ACTS.reduce((a, _, i) => a + Math.min(PER_ACT, progOf(i + 1, "e")), 0), rew: { g: 3000, c: 15, s: 3, h: 30 } },
+  { id: "hardAll", t: "Celá těžká obtížnost", d: "Dohraj všech " + ACTS.length + " kampaní na těžkou", n: ACTS.length * PER_ACT, v: () => ACTS.reduce((a, _, i) => a + Math.min(PER_ACT, progOf(i + 1, "h")), 0), rew: { g: 8000, c: 40, s: 8, h: 80 } },
 ];
 ACTS.forEach((A, i) => { const a = i + 1;
   CHAL.push({ id: "room" + a, t: "Celý pokoj: " + A.n, d: "Dohraj " + A.n + " na lehkou i těžkou", n: 2 * PER_ACT, v: () => Math.min(PER_ACT, progOf(a, "e")) + Math.min(PER_ACT, progOf(a, "h")), rew: { g: 1500 * a, c: 8 + 4 * a, s: 2, h: 15 + 5 * a } });
@@ -286,8 +323,8 @@ CHAL.push(
   { id: "eq10", t: "Legendární výstroj", d: "Všech " + HEROES.length * 3 + " kusů výstroje na maximum", n: HEROES.length * 3, v: () => HEROES.reduce((a, h) => a + EQ.filter(e => eqOf(h.id)[e.id] >= EQ_MAX).length, 0), rew: { c: 30, s: 6, h: 100 } },
   ...[[1, "I"], [5, "II"], [15, "III"], [30, "IV"]].map(([n, r], j) => ({ id: "titan" + n, t: "Přemožitel titánů " + r, d: "Poraz titána " + n + "×", n, v: () => save.stats.titanKills, rew: { c: 5 + 10 * j, s: 1 + j, h: 15 + 25 * j } })),
   { id: "night100", t: "Věčná noc", d: "Přežij Noc bossů 100×", n: 100, v: () => save.stats.eventW, rew: { c: 20, s: 4, h: 40 } },
-  { id: "bestiary", t: "Kompletní bestiář", d: "Poraz každý druh nepřítele", n: Object.keys(FOES).length, v: () => Object.keys(save.kinds || {}).length, rew: { c: 20, s: 4, h: 50 } },
-  { id: "allBoss", t: "Lovec všech bossů", d: "Poraz každého bosse", n: Object.keys(FOES).filter(k => FOES[k].boss).length, v: () => Object.keys(save.kinds || {}).filter(k => FOES[k] && FOES[k].boss).length, rew: { c: 15, s: 3, h: 30 } },
+  { id: "bestiary", t: "Kompletní bestiář", d: "Poraz každý druh nepřítele", n: Object.keys(FOES).filter(k => !FOES[k].season).length, v: () => Object.keys(save.kinds || {}).filter(k => FOES[k] && !FOES[k].season).length, rew: { c: 20, s: 4, h: 50 } },
+  { id: "allBoss", t: "Lovec všech bossů", d: "Poraz každého bosse", n: Object.keys(FOES).filter(k => FOES[k].boss && !FOES[k].season).length, v: () => Object.keys(save.kinds || {}).filter(k => FOES[k] && FOES[k].boss).length, rew: { c: 15, s: 3, h: 30 } },
   { id: "combo5", t: "Učeň komba", d: "Vylepši kombo na úroveň 5", n: 5, v: () => save.combo, rew: { c: 10, h: 20 } },
   { id: "comboMax", t: "Mistr komba", d: "Vylepši kombo na maximum (10)", n: COMBO_MAX, v: () => save.combo, rew: { c: 30, s: 2, h: 60 } },
   { id: "login30", t: "Věrný hráč", d: "Vyzvedni odměnu za přihlášení 30×", n: 30, v: () => save.login.total || 0, rew: { c: 15, s: 3, h: 30 } },
@@ -355,6 +392,8 @@ const ACH_FAM = [
   ["gran", [500, 5000, 50000, 400000], ["Mňamka", "Kočičí hostina", "Plná miska", "Granulový baron"], n => "Nasbírej " + granN(n)],
   ["upsH", [10, 50, 150], ["Kouč rodiny", "Trenér lidí", "Velmistr rodiny"], n => "Vylepši lidi " + n + "×"],
   ["upsC", [5, 25, 80], ["Chovatel", "Kočičí trenér", "Pán koček"], n => "Vylepši kočky " + n + "×"],
+  ["seasonW", [1, 10, 40], ["Sváteční výprava", "Sváteční hrdina", "Pán svátků"], n => "Vyhraj " + n + "× v sezónních kampaních"],
+  ["seasonAll", [1, 3, 6], ["Celá sezóna", "Sběratel svátků", "Celý rok s gangem"], n => "Dohraj " + n + " " + pl(n, "sezónní kampaň", "sezónní kampaně", "sezónních kampaní") + " celou"],
   ["crits", [50, 500, 3000], ["Ostrý dráp", "Kritik", "Smrtící drápy"], n => n.toLocaleString("cs-CZ") + " kritických zásahů"],
   ["stApplied", [25, 250, 1500], ["Alchymista", "Mistr stavů", "Pán živlů"], n => "Ulož nepřátelům " + n.toLocaleString("cs-CZ") + " stavů"],
   ["titanKills", [1, 5, 20], ["Lovec titánů", "Titánobijec", "Zhouba titánů"], n => "Poraz titána " + n + "×"],
@@ -366,7 +405,7 @@ ACH_FAM.forEach(([st, tiers, names, d]) => tiers.forEach((n, i) => ACH.push({ id
 ACTS.forEach((A, i) => ["e", "h"].forEach(df => ACH.push({ id: "camp" + (i + 1) + df, t: (df === "h" ? "Pán: " : "Dobyvatel: ") + A.n, d: "Dohraj kampaň " + A.n + " na " + (df === "h" ? "těžkou" : "lehkou"), camp: (i + 1) + df, n: PER_ACT, lv: df === "h" ? 4 : 2 })));
 function ensureExtra() {
   save.heroes = save.heroes || {}; for (const h of HEROES) if (!save.heroes[h.id]) save.heroes[h.id] = { lvl: 1, star: 0 };
-  save.stats = save.stats || {}; for (const k of ["kills", "boss", "bombs", "dias", "gems", "skills", "wins", "stars3", "combo", "rohl", "gran", "upsH", "upsC"]) save.stats[k] = save.stats[k] || 0;
+  save.stats = save.stats || {}; for (const k of ["kills", "boss", "bombs", "dias", "gems", "skills", "wins", "stars3", "combo", "rohl", "gran", "upsH", "upsC", "seasonW", "seasonAll"]) save.stats[k] = save.stats[k] || 0;
   if (save.rohliky === undefined) { const r = Math.round((save.granule || 0) * 0.7); save.rohliky = r; save.granule = (save.granule || 0) - r; }  // přechod na rohlíky: 70 % granulí -> rohlíky
   for (let k = 5; k < HEROES.length; k++) save.stats["s" + k] = save.stats["s" + k] || 0; save.team = save.team || DEF_TEAM.slice();
   for (let k = 0; k < 5; k++) for (const x of ["g", "s", "kc"]) save.stats[x + k] = save.stats[x + k] || 0;
@@ -399,7 +438,7 @@ ensureExtra();
 // Vylepšování za kořist: rohlíky (lidé) a granule (kočky) zvyšují úroveň, krystaly energie (z bossů) stupeň ★, který zvedá strop úrovní a přidává sílu.
 // Každá hvězda má úrovně 1–10; na 10/10 krystaly vybarví další hvězdu a úrovně jedou od 1 (hrdina je dál silnější). Max 5★ a 10/10.
 const MAX_STAR = 5, lvlCap = () => 10;
-const lvlCost = (l, st = 0) => Math.round((30 + 25 * l) * (1 + 0.8 * st)), starCost = st => [3, 6, 10, 15, 22][st] || 99;
+const lvlCost = (l, st = 0) => Math.round((45 + 38 * l) * (1 + 0.8 * st)), starCost = st => [5, 10, 17, 26, 38][st] || 99;
 // výstroj každého hrdiny: obojek (útok), rolnička (rychlejší mana), drápky (kritický zásah); úrovně 0–10 za střípky a esenci
 const EQ = [{ id: "o", n: "Obojek", im: "eq_collar", d: L => "útok +" + 3 * L + " %" },
   { id: "r", n: "Rolnička", im: "eq_bell", d: L => "mana o " + 5 * L + " % rychleji" },
@@ -434,7 +473,7 @@ function upgrade(k) {
   if (sv.lvl < lvlCap()) { const c = lvlCost(sv.lvl, sv.star), fk = foodKey(h); if (save[fk] < c) return false; save[fk] -= c; sv.lvl++; save.stats[isCat(h) ? "upsC" : "upsH"]++; }
   else if (sv.star < MAX_STAR) { const c = starCost(sv.star); if (save.crystals < c) return false; save.crystals -= c; sv.star++; sv.lvl = 1; store(); SFX.star(); for (let i = 0; i < 30; i++) burst(560, 300 + k * 182, "#ffd166"); return true; }
   else { const t = save.talents[h.id] || 0, c = talentCost(t); if (t >= TALENT_MAX || save.crystals < c) return false; save.crystals -= c; save.talents[h.id] = t + 1; store(); SFX.star(); for (let i = 0; i < 30; i++) burst(560, 300 + k * 182, "#f3c66e"); return true; }
-  save.stats.ups++; store(); SFX.level(); for (let i = 0; i < 18; i++) burst(560, heroRowY(k) + 60, COLORS[h.c]); return true;
+  save.stats.ups++; store(); SFX.level(); for (let i = 0; i < 18; i++) burst(560, heroRowY(k) + 90, COLORS[h.c]); return true;
 }
 let WAVES = [], stage = 1, levelUps = [], lastGain = 0;
 const img = {};
@@ -467,7 +506,7 @@ for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; loa
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
 for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x))]) load(k, "img/" + k + ".png");
-load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("diamond", "img/gem_diamond.png");
+load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
 function portrait(k, x, y, R) {
@@ -550,7 +589,7 @@ function porTex(k) {
 }
 // pozadí boje a podklad hracího pole – předkreslené jednou, ne v každém snímku
 function pxStatic() {
-  const key = ACTS[actOf(stage) - 1].bg, BGI = ok(img[key]) ? img[key] : img.bg, f = Math.min(2, DPR * scale), id = key + "|" + Math.round(FH) + "|" + f;
+  const key = battleBg(), BGI = ok(img[key]) ? img[key] : img.bg, f = Math.min(2, DPR * scale), id = key + "|" + Math.round(FH) + "|" + f;
   if (PX.bgId !== id && ok(BGI)) {
     const t = bake(Math.round(W * f), Math.round(FH * f), x => { x.scale(f, f);
       const fb = x.createLinearGradient(0, 0, 0, FH); fb.addColorStop(0, "#2a1b4a"); fb.addColorStop(0.5, "#1b1330"); fb.addColorStop(1, "#0f0b1c"); x.fillStyle = fb; x.fillRect(0, 0, W, FH);
@@ -705,10 +744,10 @@ const MOTES2 = Array.from({ length: 8 }, () => ({ x: Math.random() * 720, y: Mat
 const MOTES = Array.from({ length: 30 }, () => ({ x: Math.random() * 720, y: Math.random() * 1400, vx: (Math.random() - .5) * 9, vy: -6 - Math.random() * 12, ph: Math.random() * 6.3, s: 6 + Math.random() * 14 }));
 function pxAmbient() {  // pozadí jemně dýchá, vznášejí se světélka v barvě prostředí
   const b = PX.bgSpr; if (!b) return; const br = 1.02 + 0.012 * Math.sin(perf * 0.35); b.position.set(W / 2 + Math.sin(perf * 0.21) * 6, FH / 2 + Math.cos(perf * 0.17) * 5); b.width = W * br; b.height = FH * br;
-  if (!PX.pa) PX.pa = pool(PX.amb); const act = actOf(stage), col = [0xffc070, 0xd8ff7a, 0x9ec8ff, 0xffa0d8][act - 1] || 0xffc070, fx = settings().fx;
-  if (fx) for (let j = 0; j < 3; j++) { const sp = PX.pa.get(TX.beam); sp.blendMode = ADD; sp.tint = act === 3 ? 0x9ec8ff : 0xffe2a8; sp.anchor.set(0.5, 0);  // paprsky světla shora
+  if (!PX.pa) PX.pa = pool(PX.amb); const act = actOf(stage), col = [0xffc070, 0xd8ff7a, 0x9ec8ff, 0xffa0d8, 0x6ff2c8][act - 1] || 0xffc070, fx = settings().fx;
+  if (fx) for (let j = 0; j < 3; j++) { const sp = PX.pa.get(TX.beam); sp.blendMode = ADD; sp.tint = act === 3 ? 0x9ec8ff : act === 5 ? 0xb8f0ff : 0xffe2a8; sp.anchor.set(0.5, 0);  // paprsky světla shora
     sp.position.set(120 + j * 210 + Math.sin(perf * 0.13 + j) * 30, -40); sp.rotation = 0.38 + j * 0.06 + Math.sin(perf * 0.2 + j * 2) * 0.04; sp.width = 150 + j * 30; sp.height = FH * 0.75; sp.alpha = 0.07 + 0.04 * Math.sin(perf * 0.5 + j * 1.7); }
-  for (const m of MOTES) { const ff = act === 2, st = act === 4;  // zahrada: bloudící světlušky; dětský pokoj: barevné konfety; ložnice: pomalý prach
+  for (const m of MOTES) { const ff = act === 2 || act === 5, st = act === 4;  // zahrada a les: bloudící světlušky / bludičky; dětský pokoj: barevné konfety; ložnice: pomalý prach
     m.x += (m.vx + (ff ? Math.sin(perf * 0.9 + m.ph) * 22 : 0)) * frameDt; m.y += (st ? -m.vy * 0.6 : act === 3 ? m.vy * 0.5 : m.vy) * frameDt + (ff ? Math.cos(perf * 0.7 + m.ph) * 10 * frameDt : 0);
     if (m.y < -20) { m.y = FH + 20; m.x = Math.random() * W; } if (m.y > FH + 30) { m.y = -20; m.x = Math.random() * W; } if (m.x < -20) m.x = W + 20; if (m.x > W + 20) m.x = -20;
     const sp = PX.pa.get(TX.soft); sp.blendMode = ADD; sp.tint = st ? hx(COLORS[Math.floor(m.ph * 10) % 5]) : col;
@@ -761,6 +800,10 @@ function audioInit() {
 // hudba: Android OGG, iPhone/Safari M4A (OGG Safari neumí); zvuk se na iOS odemyká až koncem dotyku
 const MUSIC_EXT = (() => { try { return new Audio().canPlayType('audio/ogg; codecs="vorbis"') ? "ogg" : "m4a"; } catch (e) { return "ogg"; } })();
 addEventListener("touchend", () => { audioInit(); if (AC && AC.state !== "running") AC.resume(); if (music && music.paused && settings().music) music.play().catch(() => {}); }, { passive: true });
+// aplikace na pozadí: hudba i zvuky ztichnou, po návratu pokračují (Android posílá i Android → pauseAudio/resumeAudio)
+function pauseAudio() { if (music) music.pause(); if (AC && AC.state === "running") AC.suspend(); }
+function resumeAudio() { if (AC && AC.state === "suspended") AC.resume(); if (music && music.paused && settings().music) music.play().catch(() => {}); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) pauseAudio(); else resumeAudio(); });
 function playMusic(key, force) {
   if (!force && key === musicKey && music) return;
   musicKey = key;
@@ -864,6 +907,12 @@ const VOICE = {
   doll: ["giggle", 1.6], robot: ["beep", 1], dino: ["roar", 1.3], kite: ["fan", 1.8], horse: ["neigh", 1.2], clay: ["squish", 1.2],
   rccar: ["motor", 1.7], jackbox: ["boing", 0.8], puppet: ["giggle", 1.2],
   bigteddy: ["growl", 0.7], clownqueen: ["giggle", 0.8], megabot: ["beep", 0.6], brickrex: ["roar", 0.6], puppeteer: ["human", 0.6], toyking: ["fanfare", 1],
+  wisp: ["ghost", 1.6], tick: ["chitter", 1.5], ant: ["chitter", 1.2], shroom: ["squish", 1.1], stump: ["creak", 0.8], viper: ["hiss", 1.2],
+  boar: ["grunt", 0.8], hornet: ["buzz", 1.1], wolf: ["growl", 1.1], goblin: ["giggle", 1.3], lynx: ["hiss", 0.9], centipede: ["chitter", 0.9],
+  root: ["creak", 1.1], badger: ["grunt", 1.1], mossgolem: ["thud", 0.7],
+  pumpkin: ["growl", 1.2], ghost: ["ghost", 1.3], hbat: ["screech", 1.1], skeleton: ["creak", 1.4], zombie: ["grunt", 0.9], candy: ["giggle", 1.5], mummy: ["ghost", 0.9], witchcat: ["hiss", 1.1],
+  witch: ["giggle", 0.7], vampire: ["human", 0.6], pumpkinking: ["roar", 0.65],
+  tickqueen: ["chitter", 0.55], wisplady: ["ghost", 0.8], greyfang: ["growl", 0.6], grizzly: ["roar", 0.5], willow: ["creak", 0.55], forestlord: ["roar", 0.7],
 };
 function voice(type, p, mode) {
   // mode: "hurt" krátce, "attack" výrazně, "die" dlouze a klesavě
@@ -1021,7 +1070,7 @@ function rnd(n) { return Math.floor(Math.random() * n); }
 function newTile(t) { return { t: t === undefined ? rnd(5) : t, y: 0, vy: 0, pop: 0, alive: true }; }
 let eventMode = false;
 function startGame(st, waves) {
-  eventMode = !!waves;
+  eventMode = !!waves; seasonMode = null;
   slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0;
   lootG = 0; lootC = 0; lootS = 0; lootFly = []; titanMode = false; titanRes = null;
   paused = false;
@@ -1041,7 +1090,7 @@ function startWave() {
   enemies = WAVES[wave].map(e => ({ ...e, cur: e.hp, left: 3, hit: 0, c: rnd(5), mana: e.boss ? rnd(30) : 0 }));
   target = -1; const bs = enemies.filter(e => e.boss);
   if (bs.length) { bossIntro = { t: 0, names: bs.map(e => e.n) }; msg = null; scrFlash = 0.35; setTimeout(() => { if (scene === "play") noise(1.6, 0.32, "lowpass", 380, 40, 0, 0.7); }, 120); }
-  else msg = { text: "Úroveň " + localSt(stage) + " · vlna " + (wave + 1), t: 1.6 };
+  else msg = { text: (seasonMode ? seasonById(seasonMode.id).n + " " + seasonMode.lvl : "Úroveň " + localSt(stage)) + " · vlna " + (wave + 1), t: 1.6 };
 }
 
 // ---------- hledání shod ----------
@@ -1332,8 +1381,8 @@ const TRAITS = { heal: { ic: "💚", n: "Léčitel", d: "Když útočí, vyléč
   mute: { ic: "💤", n: "Uspávač", d: "Jeho útok umlčí hrdinu: 2 kola nenabíjí manu." },
   rage: { ic: "💢", n: "Zuřivec", d: "Když padne spojenec, rozzuří se: 3 kola útočí silněji a zaútočí dřív." } };
 const TRAIT = {};
-for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll", guard: "box hedgehog blanket brick", poison: "spray wasp mosquito spider crayon",
-  burn: "dryer laser lamp robot", mute: "owl moth snorer jackbox", rage: "bulldog doberman dino alarm" })) for (const k of ks.split(" ")) TRAIT[k] = t;
+for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll shroom root", guard: "box hedgehog blanket brick ant stump mossgolem skeleton", poison: "spray wasp mosquito spider crayon tick viper",
+  burn: "dryer laser lamp robot hornet pumpkin", mute: "owl moth snorer jackbox wisp goblin ghost witchcat", rage: "bulldog doberman dino alarm wolf boar badger" })) for (const k of ks.split(" ")) TRAIT[k] = t;
 function traitAct(e, i, tg) {
   const tr = TRAIT[e.k], p = enemyPos(i); if (!tr) return;
   const say = (t, c) => floats.push({ x: p.x, y: p.y - 110, text: t, col: c, t: 1.1 });
@@ -1374,14 +1423,23 @@ const BOSS_SK = {
   brickrex:  ["Kostkový dupot!", "allHeal", 1.1],
   puppeteer: ["Tahání za provázky!", "drainAll", 0.7, "mute"],
   toyking:   ["Královský rozkaz!", "rally", 0],
+  witch:     ["Kotel jedů!", "all", 1.0, "poison"],
+  vampire:   ["Upíří kousnutí!", "drainHeal", 0.12],
+  pumpkinking:["Dýňová bouře!", "all", 1.2, "burn"],
+  tickqueen: ["Sání krve!", "drainHeal", 0.12, "poison"],
+  wisplady:  ["Bludný kruh!", "allSlow", 0.8, "mute"],
+  greyfang:  ["Smečka!", "multi", 4],
+  grizzly:   ["Medvědí tlapa!", "one", 3.3],
+  willow:    ["Kořenové sevření!", "allDrain", 0.9, "poison"],
+  forestlord:["Prokletí lesa!", "all", 1.3, "poison"],
 };
 // každý nepřítel útočí po svém: zvířata drápy, hmyz žihadla, voda, oheň, magie, laser, elektřina, hračky hvězdičky, těžcí dunivý úder
 const ATK_ST = {}, ATK_COL = { claw: "#ff3b3b", sting: "#ffd23f", water: "#4fb8ff", fire: "#ff7a1a", magic: "#c77dff", laser: "#ff2e4d", electric: "#7fd6ff", star: "#ffe066", slam: "#e8d5b0" },
-  ATK_COLK = { clay: "#7ee05a", swamptoad: "#9a7a4a", toad: "#7ee05a", lamp: "#fff2a8", nightmare: "#7b2ff7", crayon: "#ff6fa8", curtain: "#d8e8ff", mirror: "#bfe9ff", wardrobe: "#a58bff", snorer: "#8fb8ff", puppeteer: "#e0aaff", clownqueen: "#ff6fa8", underbed: "#9b5de5" };
-for (const [st, ks] of Object.entries({ claw: "mouse crow pigeon bulldog tomcat ratking rottweiler baron hedgehog mole fox bat owl ratninja marten doberman foxbaron nightowl spider roach moth mothqueen spidermother dustbunny dino underbed catcher",
-  sting: "wasp mosquito waspqueen fly", water: "spray bath hose swamptoad clay", fire: "dryer", magic: "toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon",
+  ATK_COLK = { wisp: "#5ff2d0", wisplady: "#5ff2d0", shroom: "#b8f25f", goblin: "#9be15d", forestlord: "#7bd88f", willow: "#9ab35a", root: "#b08a5a", tick: "#c0392b", tickqueen: "#c0392b", clay: "#7ee05a", swamptoad: "#9a7a4a", toad: "#7ee05a", lamp: "#fff2a8", nightmare: "#7b2ff7", crayon: "#ff6fa8", curtain: "#d8e8ff", mirror: "#bfe9ff", wardrobe: "#a58bff", snorer: "#8fb8ff", puppeteer: "#e0aaff", clownqueen: "#ff6fa8", underbed: "#9b5de5" };
+for (const [st, ks] of Object.entries({ claw: "hbat zombie tick ant viper wolf lynx centipede badger tickqueen greyfang mouse crow pigeon bulldog tomcat ratking rottweiler baron hedgehog mole fox bat owl ratninja marten doberman foxbaron nightowl spider roach moth mothqueen spidermother dustbunny dino underbed catcher",
+  sting: "wasp mosquito waspqueen fly hornet", water: "spray bath hose swamptoad clay", fire: "dryer", magic: "ghost mummy witchcat witch vampire pumpkinking toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon wisp shroom goblin wisplady forestlord",
   laser: "laser archmage lamp", electric: "vac titan mower mulcher robot megabot rccar alarm ticktock", star: "teddy bigteddy soldier brick brickrex yoyo ball doll horse jackbox toyking kite",
-  slam: "cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
+  slam: "pumpkin skeleton candy cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet stump boar root mossgolem grizzly willow" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
 function atkImpact(st, x, y, col, boss) {
   const R = boss ? 1.4 : 1, up = (n, c) => { for (let q = 0; q < n; q++) particles.push({ x: x + (Math.random() - .5) * 90, y: y + (Math.random() - .5) * 40, vx: (Math.random() - .5) * 1.5, vy: -1 - Math.random() * 2, t: 0.9, col: c(q), fl: true }); };
   if (st === "water") { for (let q = 0; q < (boss ? 3 : 2); q++) burst(x, y, col); rings.push({ x, y: y + 20, t: 0.4, d: 0.4, col, R: 140 * R }); }
@@ -1461,6 +1519,11 @@ async function nextWave() {
     while (lootFly.length) await sleep(40);
     if (titanMode) { finishTitan(true); return; }
     save.stats.wins++; if (heroes.every(h => h.cur > 0)) save.stats.flawless++;
+    if (seasonMode) { const S = seasonById(seasonMode.id), n = seasonMode.lvl, key = seasonKey(S); save.season = save.season || {}; const first = n > (save.season[key] || 0);
+      const R = first ? 2.5 : 0.2, bonus = Math.round((20 + 10 * seasonMode.st) * R), gain = Math.round(lootG * R) + bonus, cr = first ? 2 + Math.floor(n / 3) : 0, sc = first && (n === 5 || n === 10) ? 2 : 0;
+      addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS + (first ? 3 : 0); save.stats.shardsGot += lootS; save.stats.seasonW++;
+      if (first) { save.season[key] = n; if (n === SEAS_N) { save.crystals += 15; save.scrolls += 3; save.shards += 30; for (let c = 0; c < 5; c++) save.ess[c] += 10; save.stats.seasonAll++; toast = { t: 3, text: "Celý " + S.n + " dohrán! Sezónní truhla: 15 krystalů, 3 svitky, 30 střípků, 10 esencí od každé barvy" }; } }
+      winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS]; store(); startEnd("win"); return; }
     if (eventMode) { save.stats.eventW++; const r = { g: 500, c: 3, s: 1 }, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { save.ess[rnd(5)]++; save.stats.essGot++; }
       levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh]; store(); startEnd("win"); return; }
     const hpF = heroes.reduce((a, h) => a + Math.max(0, h.cur), 0) / heroes.reduce((a, h) => a + h.hp, 0), stars = hpF >= 0.6 ? 3 : hpF >= 0.3 ? 2 : 1, sk = starKey(stage), prevS = save.stars[sk] || 0;
@@ -1725,7 +1788,7 @@ function frame(now) {
   if (!gpu) {
   const fb = g.createLinearGradient(0, 0, 0, FH); fb.addColorStop(0, "#2a1b4a"); fb.addColorStop(0.5, "#1b1330"); fb.addColorStop(1, "#0f0b1c");
   g.fillStyle = fb; g.fillRect(0, 0, W, FH);
-  const BGI = playLike() && ok(img[ACTS[actOf(stage) - 1].bg]) ? img[ACTS[actOf(stage) - 1].bg] : img.bg;
+  const BGI = playLike() && ok(img[battleBg()]) ? img[battleBg()] : img.bg;
   if (ok(BGI) && DY > 0) { const ih = FH, iw = ih * BGI.naturalWidth / BGI.naturalHeight; g.globalAlpha = scene === "play" ? 0.9 : 0.5; g.drawImage(BGI, (W - iw) / 2, 0, iw, ih); g.globalAlpha = 1;
     const lo = g.createLinearGradient(0, DY + 380, 0, FH); lo.addColorStop(0, "rgba(15,10,30,0)"); lo.addColorStop(0.35, "rgba(15,10,30,.8)"); lo.addColorStop(1, "rgba(10,6,20,.96)"); g.fillStyle = lo; g.fillRect(0, 0, W, FH); }
   if (!playLike()) g.translate(0, DY);
@@ -1743,6 +1806,7 @@ function frame(now) {
   else if (scene === "map") drawMap();
   else if (scene === "help") drawHelp();
   else if (scene === "camps") drawCamps();
+  else if (scene === "seasons") drawSeasons();
   else {
     drawHud();
     g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.textAlign = "center"; g.fillText(titanMode ? "Titán · stupeň " + ensureTitan().lvl + " · tah " + Math.min(TITAN_TURNS, turn + 1) + "/" + TITAN_TURNS : (actOf(stage) > 1 ? "Akt " + actOf(stage) + " · " : "") + "Úroveň " + localSt(stage) + " · vlna " + (wave + 1) + "/" + WAVES.length, 372, 90 + TOP_Y);
@@ -1885,12 +1949,14 @@ function drawMenu() {
   button(BTN.play, "gold"); button(BTN.heroes, "glass"); button(BTN.best, "glass"); button(BTN.help, "glass"); button(BTN.credits, "glass"); g.restore();
   // nastavení: skleněné kolečko s tenkým zlatým ozubeným kolem
   g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(GEAR.x, gearY(), 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
+  { const ex = W - GEAR.x, ey = gearY(); g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(ex, ey, 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
+    g.strokeStyle = "#f3c66e"; g.lineWidth = 5; g.lineCap = "round"; g.beginPath(); g.arc(ex, ey + 2, 15, -1.0, 4.14); g.stroke(); g.beginPath(); g.moveTo(ex, ey - 18); g.lineTo(ex, ey - 2); g.stroke(); g.lineCap = "butt"; }  // ukončit hru
   if (ok(img.ico_gear)) { g.save(); g.translate(GEAR.x, gearY()); g.rotate(Math.sin(perf * 0.5) * 0.15); drawItem("ico_gear", 0, 0, 58); g.restore(); }
   else { g.save(); g.translate(GEAR.x, gearY()); g.rotate(perf * 0.2); g.fillStyle = "#f3c66e";
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.19.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.20.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -1952,12 +2018,12 @@ function drawPanel() {
         g.fillStyle = "#fff"; g.textAlign = "left"; fitText(q.t, P.x + 40, y + 48, 400, "700 22px 'Exo 2', sans-serif"); g.fillStyle = "#f3c66e"; fitText("Odměna: " + rewText(q.rew), P.x + 40, y + 72, 400, "600 16px 'Exo 2', sans-serif");
         bar(P.x + 40, y + 84, 300, pr / q.n, done ? "#3ddc84" : "#ffd166"); line(pr.toLocaleString("cs-CZ") + " / " + q.n.toLocaleString("cs-CZ"), y + 96, "rgba(255,255,255,.8)", "600 15px 'Exo 2', sans-serif", "left", P.x + 350); }
       else { line(tier, y + 26, ["#3ddc84", "#ffd166", "#ff8a8a"][qi], "700 17px 'Exo 2', sans-serif");
-      line(q.t, y + 58, "#fff", "700 26px 'Exo 2', sans-serif"); line("Odměna: " + rewText(q.rew), y + 88, "#f3c66e", "600 20px 'Exo 2', sans-serif");
+      line(q.t, y + 58, "#fff", "700 26px 'Exo 2', sans-serif"); g.fillStyle = "#f3c66e"; g.textAlign = "left"; fitText("Odměna: " + rewText(q.rew), P.x + 40, y + 88, P.w - 270, "600 20px 'Exo 2', sans-serif");
       bar(P.x + 40, y + 112, 330, pr / q.n, done ? "#3ddc84" : "#ffd166"); line(pr.toLocaleString("cs-CZ") + " / " + q.n.toLocaleString("cs-CZ"), y + 125, "rgba(255,255,255,.8)", "600 18px 'Exo 2', sans-serif", "left", P.x + 380); }
       const b = M ? { x: P.x + P.w - 190, y: y + 24, w: 150, h: 56 } : { x: P.x + P.w - 200, y: y + 44, w: 160, h: 62 };
       if (q.got) line("✔ Hotovo", y + 84, "#3ddc84", "700 22px 'Exo 2', sans-serif", "center", b.x + 80);
       else if (done) pbtn({ ...b, t: "Vyzvednout" }, "gold", () => { q.got = true; giveRew(q.rew); });
-      else pbtn({ ...b, t: "Hrát" }, "glass", () => { menuPanel = null; if (q.st === "eventW" && canEvent()) menuPanel = "event"; else if (q.st === "titanHits") menuPanel = "titan"; else if (q.st === "chests") menuPanel = "chest"; else if (q.st === "ups" || q.st === "eqUps") scene = "heroes"; else { campPop = 0; scene = "camps"; } });
+      else pbtn({ ...b, t: "Hrát" }, "glass", () => { menuPanel = null; if (q.st === "eventW" && canEvent()) menuPanel = "event"; else if (q.st === "titanHits") menuPanel = "titan"; else if (q.st === "chests") menuPanel = "chest"; else if (q.st === "ups" || q.st === "eqUps") scene = "heroes"; else { campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; } });
       y += RH + (M ? 8 : 12); });
     { const all = P2.q.every(q => q.got); line(({ d: "Všechny dnešní: ", w: "Všechny týdenní: ", m: "Všech 5 měsíčních: " })[questTab] + rewText(QBONUS[questTab]), y + 30, all ? "#fff" : "rgba(255,255,255,.5)", "700 " + (M ? 18 : 21) + "px 'Exo 2', sans-serif");
       if (P2.bonus) line("✔ Vyzvednuto", y + 30, "#3ddc84", "700 21px 'Exo 2', sans-serif", "right", P.x + P.w - 40);
@@ -1985,7 +2051,7 @@ function drawPanel() {
       setTimeout(() => { const r = { g: 150 + rnd(250), c: Math.random() < 0.45 ? 1 + rnd(2) : 0, s: Math.random() < 0.12 ? 1 : 0, h: 3 + rnd(6), e: 2 + rnd(3), ec: rnd(5) }; save.chest.n = 0; save.stats.chests++; giveRew(r); chestRew = rewText(r); }, 700); });
     else { line("Každý poražený nepřítel přidá do truhly kořist.", y + 460, "rgba(255,255,255,.8)", "500 22px 'Exo 2', sans-serif", "center", W / 2); bar(160, y + 490, 400, save.chest.n / CHEST_N);
       line(save.chest.n + " / " + CHEST_N + " nepřátel", y + 540, "#fff", "700 22px 'Exo 2', sans-serif", "center", W / 2);
-      pbtn({ x: 190, y: y + 580, w: 340, h: 78, t: "Jít bojovat" }, "glass", () => { menuPanel = null; campPop = 0; scene = "camps"; }); }
+      pbtn({ x: 190, y: y + 580, w: 340, h: 78, t: "Jít bojovat" }, "glass", () => { menuPanel = null; campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; }); }
   }
   if (menuPanel === "event") {
     const E = eventWaves(); y = line("Jednou denně: tři vlny bossů, síla podle tvého týmu.", y, "rgba(255,255,255,.75)", "500 21px 'Exo 2', sans-serif", "center", W / 2) + 30;
@@ -2064,6 +2130,29 @@ function eventWaves() {  // síla podle energie týmu (~75 % toho, co tým zvlá
   let st = 1; const want = 0.9 * hpScale(); for (let x = 1; x <= Math.min(STAGES, Math.max(best, 3)); x++) if (stageF(x) <= want) st = x;
   const w = [0, 1, 2].map(j => stageWaves(Math.max(1, st - j * 2)).slice(-1)[0].slice(0, j ? 2 : 1)); diff = d0; return { st, w };
 }
+// ---------- Sezónní kampaně: nezávislé na hlavních, jen v období svátku, 10 úrovní, obtížnost podle síly týmu ----------
+const SEASONS = [
+  { id: "halloween", n: "Halloween", bg: "bgH", d: "Dýně, strašidla a Dýňový král.", from: [10, 10], to: [11, 15], col: "#ff8a1f",
+    bosses: { 5: ["witch"], 8: ["vampire"], 10: ["pumpkinking", "witch", "vampire"] } },
+];
+const SEAS_N = 10, seasonById = id => SEASONS.find(S => S.id === id);
+let seasonMode = null, seasonPop = null;  // seasonMode = { id, lvl } během boje
+function seasonOpen(S, d = new Date()) { const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
+function seasonDaysTo(S) { const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return i; d.setDate(d.getDate() + 1); } return 0; }
+const seasonKey = S => S.id + new Date().getFullYear(), seasonDone = S => ((save.season || {})[seasonKey(S)] || 0);
+function seasonWaves(S, n) {  // síla podle týmu: běžná úroveň, kterou tým zvládne, × (1,05 … 1,37)
+  const d0 = diff; diff = "e"; let st = 1; const want = 0.9 * hpScale(); for (let x = 1; x <= STAGES; x++) if (stageF(x) <= want) st = x;
+  const F = stageF(st) * (1.05 + 0.035 * (n - 1)), A = F <= 1 ? F : 1 + (F - 1) * balA(st); diff = d0;
+  let seed = n * 7919 + 13; const R = k => { seed = (seed * 16807) % 2147483647; return seed % k; };
+  const pool = Object.keys(FOES).filter(k => FOES[k].season === S.id && !FOES[k].boss && FOES[k].from <= n);
+  const mk = (k, m) => { const f = FOES[k]; return { ...f, k, hp: Math.round(f.hp * F * m), atk: Math.round(f.atk * A * (f.boss ? 0.85 : 0.75)) }; };
+  const waves = [], nw = n <= 3 ? 2 : 3;
+  for (let w = 0; w < nw; w++) { const wv = []; for (let i = 0; i < 5; i++) wv.push(mk(pool[R(pool.length)], 0.45 + 0.08 * w)); waves.push(wv); }
+  const B = S.bosses[n]; if (B) waves.push(B.map(k => mk(k, (B.length === 3 ? 0.27 : 0.33) * (1 + 0.02 * n))));
+  return { st, waves };
+}
+function startSeason(id, n) { const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
+const battleBg = () => seasonMode ? seasonById(seasonMode.id).bg : ACTS[actOf(stage) - 1].bg;
 // Titán týdne: jeden obří boss na celý týden, 3 pokusy denně, poškození se sčítá (f = zbývající část energie); po poražení přijde silnější
 const TITAN_TURNS = 20, TITAN_TRIES = 3;
 const titanPool = () => ACTS.map((_, i) => i + 1).filter(a => campOpen(a)).flatMap(a => bossesOf(a));
@@ -2092,9 +2181,9 @@ function finishTitan(killed) {
 }
 const weakHit = (ti, x) => { const e = enemies[ti]; return !!(e && e.titan && Math.abs(x - (enemyPos(ti).x + (e.wx || 0) * enemySize(e))) < T * 0.75); };
 function startEvent() { const E = eventWaves(); save.daily.event = true; store(); diff = "e"; startGame(E.st, E.w); }
-function heroRowY(k) { return 264 + k * 110 - (scene === "heroes" ? scrollY : 0); }  // seznam hrdinů se posouvá (od 10 hrdinů)
-function heroBtn(k) { return { x: 140, y: heroRowY(k) + 63, w: 366, h: 33 }; }
-function eqBtn(k) { return { x: 516, y: heroRowY(k) + 63, w: 154, h: 33, t: "Výstroj" }; }
+function heroRowY(k) { return 264 + k * 166 - (scene === "heroes" ? scrollY : 0); }  // seznam hrdinů se posouvá (od 10 hrdinů)
+function heroBtn(k) { return { x: 150, y: heroRowY(k) + 88, w: 340, h: 58 }; }
+function eqBtn(k) { return { x: 502, y: heroRowY(k) + 88, w: 172, h: 58, t: "Výstroj" }; }
 let eqHero = -1, eqBtns = [];
 const COMBO_BTN = { x: 400, y: 168, w: 280, h: 50 };
 // výběr družiny: až 5 z celé rodiny, uloží se; ukáže, které barvy kamenů mají hrdinu
@@ -2136,23 +2225,23 @@ function drawHeroesInfo() {
   // esence pěti barev (materiál na výstroj)
   g.fillStyle = "rgba(10,6,20,.7)"; rr(40, 226, 640, 32, 16); g.fill();
   for (let c = 0; c < 5; c++) { const x = 64 + c * 128; drawItem("ess_" + c, x, 242, 30); g.textAlign = "left"; g.fillStyle = COLORS[c]; g.font = "800 18px 'Exo 2', sans-serif"; g.fillText(save.ess[c], x + 20, 249); }
-  scrollMax = Math.max(0, 264 + HEROES.length * 110 - 1112); g.save(); g.beginPath(); g.rect(0, 261, W, 1112 - 261); g.clip();
+  scrollMax = Math.max(0, 264 + HEROES.length * 166 - 1112); g.save(); g.beginPath(); g.rect(0, 261, W, 1112 - 261); g.clip();
   HEROES.forEach((h, k) => {
     const y = heroRowY(k), st = heroStats(h), sv = save.heroes[h.id], col = COLORS[h.c];
     const full = heroFull(h);
-    g.fillStyle = "rgba(20,12,40,.82)"; rr(30, y, 660, 102, 22); g.fill();
-    if (full) { g.save(); g.shadowColor = col; g.shadowBlur = 22; g.strokeStyle = col; g.lineWidth = 6; rr(30, y, 660, 102, 22); g.stroke(); g.restore(); } else { g.strokeStyle = col; g.lineWidth = 3; rr(30, y, 660, 102, 22); g.stroke(); }
+    g.fillStyle = "rgba(20,12,40,.82)"; rr(30, y, 660, 156, 22); g.fill();
+    if (full) { g.save(); g.shadowColor = col; g.shadowBlur = 22; g.strokeStyle = col; g.lineWidth = 6; rr(30, y, 660, 156, 22); g.stroke(); g.restore(); } else { g.strokeStyle = col; g.lineWidth = 3; rr(30, y, 660, 156, 22); g.stroke(); }
     if (!full) { const eb = eqBtn(k), can = eqCan(k); button(eb, "#2e7d74"); if (can) { g.fillStyle = "#e5484d"; g.beginPath(); g.arc(eb.x + eb.w - 6, eb.y + 6, 9, 0, 6.29); g.fill(); } }
-    g.beginPath(); g.arc(82, y + 53, 46, 0, 6.29); g.fillStyle = col; g.fill(); portrait(k, 82, y + 53, 42);
-    drawSymbol(h.c, 116, y + 88, 24);
-    g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 26px Baloo, sans-serif"; g.fillText(h.name, 140, y + 32);
+    g.beginPath(); g.arc(88, y + 78, 56, 0, 6.29); g.fillStyle = col; g.fill(); portrait(k, 88, y + 78, 51);
+    drawSymbol(h.c, 128, y + 120, 30);
+    g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 32px Baloo, sans-serif"; g.fillText(h.name, 150, y + 40);
     const nw = g.measureText(h.name).width;
-    g.fillStyle = "#ffd166"; g.font = "800 20px Baloo, sans-serif"; g.fillText("★".repeat(sv.star) + "☆".repeat(MAX_STAR - sv.star), 150 + nw, y + 32);
-    if (teamIds().includes(h.id)) { g.fillStyle = "#3ddc84"; g.font = "700 14px 'Exo 2', sans-serif"; g.fillText("✔ V TÝMU", 150 + nw + g.measureText("★★★★★").width * 1.5 + 8, y + 31); }
+    g.fillStyle = "#ffd166"; g.font = "800 24px Baloo, sans-serif"; g.fillText("★".repeat(sv.star) + "☆".repeat(MAX_STAR - sv.star), 160 + nw, y + 40);
+    if (teamIds().includes(h.id)) { g.fillStyle = "#3ddc84"; g.font = "700 14px 'Exo 2', sans-serif"; g.fillText("✔ V TÝMU", 160 + nw + g.measureText("★★★★★").width * 1.5 + 8, y + 39); }
     { const fr = Math.min(1, heroPower(st) / heroPower(heroMax(h))); g.textAlign = "right"; g.fillStyle = fr >= 1 ? "#ffd166" : "rgba(255,255,255,.75)"; g.font = "700 16px 'Exo 2', sans-serif"; g.fillText("síla " + Math.round(fr * 100) + " %", 670, y + 26);
       g.fillStyle = "rgba(0,0,0,.5)"; rr(590, y + 33, 80, 6, 3); g.fill(); g.fillStyle = fr >= 1 ? "#ffd166" : col; rr(590, y + 33, Math.max(6, 80 * fr), 6, 3); g.fill(); g.textAlign = "left"; }
-    g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 18px Baloo, sans-serif";
-    g.fillText("Úroveň " + sv.lvl + "/10 · útok " + st.atk + " · energie " + st.hp, 140, y + 57);
+    g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 22px Baloo, sans-serif";
+    g.fillText("Úroveň " + sv.lvl + "/10 · útok " + st.atk + " · energie " + st.hp, 150, y + 74);
     const atCap = sv.lvl >= lvlCap(), maxed = atCap && sv.star >= MAX_STAR, tl = save.talents[h.id] || 0;
     if (full) { const pu = 0.75 + 0.25 * Math.sin(perf * 3 + k); g.globalAlpha = pu; g.fillStyle = col; g.font = "800 22px 'Exo 2', sans-serif"; g.fillText("✦ Na maximu – všechno vylepšeno ✦", 140, y + 90); g.globalAlpha = 1; return; }
     if (maxed) { const tc = talentCost(tl), canT = tl < TALENT_MAX && save.crystals >= tc;  // po maximu: talent za krystaly
@@ -2208,8 +2297,8 @@ const HELP = [
     draw(y) { miniGrid(160, y, ["31204", "42123", "14301"], 80, [[1, 1], [2, 0], [3, 1]]); hArrow(360, y + 50, 360, y + 112);
       for (let k = 0; k < 5; k++) { const x = 104 + k * 128; drawSymbol(k, x, y + 300, 54); g.textAlign = "center"; g.fillStyle = COLORS[k]; g.font = "700 18px 'Exo 2', sans-serif"; HEROES.filter(h => h.c === k).forEach((h, j) => g.fillText(h.name, x, y + 348 + j * 22)); } } },
   { t: "Útok sloupcem", d: "Spojené kameny vyletí svým sloupcem nahoru a zasáhnou nepřítele, jehož tělem sloupec prochází. Když nad sloupcem nikdo nestojí, rána jde vedle. Ťukni na nepřítele – zlatá šipka ukáže cíl pro schopnosti hrdinů.",
-    draw(y) { const ei = img.e_crow; if (ok(ei)) g.drawImage(ei, 250, y - 10, 220, 220); miniGrid(280, y + 250, ["4", "4", "4"], 80, [[0, 0], [0, 1], [0, 2]]);
-      hArrow(360, y + 250, 360, y + 175, "#ff9f43"); g.save(); g.lineCap = "round"; g.strokeStyle = "#ffd166"; g.lineWidth = 5; const ay = y - 30 + 6 * Math.sin(perf * 5);
+    draw(y) { const ei = img.e_crow; if (ok(ei)) g.drawImage(ei, 270, y - 10, 180, 180); miniGrid(305, y + 210, ["4", "4", "4"], 58, [[0, 0], [0, 1], [0, 2]]);
+      hArrow(334, y + 208, 334, y + 150, "#ff9f43"); g.save(); g.lineCap = "round"; g.strokeStyle = "#ffd166"; g.lineWidth = 5; const ay = y - 30 + 6 * Math.sin(perf * 5);
       g.beginPath(); g.moveTo(345, ay - 16); g.lineTo(360, ay); g.lineTo(375, ay - 16); g.stroke(); g.restore(); } },
   { t: "4 v řadě = bomba", d: "Spoj 4 kameny v řadě a na jejich místě vznikne bomba – kovový kruh s hroty v barvě hrdiny. Až ji spojíš s dalšími kameny stejné barvy, vybuchne a zničí všech 9 kamenů kolem sebe (3 × 3).",
     draw(y) { miniGrid(40, y + 40, ["1111"], 76, [[0, 0], [1, 0], [2, 0], [3, 0]]); hArrow(360, y + 78, 430, y + 78); miniGrid(450, y + 40, ["B"], 76, [], 1);
@@ -2292,6 +2381,8 @@ const HELP = [
   { t: "Titán týdne", d: "Ikona Titán dole v menu: obří boss na celý týden, 3 pokusy denně po nejvýš 20 tazích. Poškození se ze všech pokusů sčítá a za každý pokus je odměna. Zlatý terč je slabé místo: kameny ve sloupci pod ním dávají o 50 % víc. Poražený titán se vrátí silnější.",
     draw(y) { drawItem("ui_titan", W / 2, y + 160, 300); const pu = 0.5 + 0.5 * Math.sin(perf * 6), wx = W / 2 + 60 * Math.sin(perf * 0.8), wy = y + 170;
       g.strokeStyle = "rgba(255,209,102," + (0.6 + 0.4 * pu) + ")"; g.lineWidth = 4; g.beginPath(); g.arc(wx, wy, 36 + 6 * pu, 0, 6.29); g.stroke(); g.globalAlpha = 0.25; g.fillStyle = "#ffd166"; g.fillRect(wx - 50, wy + 42, 100, 220); g.globalAlpha = 1; } },
+  { t: "Sezónní kampaně", d: "V Kampaních je nahoře karta Sezónní kampaně: Halloween, Vánoce a další svátky. Hrají se zvlášť, jen v období svátku, mají 10 úrovní a jednu obtížnost – nepřátelé jsou silní podle týmu, se kterým jdeš do boje. Odměny jsou velké, za celou sezónu je sezónní truhla. Každý rok jdou znovu.",
+    draw(y) { const S = SEASONS[0]; coverImg(img[S.bg], 120, y, 480, 250); g.strokeStyle = S.col; g.lineWidth = 4; rr(120, y, 480, 250, 24); g.stroke(); ["pumpkinking", "witch", "vampire"].forEach((k, j) => { const im = img["e_" + k]; if (ok(im)) g.drawImage(im, 150 + j * 150, y + 60, 170, 170); }); } },
   { t: "Velké výzvy a nastavení", d: "V Úkolech je karta Výzvy: dlouhodobé cíle jako celá lehká nebo těžká obtížnost, celý pokoj, všechny hvězdy nebo kompletní bestiář, s velkými odměnami. Tlačítko ×2 vedle pauzy zrychlí boj. Vibrace, nápovědu tahu a efekty vypneš v Nastavení, kde si vybereš i vzhled kamenů.",
     draw(y) { drawItem("ui_trophy", 205, y + 155, 230); const on = Math.sin(perf * 1.5) > 0, b = { x: 420, y: y + 110, w: 150, h: 90 };
       g.fillStyle = on ? "rgba(255,209,102,.9)" : "rgba(10,6,20,.6)"; rr(b.x, b.y, b.w, b.h, 45); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 3; rr(b.x, b.y, b.w, b.h, 45); g.stroke();
@@ -2332,7 +2423,7 @@ function drawBestiary() {
   list.forEach((k, i) => {
     const f = FOES[k], boss = !!f.boss;
     g.textAlign = "left";
-    if (i === 0 || grp(k) !== grp(list[i - 1])) { g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; g.fillText(ACTS[(f.act || 1) - 1].n + " – " + (boss ? "bossové" : "nepřátelé"), 40, y + 34); y += 56; }
+    if (i === 0 || grp(k) !== grp(list[i - 1])) { g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; g.fillText((f.season ? seasonById(f.season).n + " (sezónní)" : ACTS[(f.act || 1) - 1].n) + " – " + (boss ? "bossové" : "nepřátelé"), 40, y + 34); y += 56; }
     const hgt = 214;
     if (y > -hgt && y < H) {
       bestRows.push([k, y, y + hgt - 14]);
@@ -2458,11 +2549,11 @@ function drawReset() {
   g.save(); g.shadowColor = "#ff2e2e"; g.shadowBlur = 40; g.fillStyle = "#2a0a14"; rr(50, 140, 620, 1000, 34); g.fill(); g.restore(); g.strokeStyle = "#ff4b4b"; g.lineWidth = 4; rr(50, 140, 620, 1000, 34); g.stroke();
   g.textAlign = "center"; g.fillStyle = "#ff6b6b"; g.font = "800 46px Baloo, sans-serif"; g.fillText(resetStep === 1 ? "⚠ Pozor!" : "⚠ Opravdu?", W / 2, 215);
   g.fillStyle = "#fff"; g.font = "600 24px Baloo, sans-serif"; g.fillText(resetStep === 1 ? "Začneš úplně od začátku a přijdeš o:" : "Tohle už nepůjde vrátit. Fakt jedeš od nuly?", W / 2, 262);
-  const lines = [rohlN(save.rohliky) + ", " + granN(save.granule) + ", " + save.crystals + " krystalů energie, " + save.scrolls + " tlapkových svitků", "vylepšení komba (" + save.combo + "/" + COMBO_MAX + ")"];
-  for (const h of HEROES) { const sv = save.heroes[h.id]; lines.push(h.name + ": " + sv.star + "★, úroveň " + sv.lvl + "/10"); }
-  ACTS.forEach((A, i) => lines.push(A.n + ": lehká " + progOf(i + 1, "e") + "/" + PER_ACT + ", těžká " + progOf(i + 1, "h") + "/" + PER_ACT));
-  g.textAlign = "left"; g.font = "600 22px Baloo, sans-serif";
-  lines.forEach((t, i) => { g.fillStyle = i < 2 ? "#ffd166" : "rgba(255,255,255,.9)"; g.fillText("• " + t, 90, 320 + i * 40); });
+  const lines = [rohlN(save.rohliky) + ", " + granN(save.granule), save.crystals + " krystalů, " + save.scrolls + " svitků, " + save.shards + " střípků", "kombo " + save.combo + "/" + COMBO_MAX];
+  const hs = HEROES.map(h => save.heroes[h.id]), hv = hs.filter(v => v.star || v.lvl > 1).length; lines.push(hv + " vylepšených hrdinů (nejlepší " + Math.max(...hs.map(v => v.star)) + "★)");
+  ACTS.forEach((A, i) => { const e = progOf(i + 1, "e"), h = progOf(i + 1, "h"); if (e || h) lines.push(A.n + ": lehká " + e + "/" + PER_ACT + ", těžká " + h + "/" + PER_ACT); });
+  g.textAlign = "left";
+  lines.slice(0, 12).forEach((t, i) => { g.fillStyle = i < 3 ? "#ffd166" : "rgba(255,255,255,.9)"; fitText("• " + t, 90, 320 + i * 40, 540, "600 22px Baloo, sans-serif"); });
   g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.6)"; g.font = "600 20px Baloo, sans-serif"; g.fillText("Nastavení hudby a zvuků zůstane.", W / 2, 860);
   button({ ...R_YES, t: resetStep === 1 ? "Ano, smazat všechno" : "Ano, opravdu od začátku" }, "#e5484d"); button(R_NO, "#3ddc84");
 }
@@ -2631,11 +2722,55 @@ function drawLevelPop() {
   button(LP_BACK, "glass"); button(LP_TEAM, "glass"); button(LP_GO, "gold");
 }
 let mapAct = 1, campPop = 0;
-const campCard = i => ({ x: 34, y: 148 + i * 246, w: 652, h: 228 });
+const campCard = i => ({ x: 34, y: 148 + (i + 1) * 246 - (scene === "camps" ? scrollY : 0), w: 652, h: 228 });  // slot 0 = Sezónní kampaně  // seznam kampaní se posouvá (přibývají)
 const POP_E = { x: 120, y: 640, w: 480, h: 100, t: "Lehká" }, POP_H = { x: 120, y: 770, w: 480, h: 100, t: "Těžká" }, POP_X = { x: 590, y: 300, w: 64, h: 64 };
 function coverImg(im, x, y, w, h) { if (!ok(im)) return; const s2 = Math.max(w / im.naturalWidth, h / im.naturalHeight), iw = im.naturalWidth * s2, ih = im.naturalHeight * s2; g.save(); rr(x, y, w, h, 28); g.clip(); g.drawImage(im, x + (w - iw) / 2, y + (h - ih) * 0.45, iw, ih); g.restore(); }
+// ---------- obrazovka Sezónní kampaně ----------
+const seasCard = i => ({ x: 34, y: 148 + i * 246 - (scene === "seasons" ? scrollY : 0), w: 652, h: 228 });
+const SEAS_TOP = () => ({ x: 34, y: 148 - scrollY, w: 652, h: 228 });
+function drawSeasonsCard() {
+  const b = SEAS_TOP(), S = SEASONS.find(x => seasonOpen(x)) || SEASONS[0], on = SEASONS.some(x => seasonOpen(x));
+  g.save(); g.shadowColor = on ? S.col : "rgba(0,0,0,.6)"; g.shadowBlur = 26; g.fillStyle = "#1a1030"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.restore();
+  coverImg(img[S.bg], b.x, b.y, b.w, b.h); const sh = g.createLinearGradient(0, b.y, 0, b.y + b.h); sh.addColorStop(0, "rgba(10,5,25,.1)"); sh.addColorStop(1, "rgba(10,5,25,.92)"); g.fillStyle = sh; rr(b.x, b.y, b.w, b.h, 28); g.fill();
+  g.strokeStyle = on ? S.col : "#5a5370"; g.lineWidth = 4; rr(b.x, b.y, b.w, b.h, 28); g.stroke();
+  g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.85)"; g.font = "800 22px Baloo, sans-serif"; g.fillText(on ? "PRÁVĚ PROBÍHÁ: " + S.n.toUpperCase() : "SVÁTKY A AKCE", b.x + 28, b.y + b.h - 92);
+  g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.font = "800 44px Baloo, sans-serif"; g.strokeText("Sezónní kampaně", b.x + 28, b.y + b.h - 46); g.fillStyle = "#fff"; g.fillText("Sezónní kampaně", b.x + 28, b.y + b.h - 46);
+  g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 19px Baloo, sans-serif"; g.fillText("Hrají se zvlášť · 10 úrovní · obtížnost podle tvého týmu · velké odměny", b.x + 28, b.y + b.h - 16);
+}
+function drawSeasons() {
+  menuBg(); scrollMax = Math.max(0, 148 + (SEASONS.length + 1) * 246 - 1112); g.save(); g.beginPath(); g.rect(0, 138, W, 1112 - 138); g.clip();
+  SEASONS.forEach((S, i) => { const b = seasCard(i), open = seasonOpen(S), dn = seasonDone(S);
+    g.fillStyle = "#1a1030"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); coverImg(img[S.bg], b.x, b.y, b.w, b.h);
+    const sh = g.createLinearGradient(0, b.y, 0, b.y + b.h); sh.addColorStop(0, "rgba(10,5,25,.1)"); sh.addColorStop(1, "rgba(10,5,25,.92)"); g.fillStyle = sh; rr(b.x, b.y, b.w, b.h, 28); g.fill();
+    g.strokeStyle = open ? S.col : "#5a5370"; g.lineWidth = 4; rr(b.x, b.y, b.w, b.h, 28); g.stroke();
+    g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.fillText(S.from[0] === S.to[0] ? "" : (S.from[1] + ". " + S.from[0] + ". – " + S.to[1] + ". " + S.to[0] + ".").toUpperCase(), b.x + 28, b.y + b.h - 120);
+    g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.font = "800 44px Baloo, sans-serif"; g.strokeText(S.n, b.x + 28, b.y + b.h - 76); g.fillStyle = "#fff"; g.fillText(S.n, b.x + 28, b.y + b.h - 76);
+    g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px Baloo, sans-serif"; g.fillText(S.d, b.x + 28, b.y + b.h - 46);
+    g.fillStyle = "rgba(0,0,0,.55)"; rr(b.x + 28, b.y + b.h - 34, 596, 20, 10); g.fill(); g.fillStyle = S.col; rr(b.x + 28, b.y + b.h - 34, Math.max(20, 596 * dn / SEAS_N), 20, 10); g.fill();
+    g.fillStyle = "#fff"; g.font = "800 15px Baloo, sans-serif"; g.textAlign = "center"; g.fillText(dn + " / " + SEAS_N + (dn >= SEAS_N ? " · dohráno ✔" : ""), b.x + 326, b.y + b.h - 19);
+    if (!open) { g.fillStyle = "rgba(5,3,12,.68)"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.fillStyle = "#fff"; g.font = "800 30px Baloo, sans-serif"; const dd = seasonDaysTo(S); g.fillText("🔒 Vrátí se za " + dd + " " + pl(dd, "den", "dny", "dní"), W / 2, b.y + 70); } });
+  const nb = seasCard(SEASONS.length); g.fillStyle = "rgba(20,12,40,.6)"; rr(nb.x, nb.y, nb.w, nb.h, 28); g.fill(); g.setLineDash([10, 10]); g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 3; rr(nb.x, nb.y, nb.w, nb.h, 28); g.stroke(); g.setLineDash([]);
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Další svátky připravujeme", W / 2, nb.y + 104); g.font = "600 20px Baloo, sans-serif"; g.fillText("Vánoce, Velikonoce a další…", W / 2, nb.y + 140);
+  g.restore(); header("Sezónní kampaně"); backBtn();
+  if (seasonPop) drawSeasonPop();
+}
+const SP_LVL = n => ({ x: 92 + ((n - 1) % 5) * 112, y: 600 + Math.floor((n - 1) / 5) * 118, w: 96, h: 100 }), SP_TEAM = { x: 100, y: 860, w: 250, h: 74, t: "Tým" }, SP_X = { x: 370, y: 860, w: 250, h: 74, t: "Zavřít" };
+function drawSeasonPop() {
+  const S = seasonById(seasonPop), dn = seasonDone(S);
+  g.fillStyle = "rgba(5,3,12,.78)"; g.fillRect(0, -DY, W, FH); g.save(); g.shadowColor = S.col; g.shadowBlur = 40; g.fillStyle = "#1d1236"; rr(60, 280, 600, 690, 34); g.fill(); g.restore();
+  coverImg(img[S.bg], 60, 280, 600, 220); const fd = g.createLinearGradient(0, 380, 0, 500); fd.addColorStop(0, "rgba(29,18,54,0)"); fd.addColorStop(1, "#1d1236"); g.fillStyle = fd; g.fillRect(60, 380, 600, 122);
+  g.strokeStyle = S.col; g.lineWidth = 4; rr(60, 280, 600, 690, 34); g.stroke();
+  g.textAlign = "center"; g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.font = "800 42px Baloo, sans-serif"; g.strokeText(S.n, W / 2, 490); g.fillStyle = "#fff"; g.fillText(S.n, W / 2, 490);
+  g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 19px Baloo, sans-serif"; g.fillText("Nepřátelé jsou silní podle tvého týmu · bossové v úrovni 5, 8 a 10", W / 2, 540); g.fillText("Za celou sezónu sezónní truhla", W / 2, 566);
+  for (let n = 1; n <= SEAS_N; n++) { const b = SP_LVL(n), done = n <= dn, can = n <= dn + 1, boss = !!S.bosses[n];
+    g.globalAlpha = can ? 1 : 0.4; g.fillStyle = done ? "rgba(61,220,132,.2)" : boss ? "rgba(229,72,77,.25)" : "rgba(255,255,255,.08)"; rr(b.x, b.y, b.w, b.h, 18); g.fill();
+    g.strokeStyle = done ? "#3ddc84" : can ? S.col : "#5a5370"; g.lineWidth = 3; rr(b.x, b.y, b.w, b.h, 18); g.stroke();
+    g.fillStyle = "#fff"; g.font = "800 34px Baloo, sans-serif"; g.fillText(n, b.x + b.w / 2, b.y + 52); g.font = "700 15px 'Exo 2', sans-serif"; g.fillStyle = done ? "#3ddc84" : boss ? "#ff8a8a" : "rgba(255,255,255,.7)";
+    g.fillText(done ? "✔ hotovo" : !can ? "🔒" : boss ? "boss" : "hrát", b.x + b.w / 2, b.y + 82); g.globalAlpha = 1; }
+  button(SP_TEAM, "glass"); button(SP_X, "glass");
+}
 function drawCamps() {
-  menuBg(); header("Kampaně");
+  menuBg(); scrollMax = Math.max(0, 148 + (ACTS.length + 1) * 246 - 1112); drawSeasonsCard(); g.save(); g.beginPath(); g.rect(0, 138, W, 1112 - 138); g.clip();
   ACTS.forEach((A, i) => {
     const b = campCard(i), open = campOpen(i + 1), pe = progOf(i + 1, "e"), ph = progOf(i + 1, "h");
     g.save(); g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = 24; g.fillStyle = "#1a1030"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.restore();
@@ -2649,6 +2784,7 @@ function drawCamps() {
     bar(b.x + 28, "Lehká", pe, DIFF.e.col); bar(b.x + 344, "Těžká", ph, DIFF.h.col);
     if (!open) { g.fillStyle = "rgba(5,3,12,.65)"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "800 30px Baloo, sans-serif"; g.fillText("🔒 Odemkne se po dohrání kampaně " + i, W / 2, b.y + 64); }
   });
+  g.restore(); header("Kampaně");
   backBtn();
   if (campPop) {
     const A = ACTS[campPop - 1];
@@ -2725,14 +2861,15 @@ window.goBack = function () {
   if (scene === "play") { if (paused) { paused = false; quitAsk = false; } else { paused = true; quitAsk = true; } return "ok"; }
   if (scene === "win" || scene === "lose") { playMusic("menu"); openMap(actOf(stage)); return "ok"; }
   if (scene === "help") { scene = helpFrom; return "ok"; }
-  if (scene === "map") { scene = "camps"; return "ok"; }
+  if (scene === "map") { scene = "camps"; scrollY = 0; scrollV = 0; return "ok"; }
+  if (scene === "seasons") { if (seasonPop) seasonPop = null; else { scene = "camps"; scrollY = 0; } return "ok"; }
   scene = "menu"; scrollY = 0; scrollV = 0; return "ok";
 };
 function drawExitAsk() {
   g.fillStyle = "rgba(5,3,12,.82)"; g.fillRect(0, -DY, W, FH);
   g.fillStyle = "#1d1236"; rr(70, 440, 580, 330, 30); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 2; rr(71, 441, 578, 328, 29); g.stroke();
   g.textAlign = "center"; g.fillStyle = "#f3c66e"; g.font = "800 37px 'Exo 2', sans-serif"; g.fillText("Odejít ze hry?", W / 2, 520);
-  g.fillStyle = "rgba(255,255,255,.7)"; g.font = "500 21px 'Exo 2', sans-serif"; g.fillText("Postup je uložený. Swipni ještě jednou a hra se zavře.", W / 2, 580);
+  g.fillStyle = "rgba(255,255,255,.7)"; g.font = "500 21px 'Exo 2', sans-serif"; g.fillText("Postup je uložený, kdykoli můžeš pokračovat.", W / 2, 580);
   button(EX_YES, "#e5484d"); button(EX_NO, "gold");
 }
 function drawPause() {
@@ -2806,10 +2943,10 @@ function drawEnd() {
   const TT = titanRes ? (titanRes.killed ? "Titán poražen!" : "Útok na titána") : scene === "win" ? "Vítězství!" : "Porážka"; if (titanRes) g.font = "800 64px 'Exo 2', sans-serif";
   g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 14; g.strokeText(TT, W / 2, 520); g.shadowColor = scene === "win" ? "#ffb703" : "#ff2e2e"; g.shadowBlur = 30;
   g.fillText(TT, W / 2, 520); g.shadowBlur = 0; g.restore();
-  if (scene === "win" && !eventMode && levelUps[5]) for (let j = 0; j < 3; j++) { const t = Math.max(0, Math.min(1, (endT - 0.5 - j * 0.25) * 4)), on = j < levelUps[5], x = W / 2 + (j - 1) * 96, y = 400 - (j === 1 ? 18 : 0);
+  if (scene === "win" && !eventMode && !seasonMode && levelUps[5]) for (let j = 0; j < 3; j++) { const t = Math.max(0, Math.min(1, (endT - 0.5 - j * 0.25) * 4)), on = j < levelUps[5], x = W / 2 + (j - 1) * 96, y = 400 - (j === 1 ? 18 : 0);
     if (t <= 0) continue; const sc = t < 1 ? 0.3 + 1.0 * t + 0.3 * Math.sin(t * Math.PI) : 1; drawStar(x, y, 40 * sc, on); }
   if (scene === "win" && levelUps[6] && endT > 1.4) { g.fillStyle = "#ffd166"; g.font = "700 20px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("Poprvé 3 hvězdy: +1 krystal", W / 2, 455); }
-  g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; g.fillText(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580);
+  g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; g.fillText(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" && seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580);
   if (scene === "win") {
     const [gn, cr, bonus] = levelUps, e = winAnim * winAnim * (3 - 2 * winAnim);
     const shd = levelUps[7] || 0, X = shd ? [W / 2 - 290, W / 2 - 130, W / 2 + 40, W / 2 + 190] : [W / 2 - 250, W / 2 - 80, W / 2 + 100], [gr, gg2] = splitFood(gn);
@@ -2819,7 +2956,7 @@ function drawEnd() {
     g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 20px Baloo, sans-serif"; g.fillText(titanRes ? (titanRes.killed ? "Další titán bude o stupeň silnější!" : "Titánovi zbývá " + Math.round(titanRes.left * 100) + " % · pokusy dnes " + (TITAN_TRIES - ensureTitan().n) + "/" + TITAN_TRIES) : eventMode ? "odměna Noci bossů + kořist z bossů" : levelUps[4] ? "včetně bonusu " + foodText(bonus) + " za první výhru" + (levelUps[3] ? " · +" + levelUps[3] + " tlapkový svitek" : "") : "opakovaná výhra – jen 20 % odměny" + (levelUps[3] ? " · boss pustil tlapkový svitek!" : ""), W / 2, 690);
     g.fillText("Vylepši hrdiny v menu Hrdinové", W / 2, 960);
   }
-  button({ ...END_GO, t: eventMode || titanMode ? "Menu" : scene === "win" && localSt(stage) < PER_ACT ? "Další úroveň" : "Znovu" }, "gold"); button(END_MAP, "glass"); button(END_HER, "glass"); button(END_MENU, "glass");
+  button({ ...END_GO, t: eventMode || titanMode ? "Menu" : seasonMode ? (scene === "win" && seasonMode.lvl < SEAS_N ? "Další úroveň" : "Znovu") : scene === "win" && localSt(stage) < PER_ACT ? "Další úroveň" : "Znovu" }, "gold"); button(END_MAP, "glass"); button(END_HER, "glass"); button(END_MENU, "glass");
 }
 requestAnimationFrame(frame);
 
@@ -2829,11 +2966,11 @@ function pos(ev) { const t = ev.touches ? ev.touches[0] || ev.changedTouches[0] 
 function inside(p, b) { return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; }
 function down(ev) { idleT = 0; hint = null;
   ev.preventDefault(); const p = pos(ev); audioInit();
-  if (scene === "menu" || scene === "map" || scene === "heroes" || scene === "credits" || scene === "settings" || scene === "best" || scene === "camps") playMusic("menu");
+  if (scene === "menu" || scene === "map" || scene === "heroes" || scene === "credits" || scene === "settings" || scene === "best" || scene === "camps" || scene === "seasons") playMusic("menu");
   if (teamPick) { const hit = teamBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } return; }
   if (scene === "map") {
     if (levelPop) { if (!LPI.first && (save.stars[starKey(levelPop)] || 0) >= 3 && inside(p, LP_FAST)) { fastWin(); levelPop = 0; return; } if (inside(p, LP_TEAM)) { teamPick = true; SFX.click(); return; } if (inside(p, LP_GO)) { const st = levelPop; levelPop = 0; SFX.click(); startGame(st); } else if (inside(p, LP_BACK) || !inside(p, LP_BOX)) { levelPop = 0; SFX.click(); } return; }
-    if (inside(p, MAP_CAMPS)) { scene = "camps"; SFX.click(); return; }
+    if (inside(p, MAP_CAMPS)) { scene = "camps"; scrollY = 0; scrollV = 0; SFX.click(); return; }
     const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return;
   }
   if (scene === "help") {
@@ -2849,6 +2986,7 @@ function down(ev) { idleT = 0; hint = null;
     const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; };
     if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
     else if (Math.hypot(p.x - GEAR.x, p.y - gearY()) < 50) go("settings");
+    else if (Math.hypot(p.x - (W - GEAR.x), p.y - gearY()) < 50) { SFX.click(); exitAsk = true; }
     return;
   }
   if (scene === "camps") {
@@ -2858,7 +2996,16 @@ function down(ev) { idleT = 0; hint = null;
       return;
     }
     if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; }
-    ACTS.forEach((A, i) => { if (inside(p, campCard(i))) { SFX.click(); if (campOpen(i + 1)) campPop = i + 1; else SFX.bad(); } });
+    if (p.y > 138 && p.y < 1112) { const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; }
+    return;
+  }
+  if (scene === "seasons") {
+    if (seasonPop) { const S = seasonById(seasonPop), dn = seasonDone(S);
+      if (inside(p, SP_X)) { SFX.click(); seasonPop = null; return; } if (inside(p, SP_TEAM)) { SFX.click(); teamPick = true; return; }
+      for (let n = 1; n <= SEAS_N; n++) if (inside(p, SP_LVL(n))) { if (n <= dn + 1) { SFX.click(); const id = seasonPop; seasonPop = null; startSeason(id, n); } else SFX.bad(); return; }
+      return; }
+    if (inside(p, BACK)) { SFX.click(); scene = "camps"; scrollY = 0; scrollV = 0; return; }
+    if (p.y > 138 && p.y < 1112) { const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; }
     return;
   }
   if (scene === "settings") {
@@ -2889,7 +3036,8 @@ function down(ev) { idleT = 0; hint = null;
     return;
   }
   if (scene === "win" || scene === "lose") {
-    const leave = sc => { SFX.click(); playMusic("menu"); if (sc === "map") openMap(actOf(stage)); else { scene = sc; scrollY = 0; scrollV = 0; heroCard = -1; } };
+    const leave = sc => { SFX.click(); playMusic("menu"); if (sc === "map" && seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else if (sc === "map") openMap(actOf(stage)); else { scene = sc; scrollY = 0; scrollV = 0; heroCard = -1; } };
+    if (inside(p, END_GO) && seasonMode) { const SM = seasonMode; startSeason(SM.id, scene === "win" && SM.lvl < SEAS_N ? SM.lvl + 1 : SM.lvl); return; }
     if (inside(p, END_GO)) { if (eventMode || titanMode) leave("menu"); else startGame(scene === "win" && localSt(stage) < PER_ACT ? stage + 1 : stage); }
     else if (inside(p, END_MAP)) leave("map"); else if (inside(p, END_HER)) leave("heroes"); else if (inside(p, END_MENU)) leave("menu");
     return; }
@@ -2926,6 +3074,10 @@ function up(ev) {
   if (scrollDrag) { const q = scrollDrag.pts, a = q[0], b = q[q.length - 1], dtm = b[0] - a[0];
     if (scrollTarget !== null) scrollY = scrollTarget; scrollTarget = null;
     scrollV = dtm > 10 && performance.now() - b[0] < 80 ? Math.max(-9000, Math.min(9000, -(b[1] - a[1]) / dtm * 1000 * 1.15)) : 0;
+    // seznam kampaní: ťuknutí (bez posunu) otevře kampaň
+    if (scene === "seasons" && !seasonPop && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y }; SEASONS.forEach((S, i) => { if (inside(p, seasCard(i))) { SFX.click(); if (seasonOpen(S)) seasonPop = S.id; else SFX.bad(); } }); }
+    if (scene === "camps" && !campPop && scrollDrag.moved < 14 && !scrollDrag.fly && inside({ x: scrollDrag.x, y: scrollDrag.y }, SEAS_TOP())) { SFX.click(); scene = "seasons"; scrollY = 0; scrollV = 0; seasonPop = null; }
+    if (scene === "camps" && !campPop && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y }; ACTS.forEach((A, i) => { if (inside(p, campCard(i))) { SFX.click(); if (campOpen(i + 1)) campPop = i + 1; else SFX.bad(); } }); }
     // seznam hrdinů: ťuknutí (bez posunu) = tlačítko nebo karta hrdiny
     if (scene === "heroes" && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y };
       for (let k = 0; k < HEROES.length; k++) { if (inside(p, eqBtn(k)) && !heroFull(HEROES[k])) { SFX.click(); eqHero = k; break; } if (inside(p, heroBtn(k))) { if (!upgrade(k)) SFX.click(); break; } if (p.y > heroRowY(k) && p.y < heroRowY(k) + 102) { heroCard = k; SFX.hero(k); break; } } }
