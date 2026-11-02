@@ -1890,7 +1890,7 @@ function drawMenu() {
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.17.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.18.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2444,11 +2444,13 @@ function drawSettings() {
         [[0, 30, 34], [1, 82, 34], [3, 56, 62]].forEach(([k, dx, dy]) => { const im = img["gem_" + t + k]; if (ok(im)) g.drawImage(im, x + dx - 24, o.y + dy - 24, 48, 48); });
         g.textAlign = "center"; g.fillStyle = on ? "#ffd166" : "rgba(255,255,255,.8)"; g.font = "700 16px 'Exo 2', sans-serif"; g.fillText(n, x + 56, o.y + o.h - 10); }); continue; }
     const v = settings()[o.r[0]]; toggle(o.y, o.r[1], o.r[0] === "speed" ? v > 1 : !!v, o.r[2]); }
-  g.globalAlpha = 0.85; button(RESET_BTN, "#7a2233"); g.globalAlpha = 1;
+  if (canUpd()) button(UPD_BTN, "#2e7d74");
+  g.globalAlpha = 0.85; button(canUpd() ? { ...RESET_BTN, x: 372, w: 308, t: "Začít od nuly" } : RESET_BTN, "#7a2233"); g.globalAlpha = 1;
   backBtn();
   if (resetStep) drawReset();
 }
 // Smazání veškerého postupu: varování se seznamem všeho, co se ztratí, a dvojí potvrzení
+const UPD_BTN = { x: 40, y: 1082, w: 320, h: 70, t: "Hledat aktualizaci" }, canUpd = () => !!(window.Android && Android.checkUpdate);  // jen v aplikaci pro Android
 const RESET_BTN = { x: 160, y: 1082, w: 400, h: 70, t: "Začít úplně od začátku" }, R_YES = { x: 110, y: 900, w: 500, h: 92, t: "Ano, smazat všechno" }, R_NO = { x: 110, y: 1010, w: 500, h: 92, t: "Ne, nechat jak je" };
 let resetStep = 0;
 function drawReset() {
@@ -2865,7 +2867,8 @@ function down(ev) { idleT = 0; hint = null;
       else if (inside(p, R_NO)) { resetStep = 0; SFX.click(); }
       return;
     }
-    if (inside(p, RESET_BTN)) { resetStep = 1; SFX.bad(); return; }
+    if (inside(p, canUpd() ? { ...RESET_BTN, x: 372, w: 308 } : RESET_BTN)) { resetStep = 1; SFX.bad(); return; }
+    if (canUpd() && inside(p, UPD_BTN)) { SFX.click(); try { Android.checkUpdate(); } catch (e) {} return; }
     if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; }
     const o = setRowsY().find(o => o.r.length > 1 && p.y >= o.y && p.y <= o.y + o.h && p.x > 60 && p.x < 660); if (!o) return;
     const S = settings(), key = o.r[0];
