@@ -1875,7 +1875,7 @@ function drawMenu() {
   title(W / 2, 205, 1);
   // hrdinové: celé postavy, pokud jsou, jinak portréty
   // úvodní obrazovka ukazuje aktuální tým (až 5): lidé uprostřed, kočky po krajích; vyšší postavy se kreslí dřív (vzadu)
-  const tall = h => h.id === "petr" || h.id === "luky" || h.id === "patrik" ? 400 : h.c === 3 || h.c === 4 || h.id === "hepina" ? 280 : 360, tm = teamHeroes().slice().sort((a, b) => tall(b) - tall(a));
+  const tall = h => h.id === "venous" ? 430 : h.id === "petr" || h.id === "luky" || h.id === "patrik" ? 400 : h.c === 3 || h.c === 4 || h.id === "hepina" ? 280 : 360, tm = teamHeroes().slice().sort((a, b) => tall(b) - tall(a));
   const order = [], mid = (tm.length - 1) / 2; tm.forEach((h, i) => { const off = Math.ceil(i / 2) * (i % 2 ? -1 : 1); order[Math.round(mid + off)] = HEROES.indexOf(h); });
   const drawOrder = order.map((k, j) => j).sort((a, b) => tall(HEROES[order[b]]) - tall(HEROES[order[a]]));
   drawOrder.forEach(j => { const k = order[j]; const h = HEROES[k], fi = img["full_" + h.id], x = W / 2 + (j - mid) * 140, base = 760, bob = Math.sin(perf * 1.6 + j) * 6;
@@ -1890,7 +1890,7 @@ function drawMenu() {
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.18.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.18.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
