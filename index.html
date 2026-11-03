@@ -73,7 +73,9 @@ const HEROES = [
 const CHARGE = 12;
 // Jídlo (Petr 2. 11. 2026: lidé granule nejedí): kočky = granule, lidé = rohlíky. Kořist z bojů se dělí 70 % rohlíky / 30 % granule.
 const CATS = ["hepina", "kefir", "nuna"], isCat = h => CATS.includes(h.id), foodKey = h => isCat(h) ? "granule" : "rohliky";
-const splitFood = n => { const r = Math.round(n * 0.7); return [r, n - r]; };
+// podíl rohlíků podle týmu: kolik lidí v týmu, tolik rohlíků (min. 25 %, max. 85 %); kočky dostanou zbytek jako granule
+const humanShare = () => { try { const t = teamHeroes().filter(Boolean); if (!t.length) return 0.7; return Math.max(0.25, Math.min(0.85, t.filter(h => !isCat(h)).length / t.length)); } catch (e) { return 0.7; } };
+const splitFood = n => { const r = Math.round(n * humanShare()); return [r, n - r]; };
 const rohlN = n => n.toLocaleString("cs-CZ") + " " + pl(n, "rohlík", "rohlíky", "rohlíků"), granN = n => n.toLocaleString("cs-CZ") + " " + pl(n, "granule", "granule", "granulí");
 const foodText = n => { const [r, g2] = splitFood(n); return rohlN(r) + " a " + granN(g2); };
 function addFood(n) { const [r, g2] = splitFood(Math.max(0, Math.round(n))); save.rohliky += r; save.granule += g2; save.stats.rohl += r; save.stats.gran += g2; return [r, g2]; }
@@ -217,10 +219,13 @@ const BOSSES = bossesOf(1);
 // Úroveň kampaně: 1–5 = 2 kola, 6–15 = 3 kola, 16–30 = 4 kola; poslední kolo vždy boss. Bossové po řadě, ve vyšších úrovních silnější.
 function roundsFor(st) { const l = localSt(st); return Math.min(4, (l <= 5 ? 2 : l <= 15 ? 3 : 4) + (diff === "h" ? 1 : 0)); }  // těžká o vlnu víc
 // násobek energie nepřátel pro úroveň st při aktuální obtížnosti
-function stageF(st) { const act = actOf(st), ls = localSt(st), [h0, h1] = HPT[act + diff] || HPT["1" + diff]; return (h0 + (h1 - h0) * (ls - 1) / (PER_ACT - 1)) * balK(st); }
-// Vyvážení 2. 11. 2026 (Petr: moc lehké): BAL.K násobí sílu všech úrovní, BAL.AS = jak rychle roste útok nepřátel; těžká navazuje na konec lehké
-const BAL = { K: [1.5, 1.35, 1.0, 1.08, 1.0], AS: [0.6, 0.56, 0.48, 0.46, 0.45] }, balK = st => BAL.K[actOf(st) - 1] || 1, balA = st => BAL.AS[actOf(st) - 1] || 0.45;
-const HPT = { "1e": [0.8, 2.4], "1h": [2.3, 4.4], "2e": [3.4, 5.7], "2h": [6.0, 8.4], "3e": [6.4, 8.7], "3h": [8.0, 10.0], "4e": [8.3, 10.1], "4h": [9.4, 11.8], "5e": [8.9, 10.3], "5h": [9.8, 11.6] };
+// HPT = [1. úroveň, 15. úroveň, 30. úroveň] (3. 11. 2026); mezi nimi lineárně. Starý zápis [začátek, konec] funguje dál.
+function stageF(st) { const act = actOf(st), ls = localSt(st), H = HPT[act + diff] || HPT["1" + diff], M = 15;
+  const f = H.length < 3 ? H[0] + (H[1] - H[0]) * (ls - 1) / (PER_ACT - 1) : ls <= M ? H[0] + (H[1] - H[0]) * (ls - 1) / (M - 1) : H[1] + (H[2] - H[1]) * (ls - M) / (PER_ACT - M); return f * balK(st); }
+// Vyvážení 2. 11. 2026 (Petr: moc lehké); od 3. 11. 2026 je BAL.K = 1 a síla je celá v HPT. BAL.K násobí sílu všech úrovní, BAL.AS = jak rychle roste útok nepřátel; těžká navazuje na konec lehké
+const BAL = { K: [1, 1, 1, 1, 1], AS: [0.6, 0.56, 0.48, 0.46, 0.45] }, balK = st => BAL.K[actOf(st) - 1] || 1, balA = st => BAL.AS[actOf(st) - 1] || 0.45;
+// 3. 11. 2026 – ekonomika: síla podle očekávaného postupu hrdinů (sim_ekonomika.js), změřeno automatem (vyvazeni.py); BAL.K už v HPT
+const HPT = { "1e": [1.2, 2.6, 3.6], "1h": [7.2, 6.2, 7.1], "2e": [9.0, 7.0, 7.1], "2h": [13, 9.0, 9.4], "3e": [15, 13, 10.0], "3h": [18.5, 15.3, 13.0], "4e": [21, 13, 20], "4h": [24, 16, 21], "5e": [19, 21.5, 16.5], "5h": [22.5, 26, 17.5] };
 // kampaně 3+ mají silnější základní hodnoty v FOES – srovnat na průměr Zahrady, růst řídí jen HPT
 const avgF = (act, boss, f) => { const v = Object.values(FOES).filter(e => (e.act || 1) === act && !!e.boss === boss); return v.reduce((a, e) => a + e[f], 0) / v.length; };
 const NORM = (e, f) => (e.act || 1) <= 2 ? 1 : avgF(2, !!e.boss, f) / avgF(e.act, !!e.boss, f);
@@ -256,6 +261,10 @@ const campOpen = c => c === 1 || progOf(c - 1, "e") >= PER_ACT || progOf(c - 1, 
 // svitky za první výhru: těžká každá 5. úroveň (+2 za poslední), lehká každá 10.
 const scrollsFor = (ls, d) => d === "h" ? (ls % 5 === 0 ? 1 : 0) + (ls === PER_ACT ? 2 : 0) : (ls % 10 === 0 ? 1 : 0);
 // kombo: 10 úrovní za tlapkové svitky; 1–5 po +0,07, 6–10 po +0,04 za krok (na maximu ×0,80)
+// krystaly z bosse (3. 11. 2026: dřív 1 + úroveň/10 – krystalů bylo moc): 1 v kampaních 1–2, 2 ve 3–4, 3 v 5
+// jídlo: kořist z nepřítele podle jeho energie + odměna za úroveň (3. 11. 2026: dřív hp/45 a 20 + 10·úroveň – jídla bylo moc)
+const foeFood = e => Math.max(2, Math.round(e.hp / 70)), stageBonus = st => 20 + 4 * st;
+const bossCr = st => 1 + Math.floor((actOf(st) - 1) / 2), bossSh = st => actOf(st);  // střípky z bosse: číslo kampaně + 0–1
 const COMBO_MAX = 10, comboCost = l => [2, 3, 5, 8, 12, 14, 16, 18, 21, 24][l] || 99, comboStep = () => { const c = save.combo || 0; return 0.25 + 0.07 * Math.min(c, 5) + 0.04 * Math.max(0, c - 5); };
 // ---------- novinky: statistiky, denní úkoly, odměna za přihlášení, truhla, hvězdy, Noc bossů, talenty, úspěchy ----------
 const dayNum = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
@@ -352,9 +361,12 @@ CHAL.push(...[
   ["fullTeam", "Legendární rodina", "Všech " + HEROES.length + " hrdinů na 100 % síly (vše vylepšeno)", HEROES.length, () => HEROES.filter(h => heroFull(h)).length, { c: 80, s: 15, h: 200 }],
   ["dmg1e8", "Sto milionů", "Způsob 100 000 000 poškození", 100000000, () => save.stats.dmg, { c: 40, s: 8, h: 100 }],
 ].map(([id, t, d, n, v, rew]) => ({ id, t, d, n, v, rew })));
+// výzvy: odměny ×CHAL_F (3. 11. 2026: velké výzvy přeskakovaly postup); svitky beze změny
+const CHAL_F = 0.4; CHAL.forEach(C => { for (const k of ["g", "c", "h"]) if (C.rew[k]) C.rew[k] = Math.max(1, Math.round(C.rew[k] * CHAL_F)); });
 const chalCan = c => !save.chal[c.id] && c.v() >= c.n;
-const QREW = { d: [{ g: 100 }, { g: 180, c: 1, h: 2 }, { g: 120, c: 2, h: 4 }], w: [{ g: 500, c: 2, h: 6 }, { g: 400, c: 4, h: 10 }, { c: 6, s: 1, h: 15 }], m: [{ g: 800, c: 4, h: 15 }, { g: 1200, c: 6, s: 1, h: 25 }, { g: 1500, c: 10, s: 2, h: 40 }, { g: 2500, c: 15, s: 3, h: 60 }, { g: 4000, c: 25, s: 5, h: 100 }] },
-  QBONUS = { d: { s: 1 }, w: { s: 2, c: 5 }, m: { c: 20, s: 4, h: 80 } }, M_F = [0.8, 1.2, 1.7, 2.4, 3.2], M_TIER = ["LEHKÝ", "STŘEDNÍ", "TĚŽKÝ", "MISTROVSKÝ", "LEGENDÁRNÍ"];
+// odměny úkolů (3. 11. 2026 zmenšeny – měsíční dávaly víc než celá kampaň)
+const QREW = { d: [{ g: 100 }, { g: 150, c: 1, h: 2 }, { g: 100, c: 1, h: 3 }], w: [{ g: 400, c: 2, h: 5 }, { g: 300, c: 3, h: 8 }, { c: 4, s: 1, h: 10 }], m: [{ g: 500, c: 2, h: 8 }, { g: 700, c: 3, s: 1, h: 12 }, { g: 900, c: 4, s: 1, h: 16 }, { g: 1200, c: 6, s: 1, h: 20 }, { g: 1600, c: 8, s: 2, h: 30 }] },
+  QBONUS = { d: { s: 1 }, w: { s: 1, c: 3 }, m: { c: 8, s: 2, h: 30 } }, M_F = [0.8, 1.2, 1.7, 2.4, 3.2], M_TIER = ["LEHKÝ", "STŘEDNÍ", "TĚŽKÝ", "MISTROVSKÝ", "LEGENDÁRNÍ"];
 const MONTH_T = ["Mrazivá výprava", "Únorové tání", "Jarní úklid", "Aprílová šibalství", "Májová zahrada", "Letní slunovrat", "Prázdninové dobrodružství", "Srpnová bouře", "Zářijová sklizeň", "Říjnová strašidla", "Listopadová mlha", "Vánoční nadílka"];
 function rngOf(seed) { let x = Math.abs(Math.floor(seed)) % 2147483646 + 1; return () => (x = x * 16807 % 2147483647) / 2147483647; }
 const nice = n => n < 10 ? Math.max(1, Math.round(n)) : n < 100 ? Math.round(n / 5) * 5 : n < 1000 ? Math.round(n / 10) * 10 : Math.round(n / 100) * 100;
@@ -367,10 +379,12 @@ function makeQuests(seed, kind) {
 }
 const weekNum = () => Math.floor((dayNum() + 3) / 7), monthNum = () => { const d = new Date(); return d.getFullYear() * 12 + d.getMonth(); };
 const qProgOf = (q, P) => Math.max(0, Math.min(q.n, q.max ? P.combo : (save.stats[q.st] || 0) - (P.base[q.st] || 0)));
-const LOGIN_REW = [{ g: 100 }, { c: 1 }, { g: 200 }, { c: 2 }, { g: 300 }, { s: 1 }, { c: 3, g: 500 }], CHEST_N = 30, TALENT_MAX = 5, talentCost = t => [5, 8, 12, 16, 20][t] || 99;
+// obsah truhly (3. 11. 2026: méně krystalů a střípků)
+const chestRoll = () => ({ g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5) });
+const LOGIN_REW = [{ g: 100 }, { c: 1 }, { g: 200 }, { c: 2 }, { g: 300 }, { s: 1 }, { c: 3, g: 500 }], CHEST_N = 30, TALENT_MAX = 5, talentCost = t => [35, 50, 60, 75, 90][t] || 99;
 const TALENT_N = ["Mistr kovář", "Laskavé srdce", "Princeznin majestát", "Vrchní inspektor", "Šéfkuchařka", "Královna parketu", "Premiantka", "Pilot rallye"];
 // Úspěchy: řady se stupni (každý stupeň je samostatný úspěch) + dobytí kampaní. Odměna roste se stupněm.
-const ACH_REW = [{ g: 150 }, { g: 300, c: 1, h: 3 }, { c: 3, h: 6 }, { c: 5, s: 1, h: 10 }, { c: 8, s: 2, h: 20 }];
+const ACH_REW = [{ g: 100 }, { g: 150, c: 1, h: 2 }, { c: 1, h: 4 }, { c: 2, s: 1, h: 6 }, { c: 3, s: 1, h: 10 }];
 const ACH_FAM = [
   ["kills", [25, 100, 300, 1000, 3000], ["První krev", "Lovec", "Zkušený lovec", "Mistr lovu", "Legenda lovu"], n => "Poraz " + n + " nepřátel"],
   ["boss", [1, 10, 50, 150, 400], ["Bossobijec", "Lovec bossů", "Postrach bossů", "Zhouba bossů", "Bossí legenda"], n => "Poraz " + n + " " + pl(n, "bosse", "bosse", "bossů")],
@@ -438,12 +452,12 @@ ensureExtra();
 // Vylepšování za kořist: rohlíky (lidé) a granule (kočky) zvyšují úroveň, krystaly energie (z bossů) stupeň ★, který zvedá strop úrovní a přidává sílu.
 // Každá hvězda má úrovně 1–10; na 10/10 krystaly vybarví další hvězdu a úrovně jedou od 1 (hrdina je dál silnější). Max 5★ a 10/10.
 const MAX_STAR = 5, lvlCap = () => 10;
-const lvlCost = (l, st = 0) => Math.round((45 + 38 * l) * (1 + 0.8 * st)), starCost = st => [5, 10, 17, 26, 38][st] || 99;
+const lvlCost = (l, st = 0) => Math.round((60 + 50 * l) * (1 + 1.2 * st)), starCost = st => [18, 33, 50, 70, 95][st] || 99;
 // výstroj každého hrdiny: obojek (útok), rolnička (rychlejší mana), drápky (kritický zásah); úrovně 0–10 za střípky a esenci
 const EQ = [{ id: "o", n: "Obojek", im: "eq_collar", d: L => "útok +" + 3 * L + " %" },
   { id: "r", n: "Rolnička", im: "eq_bell", d: L => "mana o " + 5 * L + " % rychleji" },
   { id: "d", n: "Drápky", im: "eq_claws", d: L => "kritický zásah " + String(5 + 1.5 * L).replace(".", ",") + " %, síla ×" + (1.8 + 0.04 * L).toFixed(2).replace(".", ",") }];
-const EQ_MAX = 10, eqCost = L => ({ h: 3 + 3 * L, g: Math.round(80 * (L + 1) ** 1.6), e: 1 + L });
+const EQ_MAX = 10, eqCost = L => ({ h: 12 + 5 * L, g: Math.round(80 * (L + 1) ** 1.6), e: Math.round(2 + 1.6 * L) });
 // esence pěti barev: výstroj hrdiny se vylepšuje esencí jeho barvy (padá z nepřátel té barvy, z bossů, titána a truhel)
 const ESS_N = ["zlatá jiskra", "růžová slza", "fialová runa", "modrá perla", "oranžový žár"], ESS_P = ["zlatých jisker", "růžových slz", "fialových run", "modrých perel", "oranžových žárů"];
 const essName = (c, n) => n + " " + (n === 1 ? ESS_N[c] : ESS_P[c]);
@@ -1068,7 +1082,7 @@ let board, heroes, enemies, wave, target, shield, busy, scene = "menu", particle
 
 function rnd(n) { return Math.floor(Math.random() * n); }
 function newTile(t) { return { t: t === undefined ? rnd(5) : t, y: 0, vy: 0, pop: 0, alive: true }; }
-let eventMode = false;
+let eventMode = false; const EVENT_REW = { g: 500, c: 2, s: 1 };  // Noc bossů: odměna za přežití (+6 střípků, 3 esence, polovina kořisti)
 function startGame(st, waves) {
   eventMode = !!waves; seasonMode = null;
   slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0;
@@ -1340,10 +1354,10 @@ function hitEnemy(i, dmg, col, k, crit) {
     enemies.forEach((o, j) => { if (o.cur > 0 && TRAIT[o.k] === "rage") { addSt(o, "rage", 3); o.left = Math.max(1, o.left - 1); const q = enemyPos(j); floats.push({ x: q.x, y: q.y - 110, text: "💢 Zuřivost!", col: STS.rage.col, t: 1.1 }); } });
     if (WAVES && wave === WAVES.length - 1 && enemies.every(o => o.cur <= 0)) { finisher = { t: 1.3, x: p.x, y: p.y }; SFX.finisher(); scrFlash = Math.max(scrFlash, 0.3); }
     // kořist podle síly nepřítele: granule, bossové i krystaly
-    const gg = Math.max(2, Math.round(e.hp / 45)), cc = e.boss ? 1 + Math.floor(stage / 10) : 0;
+    const gg = foeFood(e), cc = e.boss ? bossCr(stage) : 0;
     lootFly.push({ x: p.x, y: p.y, t: 0, kind: "g", v: gg }); if (cc) lootFly.push({ x: p.x, y: p.y - 30, t: -0.15, kind: "c", v: cc });
     if (!e.titan && e.c >= 0 && (e.boss || Math.random() < 0.35)) { const ne = e.boss ? 2 + rnd(2) : 1; save.ess[e.c] += ne; save.stats.essGot += ne; floats.push({ x: p.x - 40, y: p.y - 90, text: "+" + ne + " " + ESS_N[e.c], col: COLORS[e.c], t: 1.1 }); }
-    if (!e.titan) { const sh = e.boss ? 2 + rnd(3) : Math.random() < 0.25 ? 1 : 0; if (sh) { lootS += sh; SFX.shard(); floats.push({ x: p.x + 40, y: p.y - 60, text: "+" + sh + " ⚙", col: "#5fe3d0", t: 1 }); } }
+    if (!e.titan) { const sh = e.boss ? bossSh(stage) + rnd(2) : Math.random() < 0.2 ? 1 : 0; if (sh) { lootS += sh; SFX.shard(); floats.push({ x: p.x + 40, y: p.y - 60, text: "+" + sh + " ⚙", col: "#5fe3d0", t: 1 }); } }
   }
 }
 function healAll(v) { for (const h of heroes) if (h.cur > 0) { const n = Math.min(h.hp, h.cur + v); save.stats.heal += n - h.cur; h.cur = n; } }
@@ -1524,12 +1538,12 @@ async function nextWave() {
       addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS + (first ? 3 : 0); save.stats.shardsGot += lootS; save.stats.seasonW++;
       if (first) { save.season[key] = n; if (n === SEAS_N) { save.crystals += 15; save.scrolls += 3; save.shards += 30; for (let c = 0; c < 5; c++) save.ess[c] += 10; save.stats.seasonAll++; toast = { t: 3, text: "Celý " + S.n + " dohrán! Sezónní truhla: 15 krystalů, 3 svitky, 30 střípků, 10 esencí od každé barvy" }; } }
       winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS]; store(); startEnd("win"); return; }
-    if (eventMode) { save.stats.eventW++; const r = { g: 500, c: 3, s: 1 }, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { save.ess[rnd(5)]++; save.stats.essGot++; }
+    if (eventMode) { save.stats.eventW++; const r = EVENT_REW, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { save.ess[rnd(5)]++; save.stats.essGot++; }
       levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh]; store(); startEnd("win"); return; }
     const hpF = heroes.reduce((a, h) => a + Math.max(0, h.cur), 0) / heroes.reduce((a, h) => a + h.hp, 0), stars = hpF >= 0.6 ? 3 : hpF >= 0.3 ? 2 : 1, sk = starKey(stage), prevS = save.stars[sk] || 0;
     save.stats.starsGot += stars; if (diff === "h") save.stats.winsH++; if (stars > prevS) save.stars[sk] = stars; const s3 = stars === 3 && prevS < 3; if (s3) { save.stats.stars3++; save.crystals += 1; }
     const c = actOf(stage), ls = localSt(stage), first = ls > progOf(c, diff), R = DIFF[diff].rew * (first ? 1 : 0.2);
-    const bonus = Math.round((20 + 10 * stage) * R), gain = Math.round(lootG * R) + bonus, cr = Math.max(first ? 1 : 0, Math.round(lootC * R));
+    const bonus = Math.round(stageBonus(stage) * R), gain = Math.round(lootG * R) + bonus, cr = first ? Math.max(1, Math.round(lootC * R)) : Math.random() < (diff === "h" ? 0.25 : 0.1) ? 1 : 0;  // opakování: krystal jen náhodou (3. 11. 2026 – opakováním se dalo farmit)
     const sc = first ? scrollsFor(ls, diff) : Math.random() < 0.1 ? 1 : 0;  // opakování: boss občas pustí svitek
     addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS; save.stats.shardsGot += lootS; if (stars === 3) save.stats.win3++; winAnim = 0; levelUps = [gain, cr, bonus, sc, first, stars, s3, lootS];
     if (first) save.prog[c + diff] = ls; save.stage = Math.max(save.stage || 1, stage + 1);
@@ -1956,7 +1970,7 @@ function drawMenu() {
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 0.20.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.0.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2025,7 +2039,7 @@ function drawPanel() {
       else if (done) pbtn({ ...b, t: "Vyzvednout" }, "gold", () => { q.got = true; giveRew(q.rew); });
       else pbtn({ ...b, t: "Hrát" }, "glass", () => { menuPanel = null; if (q.st === "eventW" && canEvent()) menuPanel = "event"; else if (q.st === "titanHits") menuPanel = "titan"; else if (q.st === "chests") menuPanel = "chest"; else if (q.st === "ups" || q.st === "eqUps") scene = "heroes"; else { campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; } });
       y += RH + (M ? 8 : 12); });
-    { const all = P2.q.every(q => q.got); line(({ d: "Všechny dnešní: ", w: "Všechny týdenní: ", m: "Všech 5 měsíčních: " })[questTab] + rewText(QBONUS[questTab]), y + 30, all ? "#fff" : "rgba(255,255,255,.5)", "700 " + (M ? 18 : 21) + "px 'Exo 2', sans-serif");
+    { const all = P2.q.every(q => q.got); g.fillStyle = all ? "#fff" : "rgba(255,255,255,.5)"; g.textAlign = "left"; fitText(({ d: "Všechny dnešní: ", w: "Všechny týdenní: ", m: "Všech 5 měsíčních: " })[questTab] + rewText(QBONUS[questTab]), P.x + 40, y + 30, P.w - 260, "700 " + (M ? 18 : 21) + "px 'Exo 2', sans-serif");
       if (P2.bonus) line("✔ Vyzvednuto", y + 30, "#3ddc84", "700 21px 'Exo 2', sans-serif", "right", P.x + P.w - 40);
       else if (all) pbtn({ x: P.x + P.w - 200, y: y, w: 160, h: 54, t: "Vyzvednout" }, "gold", () => { P2.bonus = true; giveRew(QBONUS[questTab]); }); }
     }
@@ -2048,7 +2062,7 @@ function drawPanel() {
     drawItem(chestRew ? "ui_chest_open" : "ui_chest", W / 2 + shk, y + 220, 380);
     if (chestRew) { line("Získáváš: " + chestRew, y + 470, "#ffd166", "700 24px 'Exo 2', sans-serif", "center", W / 2); pbtn({ x: 190, y: y + 520, w: 340, h: 78, t: "Super!" }, "gold", () => { chestRew = null; }); }
     else if (ready) pbtn({ x: 190, y: y + 470, w: 340, h: 84, t: "Otevřít truhlu" }, "gold", () => { if (chestOpen > 0) return; chestOpen = 1.2; SFX.chestOpen();
-      setTimeout(() => { const r = { g: 150 + rnd(250), c: Math.random() < 0.45 ? 1 + rnd(2) : 0, s: Math.random() < 0.12 ? 1 : 0, h: 3 + rnd(6), e: 2 + rnd(3), ec: rnd(5) }; save.chest.n = 0; save.stats.chests++; giveRew(r); chestRew = rewText(r); }, 700); });
+      setTimeout(() => { const r = chestRoll(); save.chest.n = 0; save.stats.chests++; giveRew(r); chestRew = rewText(r); }, 700); });
     else { line("Každý poražený nepřítel přidá do truhly kořist.", y + 460, "rgba(255,255,255,.8)", "500 22px 'Exo 2', sans-serif", "center", W / 2); bar(160, y + 490, 400, save.chest.n / CHEST_N);
       line(save.chest.n + " / " + CHEST_N + " nepřátel", y + 540, "#fff", "700 22px 'Exo 2', sans-serif", "center", W / 2);
       pbtn({ x: 190, y: y + 580, w: 340, h: 78, t: "Jít bojovat" }, "glass", () => { menuPanel = null; campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; }); }
@@ -2163,7 +2177,7 @@ function ensureTitan() {
   return save.titan;
 }
 const titanMax = () => Math.round(7000 * atkScale() * 1.22 ** (ensureTitan().lvl - 1)), titanAtk = () => Math.round(150 * hpScale() * 1.06 ** (ensureTitan().lvl - 1));
-const canTitan = () => ensureTitan().n < TITAN_TRIES, titanRew = () => { const L = ensureTitan().lvl; return { g: 1000, c: 4 + L, s: 1 + Math.floor(L / 4), h: 10 + 2 * L }; };
+const canTitan = () => ensureTitan().n < TITAN_TRIES, titanRew = () => { const L = ensureTitan().lvl; return { g: 1000, c: 2 + Math.floor(L / 2), s: 1 + Math.floor(L / 4), h: 6 + L }; };
 let titanDmg0 = 0;
 function startTitan() {
   const T0 = ensureTitan(); if (T0.n >= TITAN_TRIES) return; T0.n++; store();
@@ -2233,11 +2247,11 @@ function drawHeroesInfo() {
     if (full) { g.save(); g.shadowColor = col; g.shadowBlur = 22; g.strokeStyle = col; g.lineWidth = 6; rr(30, y, 660, 156, 22); g.stroke(); g.restore(); } else { g.strokeStyle = col; g.lineWidth = 3; rr(30, y, 660, 156, 22); g.stroke(); }
     if (!full) { const eb = eqBtn(k), can = eqCan(k); button(eb, "#2e7d74"); if (can) { g.fillStyle = "#e5484d"; g.beginPath(); g.arc(eb.x + eb.w - 6, eb.y + 6, 9, 0, 6.29); g.fill(); } }
     g.beginPath(); g.arc(88, y + 78, 56, 0, 6.29); g.fillStyle = col; g.fill(); portrait(k, 88, y + 78, 51);
-    drawSymbol(h.c, 128, y + 120, 30);
+    drawSymbol(h.c, 136, y + 104, 30);
     g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 32px Baloo, sans-serif"; g.fillText(h.name, 150, y + 40);
     const nw = g.measureText(h.name).width;
     g.fillStyle = "#ffd166"; g.font = "800 24px Baloo, sans-serif"; g.fillText("★".repeat(sv.star) + "☆".repeat(MAX_STAR - sv.star), 160 + nw, y + 40);
-    if (teamIds().includes(h.id)) { g.fillStyle = "#3ddc84"; g.font = "700 14px 'Exo 2', sans-serif"; g.fillText("✔ V TÝMU", 160 + nw + g.measureText("★★★★★").width * 1.5 + 8, y + 39); }
+    if (teamIds().includes(h.id)) { g.fillStyle = "#1f8a4c"; rr(40, y + 128, 96, 24, 12); g.fill(); g.fillStyle = "#fff"; g.textAlign = "center"; g.font = "800 14px 'Exo 2', sans-serif"; g.fillText("✔ V TÝMU", 88, y + 145); g.textAlign = "left"; }
     { const fr = Math.min(1, heroPower(st) / heroPower(heroMax(h))); g.textAlign = "right"; g.fillStyle = fr >= 1 ? "#ffd166" : "rgba(255,255,255,.75)"; g.font = "700 16px 'Exo 2', sans-serif"; g.fillText("síla " + Math.round(fr * 100) + " %", 670, y + 26);
       g.fillStyle = "rgba(0,0,0,.5)"; rr(590, y + 33, 80, 6, 3); g.fill(); g.fillStyle = fr >= 1 ? "#ffd166" : col; rr(590, y + 33, Math.max(6, 80 * fr), 6, 3); g.fill(); g.textAlign = "left"; }
     g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 22px Baloo, sans-serif";
@@ -2679,15 +2693,15 @@ let levelPop = 0, LPI = null;
 // co čeká v úrovni: nepřátelé (pevně daní), odměna (stejný výpočet jako po výhře), energie nepřátel, týmu a doporučená
 function levelInfo(st) {
   const waves = stageWaves(st), all = waves.flat(), c = actOf(st), ls = localSt(st), first = ls > progOf(c, diff), R = DIFF[diff].rew * (first ? 1 : 0.2);
-  const lg = all.reduce((a, e) => a + Math.max(2, Math.round(e.hp / 45)), 0), lc = all.filter(e => e.boss).length * (1 + Math.floor(st / 10));
-  return { waves, first, gran: Math.round(lg * R) + Math.round((20 + 10 * st) * R), cr: Math.max(first ? 1 : 0, Math.round(lc * R)), sc: first ? scrollsFor(ls, diff) : 0,
+  const lg = all.reduce((a, e) => a + foeFood(e), 0), lc = all.filter(e => e.boss).length * bossCr(st);
+  return { waves, first, gran: Math.round(lg * R) + Math.round(stageBonus(st) * R), cr: first ? Math.max(1, Math.round(lc * R)) : 0, sc: first ? scrollsFor(ls, diff) : 0,
     foeHp: all.reduce((a, e) => a + e.hp, 0), team: teamHeroes().reduce((a, h) => a + heroStats(h).hp, 0), rec: Math.round(DEF_TEAM.map(heroById).reduce((a, h) => a + h.hp, 0) * stageF(st)) };
 }
 const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 452, y: 1090, w: 210, h: 84, t: "Do boje" }, LP_BACK = { x: 58, y: 1090, w: 170, h: 84, t: "Zpět" }, LP_TEAM = { x: 240, y: 1090, w: 200, h: 84, t: "Tým" };
 function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(t, x, y); g.letterSpacing = "0px";
   const lg = g.createLinearGradient(x, 0, x + 600, 0); lg.addColorStop(0, "rgba(243,198,110,.5)"); lg.addColorStop(1, "rgba(243,198,110,0)"); g.fillStyle = lg; g.fillRect(x, y + 9, 600, 1.5); }
 const LP_FAST = { x: 58, y: 1004, w: 604, h: 66, t: "⚡ Rychle dohrát (3 hvězdy)" };
-function fastWin() { const I = LPI, sh = 1 + rnd(2); addFood(I.gran); save.crystals += I.cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (I.cr ? "  ·  +" + I.cr + " krystalů" : "") + "  ·  +" + sh + " ⚙" }; }
+function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0; addFood(I.gran); save.crystals += I.cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (I.cr ? "  ·  +" + I.cr + " krystalů" : "") + (sh ? "  ·  +" + sh + " ⚙" : "") }; }
 function drawLevelPop() {
   const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX;
   g.fillStyle = "rgba(5,3,12,.8)"; g.fillRect(0, -DY, W, FH);
