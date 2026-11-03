@@ -1970,7 +1970,7 @@ function drawMenu() {
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.0.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.0.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2156,13 +2156,13 @@ function seasonDaysTo(S) { const d = new Date(); for (let i = 0; i < 400; i++) {
 const seasonKey = S => S.id + new Date().getFullYear(), seasonDone = S => ((save.season || {})[seasonKey(S)] || 0);
 function seasonWaves(S, n) {  // síla podle týmu: běžná úroveň, kterou tým zvládne, × (1,05 … 1,37)
   const d0 = diff; diff = "e"; let st = 1; const want = 0.9 * hpScale(); for (let x = 1; x <= STAGES; x++) if (stageF(x) <= want) st = x;
-  const F = stageF(st) * (1.05 + 0.035 * (n - 1)), A = F <= 1 ? F : 1 + (F - 1) * balA(st); diff = d0;
+  const F = stageF(st) * (1.05 + 0.025 * (n - 1)), A = F <= 1 ? F : 1 + (F - 1) * balA(st); diff = d0;
   let seed = n * 7919 + 13; const R = k => { seed = (seed * 16807) % 2147483647; return seed % k; };
   const pool = Object.keys(FOES).filter(k => FOES[k].season === S.id && !FOES[k].boss && FOES[k].from <= n);
   const mk = (k, m) => { const f = FOES[k]; return { ...f, k, hp: Math.round(f.hp * F * m), atk: Math.round(f.atk * A * (f.boss ? 0.85 : 0.75)) }; };
   const waves = [], nw = n <= 3 ? 2 : 3;
   for (let w = 0; w < nw; w++) { const wv = []; for (let i = 0; i < 5; i++) wv.push(mk(pool[R(pool.length)], 0.45 + 0.08 * w)); waves.push(wv); }
-  const B = S.bosses[n]; if (B) waves.push(B.map(k => mk(k, (B.length === 3 ? 0.27 : 0.33) * (1 + 0.02 * n))));
+  const B = S.bosses[n]; if (B) waves.push(B.map(k => { const e = mk(k, (B.length === 3 ? 0.27 : 0.33) * (1 + 0.02 * n)); if (B.length === 3) e.atk = Math.round(e.atk * 0.6); return e; }));  // tři bossové najednou: slabší rány (Petr 3. 11.)
   return { st, waves };
 }
 function startSeason(id, n) { const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
