@@ -219,13 +219,22 @@ const BOSSES = bossesOf(1);
 // Úroveň kampaně: 1–5 = 2 kola, 6–15 = 3 kola, 16–30 = 4 kola; poslední kolo vždy boss. Bossové po řadě, ve vyšších úrovních silnější.
 function roundsFor(st) { const l = localSt(st); return Math.min(4, (l <= 5 ? 2 : l <= 15 ? 3 : 4) + (diff === "h" ? 1 : 0)); }  // těžká o vlnu víc
 // násobek energie nepřátel pro úroveň st při aktuální obtížnosti
-// HPT = [1. úroveň, 15. úroveň, 30. úroveň] (3. 11. 2026); mezi nimi lineárně. Starý zápis [začátek, konec] funguje dál.
-function stageF(st) { const act = actOf(st), ls = localSt(st), H = HPT[act + diff] || HPT["1" + diff], M = 15;
-  const f = H.length < 3 ? H[0] + (H[1] - H[0]) * (ls - 1) / (PER_ACT - 1) : ls <= M ? H[0] + (H[1] - H[0]) * (ls - 1) / (M - 1) : H[1] + (H[2] - H[1]) * (ls - M) / (PER_ACT - M); return f * balK(st); }
+// HPT/TT = [1. úroveň, 15. úroveň, 30. úroveň]; mezi nimi lineárně
+const interp3 = (H, ls, M = 15) => H.length < 3 ? H[0] + (H[1] - H[0]) * (ls - 1) / (PER_ACT - 1) : ls <= M ? H[0] + (H[1] - H[0]) * (ls - 1) / (M - 1) : H[1] + (H[2] - H[1]) * (ls - M) / (PER_ACT - M);
+function stageF(st) { const act = actOf(st), H = HPT[act + diff] || HPT["1" + diff]; return interp3(H, localSt(st)) * balK(st); }
+// očekávaná energie týmu (násobek výchozího týmu) – „Doporučená energie týmu“ v okně úrovně
+function stageT(st) { const act = actOf(st), H = TT[act + diff] || TT["1" + diff]; return interp3(H, localSt(st)); }
 // Vyvážení 2. 11. 2026 (Petr: moc lehké); od 3. 11. 2026 je BAL.K = 1 a síla je celá v HPT. BAL.K násobí sílu všech úrovní, BAL.AS = jak rychle roste útok nepřátel; těžká navazuje na konec lehké
 const BAL = { K: [1, 1, 1, 1, 1], AS: [0.6, 0.56, 0.48, 0.46, 0.45] }, balK = st => BAL.K[actOf(st) - 1] || 1, balA = st => BAL.AS[actOf(st) - 1] || 0.45;
-// 3. 11. 2026 – ekonomika: síla podle očekávaného postupu hrdinů (sim_ekonomika.js), změřeno automatem (vyvazeni.py); BAL.K už v HPT
-const HPT = { "1e": [1.2, 2.6, 3.6], "1h": [7.2, 6.2, 7.1], "2e": [9.0, 7.0, 7.1], "2h": [13, 9.0, 9.4], "3e": [15, 13, 10.0], "3h": [18.5, 15.3, 13.0], "4e": [21, 13, 20], "4h": [24, 16, 21], "5e": [19, 21.5, 16.5], "5h": [22.5, 26, 17.5] };
+// 5. 11. 2026 (Petr): postup je 1e → 2e → … → 5e, pak 1h → … → 5h (těžká se odemkne po dohrání všech lehkých). Síla nepřátel = KAP × TT:
+// TT = očekávaný násobek energie týmu v tu chvíli [1., 15., 30. úroveň] (sim_ekonomika.js, hráč v tomto pořadí), KAP vyrovnává kampaně (měřeno vyvazeni.py).
+// 1. úroveň kampaně má 2 kola, od 16. úrovně 4 kola a 3 bossy – začátek kampaně je proto lehčí a konec těžší i při stejné síle jednoho nepřítele.
+const TT = { "1e": [0.95, 2.0, 2.8], "2e": [3.2, 3.75, 4.5], "3e": [4.7, 5.1, 5.8], "4e": [6.1, 6.5, 7.2], "5e": [7.25, 7.65, 8.5],
+             "1h": [8.5, 8.6, 8.7], "2h": [9.05, 9.2, 9.3], "3h": [9.3, 9.45, 10.1], "4h": [10.1, 10.25, 10.8], "5h": [10.8, 11.35, 11.6] };
+// KAP = [1., 15., 30. úroveň] – nepřátelé kampaní se liší (schopnosti, bossové), proto každý bod zvlášť (měřeno vyvazeni.py 5. 11. 2026)
+const KAP = { "1e": [1.3, 1.45, 1.25], "2e": [1.4, 1.05, 1.3], "3e": [1.55, 1.35, 1.15], "4e": [2.05, 1.0, 1.85], "5e": [1.6, 1.7, 1.1],
+              "1h": [2.1, 2.0, 1.85], "2h": [2.0, 1.35, 1.45], "3h": [2.2, 1.85, 1.55], "4h": [2.8, 1.6, 2.1], "5h": [1.9, 1.85, 1.5] };
+const HPT = {}; for (const k in TT) HPT[k] = TT[k].map((x, i) => +(x * KAP[k][i]).toFixed(3));
 // kampaně 3+ mají silnější základní hodnoty v FOES – srovnat na průměr Zahrady, růst řídí jen HPT
 const avgF = (act, boss, f) => { const v = Object.values(FOES).filter(e => (e.act || 1) === act && !!e.boss === boss); return v.reduce((a, e) => a + e[f], 0) / v.length; };
 const NORM = (e, f) => (e.act || 1) <= 2 ? 1 : avgF(2, !!e.boss, f) / avgF(e.act, !!e.boss, f);
@@ -257,6 +266,9 @@ save.granule = save.granule || 0; save.crystals = save.crystals || 0; save.scrol
 if (!save.prog) { save.prog = {}; const done = Math.max(0, (save.stage || 1) - 1); save.prog["1e"] = Math.min(30, done); save.prog["2e"] = Math.max(0, done - 30); }
 const progOf = (c, d) => save.prog[c + d] || 0;
 const campOpen = c => c === 1 || progOf(c - 1, "e") >= PER_ACT || progOf(c - 1, "h") >= PER_ACT;
+// těžká (Petr 5. 11. 2026): až po dohrání všech lehkých kampaní, pak po řadě 1 → 5; rozehraná těžká zůstává otevřená
+const allEasy = () => ACTS.every((_, i) => progOf(i + 1, "e") >= PER_ACT);
+const hardOpen = c => progOf(c, "h") > 0 || (allEasy() && (c === 1 || progOf(c - 1, "h") >= PER_ACT));
 // vylepšení komba: 10 úrovní za tlapkové svitky
 // svitky za první výhru: těžká každá 5. úroveň (+2 za poslední), lehká každá 10.
 const scrollsFor = (ls, d) => d === "h" ? (ls % 5 === 0 ? 1 : 0) + (ls === PER_ACT ? 2 : 0) : (ls % 10 === 0 ? 1 : 0);
@@ -291,7 +303,7 @@ const QT = [
   { st: "kc#", n: [6, 15, 30], t: (n, h) => "Poraz " + n + " " + COL_N[h] + " nepřátel" },
   { st: "dmg", n: [3000, 9000, 20000], sc: atkScale, t: n => "Způsob " + n.toLocaleString("cs-CZ") + " poškození" },
   { st: "heal", n: [800, 2500, 6000], sc: hpScale, t: n => "Vyléč týmu " + n.toLocaleString("cs-CZ") + " energie" },
-  { st: "winsH", n: [1, 2, 4], wm: 3, t: n => "Vyhraj " + n + " " + pl(n, "boj", "boje", "bojů") + " na těžkou", need: () => (save.stage || 1) > 8 },
+  { st: "winsH", n: [1, 2, 4], wm: 3, t: n => "Vyhraj " + n + " " + pl(n, "boj", "boje", "bojů") + " na těžkou", need: () => hardOpen(1) },
   { st: "flawless", n: [1, 2, 4], wm: 3, t: n => "Vyhraj " + n + "× bez padlého hrdiny" },
   { st: "starsGot", n: [4, 9, 16], t: n => "Získej " + n + " " + pl(n, "hvězdu", "hvězdy", "hvězd") + " za výhry" },
   { st: "combo4", n: [1, 3, 6], wm: 2, t: n => "Dosáhni komba ×4 a víc (" + n + "×)" },
@@ -1970,7 +1982,7 @@ function drawMenu() {
   for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.fillRect(-4, -20, 8, 7); }
   g.beginPath(); g.arc(0, 0, 14, 0, 6.29); g.fill(); g.fillStyle = "rgba(20,14,40,1)"; g.beginPath(); g.arc(0, 0, 6, 0, 6.29); g.fill(); g.restore(); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.0.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.1.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2695,7 +2707,7 @@ function levelInfo(st) {
   const waves = stageWaves(st), all = waves.flat(), c = actOf(st), ls = localSt(st), first = ls > progOf(c, diff), R = DIFF[diff].rew * (first ? 1 : 0.2);
   const lg = all.reduce((a, e) => a + foeFood(e), 0), lc = all.filter(e => e.boss).length * bossCr(st);
   return { waves, first, gran: Math.round(lg * R) + Math.round(stageBonus(st) * R), cr: first ? Math.max(1, Math.round(lc * R)) : 0, sc: first ? scrollsFor(ls, diff) : 0,
-    foeHp: all.reduce((a, e) => a + e.hp, 0), team: teamHeroes().reduce((a, h) => a + heroStats(h).hp, 0), rec: Math.round(DEF_TEAM.map(heroById).reduce((a, h) => a + h.hp, 0) * stageF(st)) };
+    foeHp: all.reduce((a, e) => a + e.hp, 0), team: teamHeroes().reduce((a, h) => a + heroStats(h).hp, 0), rec: Math.round(DEF_TEAM.map(heroById).reduce((a, h) => a + h.hp, 0) * stageT(st)) };
 }
 const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 452, y: 1090, w: 210, h: 84, t: "Do boje" }, LP_BACK = { x: 58, y: 1090, w: 170, h: 84, t: "Zpět" }, LP_TEAM = { x: 240, y: 1090, w: 200, h: 84, t: "Tým" };
 function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(t, x, y); g.letterSpacing = "0px";
@@ -2808,10 +2820,10 @@ function drawCamps() {
     g.strokeStyle = "#ffd166"; g.lineWidth = 4; rr(70, 280, 580, 640, 34); g.stroke();
     g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "800 40px Baloo, sans-serif"; g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.strokeText(A.n, W / 2, 520); g.fillText(A.n, W / 2, 520);
     g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 22px Baloo, sans-serif"; g.fillText("Vyber obtížnost", W / 2, 590);
-    button(POP_E, DIFF.e.col); button(POP_H, DIFF.h.col);
+    button(POP_E, DIFF.e.col); const hO = hardOpen(campPop); button(POP_H, hO ? DIFF.h.col : "#5a5370");
     g.font = "600 18px Baloo, sans-serif"; g.fillStyle = "rgba(255,255,255,.75)";
     g.fillText("slabší nepřátelé · běžné odměny · " + progOf(campPop, "e") + "/" + PER_ACT, W / 2, 762);
-    g.fillText("silní nepřátelé · odměny ×2,5 · svitky · " + progOf(campPop, "h") + "/" + PER_ACT, W / 2, 892);
+    g.fillText(hO ? "silní nepřátelé · odměny ×2,5 · svitky · " + progOf(campPop, "h") + "/" + PER_ACT : "🔒 " + (allEasy() ? "nejdřív dohraj kampaň " + (campPop - 1) + " na těžkou" : "odemkne se po dohrání všech lehkých kampaní"), W / 2, 892);
     g.fillStyle = "rgba(255,255,255,.12)"; g.beginPath(); g.arc(POP_X.x + 32, POP_X.y + 32, 28, 0, 6.29); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 4;
     g.beginPath(); g.moveTo(POP_X.x + 20, POP_X.y + 20); g.lineTo(POP_X.x + 44, POP_X.y + 44); g.moveTo(POP_X.x + 44, POP_X.y + 20); g.lineTo(POP_X.x + 20, POP_X.y + 44); g.stroke();
   }
@@ -3005,7 +3017,7 @@ function down(ev) { idleT = 0; hint = null;
   }
   if (scene === "camps") {
     if (campPop) {
-      const campPop0 = campPop; if (inside(p, POP_E) || inside(p, POP_H)) { diff = inside(p, POP_E) ? "e" : "h"; campPop = 0; SFX.click(); openMap(mapAct = campPop0); }
+      const campPop0 = campPop; if (inside(p, POP_H) && !hardOpen(campPop)) SFX.bad(); else if (inside(p, POP_E) || inside(p, POP_H)) { diff = inside(p, POP_E) ? "e" : "h"; campPop = 0; SFX.click(); openMap(mapAct = campPop0); }
       else if (inside(p, POP_X) || p.y < 280 || p.y > 920) { campPop = 0; SFX.click(); }
       return;
     }
