@@ -27,6 +27,7 @@
 <canvas id="c"></canvas>
 <script src="lib/pixi.min.js"></script>
 <script src="img/anim.js"></script>
+<script src="edition.js"></script>
 <script>
 // Mňoukgang War – Petr Šafařík © 2026, Czech Republic. Vytvořeno s Claude (Anthropic).
 // Vlastní hra v žánru match-3 RPG: spojuj tři a více stejných symbolů, nabíjej hrdiny a poraz vlny nepřátel.
@@ -257,7 +258,8 @@ function stageWaves(st) {
   return waves;
 }
 // ---------- postup (uloženo v telefonu) ----------
-const SAVE_KEY = "mnoukgang-save-v1";
+const ED = window.EDITION || { fan: false };  // edice: rodina / fanoušci (edition.js)
+const SAVE_KEY = ED.fan ? "mnoukgang-fans-save-v1" : "mnoukgang-save-v1";
 let save = { stage: 1, heroes: {}, granule: 0, crystals: 0 };
 try { const s0 = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); if (s0) save = s0; } catch (e) {}
 for (const h of HEROES) { const x = save.heroes[h.id] = save.heroes[h.id] || { lvl: 1 }; x.star = x.star || 0; if (x.lvl > 10) { x.star = Math.min(5, x.star + Math.floor((x.lvl - 1) / 10)); x.lvl = (x.lvl - 1) % 10 + 1; } }
@@ -1412,12 +1414,12 @@ function enemyAt(x) {
     if (ov >= T * 0.33 && ov > bo) { bo = ov; best = i; } });
   return best;
 }
-function pickTarget() { if (enemies[target] && enemies[target].cur > 0) return target; target = enemies.findIndex(e => e.cur > 0); return target; }
+function pickTarget() { if (enemies[target] && enemies[target].cur > 0) return target; const al = enemies.map((e, j) => e.cur > 0 ? j : -1).filter(j => j >= 0); return al.length ? al[rnd(al.length)] : -1; }
 function hitEnemy(i, dmg, col, k, crit) {
   const e = enemies[i]; if (!e || e.cur <= 0) return;
   if (hasSt(e, "weak")) dmg = Math.round(dmg * 1.3); if (hasSt(e, "guard")) dmg = Math.round(dmg * 0.6);
   const ep = enemyPos(i); explosions.push({ x: ep.x, y: ep.y, t: 0.35, col });
-  save.stats.dmg += Math.min(dmg, e.cur); e.cur = Math.max(0, e.cur - dmg); e.hit = 0.3; if (e.cur <= 0) e.die = 1.0; if (e.boss && e.cur > 0) e.mana = Math.min(100, (e.mana || 0) + 12);
+  save.stats.dmg += Math.min(dmg, e.cur); e.cur = Math.max(0, e.cur - dmg); e.hit = 0.3; if (e.cur <= 0) e.die = 1.0; if (e.boss && e.cur > 0) e.mana = Math.min(100, (e.mana || 0) + (e.titan ? 6 : 12));
   const p = enemyPos(i), m = k === undefined ? 1 : colorMult(k, e.c);
   if (crit) { SFX.crit(); save.stats.crits++; floats.push({ x: p.x, y: p.y - 50, text: "-" + dmg, col: "#ffe066", t: 1.2, big: true, crit: true }); floats.push({ x: p.x, y: p.y - 120, text: "KRITICKÝ ZÁSAH!", col: "#ffd166", t: 1 });
     shake = Math.max(shake, 0.35); hitstop = Math.max(hitstop, 0.06); buzz(30, 170); rings.push({ x: p.x, y: p.y, t: 0.45, d: 0.45, col: "#ffe066", R: 200 }); }
@@ -1573,14 +1575,15 @@ async function bossSkill(e, i) {
   if (kind === "drainTwo") { const sh = alive.slice().sort(() => Math.random() - .5).slice(0, 2); sh.forEach(h => drainFx(h, 1)); }
   if (kind === "drainHeal") { drainFx(alive.reduce((a, b) => (b.ch > a.ch ? b : a)), 1); bossHeal(e, i, v); }
   if (kind === "heal" || kind === "allHeal") bossHeal(e, i, kind === "heal" ? v : 0.1);
-  if (kind === "healCharge") { bossHeal(e, i, v); e.mana = 50; }
+  if (kind === "healCharge") { bossHeal(e, i, v); e.mana = e.titan ? 0 : 50; }
   if (kind === "rally") enemies.forEach(o => { if (o.cur > 0) { o.left = Math.max(1, o.left - 1); if (o.boss && o !== e) o.mana = Math.min(100, (o.mana || 0) + 50); } });
   if (kind === "allSlow") slowT = 2;
   const st4 = (BOSS_SK[e.k] || [])[3]; if (st4) { const al = heroes.filter(h => h.cur > 0), tg = kind.startsWith("all") || kind.startsWith("drainAll") ? al : al.sort(() => Math.random() - .5).slice(0, 2);
     tg.forEach(h => { addSt(h, st4, st4 === "mute" ? 2 : 3, st4 === "mute" ? 0 : Math.round(e.atk * 0.35)); floats.push({ x: heroX(heroes.indexOf(h)), y: HERO_Y - 100, text: STS[st4].ic + " " + STS[st4].n, col: STS[st4].col, t: 1.1 }); }); }
   await sleep(300);
 }
-function bossHeal(e, i, frac) { const v2 = Math.round(e.hp * frac); e.cur = Math.min(e.hp, e.cur + v2); const ep = enemyPos(i); floats.push({ x: ep.x, y: ep.y - 60, text: "+" + v2, col: "#3ddc84", t: 1.1, big: true }); for (let q = 0; q < 16; q++) particles.push({ x: ep.x + (Math.random() - .5) * 80, y: ep.y, vx: 0, vy: -2 - Math.random() * 3, t: 0.8, col: "#3ddc84" }); }
+function bossHeal(e, i, frac) { if (e.titan) frac *= 0.12;  // titán má obří energii: 25 % by bylo nedohratelné
+  const v2 = Math.round(e.hp * frac); e.cur = Math.min(e.hp, e.cur + v2); const ep = enemyPos(i); floats.push({ x: ep.x, y: ep.y - 60, text: "+" + v2, col: "#3ddc84", t: 1.1, big: true }); for (let q = 0; q < 16; q++) particles.push({ x: ep.x + (Math.random() - .5) * 80, y: ep.y, vx: 0, vy: -2 - Math.random() * 3, t: 0.8, col: "#3ddc84" }); }
 let bossBanner = null;
 async function enemyTurn() {
   if (slowT > 0) slowT--;
@@ -1904,8 +1907,7 @@ function frame(now) {
   else {
     drawHud();
     g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.textAlign = "center"; if (titanMode) { const low = titanT < 20, pu = low ? 0.5 + 0.5 * Math.sin(perf * 10) : 0; g.fillText("Titán · stupeň " + ensureTitan().lvl + " · útok " + ensureTitan().n + "/" + TITAN_TRIES, 372, 90 + TOP_Y);
-      g.fillStyle = "rgba(10,6,20,.6)"; rr(292, 104 + TOP_Y, 160, 40, 20); g.fill(); g.fillStyle = low ? "rgba(255," + Math.round(90 + 80 * pu) + ",90,1)" : "#ffd166"; g.font = "800 28px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 372, 134 + TOP_Y);
-      g.fillStyle = "rgba(0,0,0,.5)"; rr(300, 146 + TOP_Y, 144, 6, 3); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(300, 146 + TOP_Y, 144 * titanT / TITAN_TIME, 6, 3); g.fill(); }
+    }
     else g.fillText((actOf(stage) > 1 ? "Akt " + actOf(stage) + " · " : "") + "Úroveň " + localSt(stage) + " · vlna " + (wave + 1) + "/" + WAVES.length, 372, 90 + TOP_Y);
     if (shield) { g.textAlign = "right"; g.fillStyle = COLORS[2]; g.fillText("Štít ×" + shield, W - 110, 44); }
     // tlačítko pauzy
@@ -2057,7 +2059,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2606,7 +2608,7 @@ function drawCredits() {
   drawSymbol(1, W / 2, y + 44, 56);
   g.fillStyle = "#ffd1e3"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Věnováno", W / 2, y + 104);
   g.fillStyle = "#fff"; g.font = "600 22px Baloo, sans-serif";
-  wrap("Lucince – za lásku, trpělivost a všechna společná rána. A našim kočkám Hepině, Kefírovi a Ňuňovi, bez kterých by doma bylo ticho a v kuchyni až podezřelý pořádek.", W / 2, y + 140, 560, 30);
+  wrap(ED.fan ? "Všem fanouškům stránky MňoukGang na Facebooku, kde Hepina, Kefír a Ňuňa natáčejí svá videa. Díky, že se díváte, lajkujete a fandíte – tahle hra je dárek pro vás. Hledejte MňoukGang na Facebooku." : "Lucince – za lásku, trpělivost a všechna společná rána. A našim kočkám Hepině, Kefírovi a Ňuňovi, bez kterých by doma bylo ticho a v kuchyni až podezřelý pořádek.", W / 2, y + 140, 560, 30);
   y += 280;
   // autoři
   g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; g.fillText("Vytvořili", W / 2, y + 30); y += 70;
@@ -3008,9 +3010,12 @@ function drawHud() {
   g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; g.fillText(lootG, lg.x + 22, lg.y + 8); g.fillText(lootC, lc.x + 22, lc.y + 8);
   // pruh výhod: každý kámen je silný proti kameni napravo od sebe
   const y0 = lg.y; g.fillStyle = "rgba(10,6,20,.6)"; rr(222, y0 - 24, 300, 48, 24); g.fill();
-  const seq = [...ADV_ORDER, ADV_ORDER[0]];
+  if (titanMode) { const low = titanT < 20, pu = low ? 0.5 + 0.5 * Math.sin(perf * 10) : 0, col = low ? "rgba(255," + Math.round(90 + 80 * pu) + ",90,1)" : "#ffd166";  // časomíra útoku na titána
+    g.textAlign = "left"; g.fillStyle = col; g.font = "800 26px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 240, y0 + 9);
+    g.fillStyle = "rgba(0,0,0,.55)"; rr(350, y0 - 5, 154, 10, 5); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(350, y0 - 5, Math.max(10, 154 * titanT / TITAN_TIME), 10, 5); g.fill(); }
+  else { const seq = [...ADV_ORDER, ADV_ORDER[0]];
   seq.forEach((k, j) => { const x = 246 + j * 50; drawSymbol(k, x, y0, 28);
-    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 21, y0 - 6); g.lineTo(x + 30, y0); g.lineTo(x + 21, y0 + 6); g.fill(); } });
+    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 21, y0 - 6); g.lineTo(x + 30, y0); g.lineTo(x + 21, y0 + 6); g.fill(); } }); }
   // létající kořist
   for (const l of lootFly) { if (l.t < 0) continue; const k = Math.min(1, l.t / 0.9), e = k * k * (3 - 2 * k), dst = l.kind === "g" ? lg : lc;
     const x = l.x + (dst.x - l.x) * e, y = l.y + (dst.y - l.y) * e - Math.sin(k * Math.PI) * 120;
