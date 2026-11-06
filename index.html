@@ -384,10 +384,16 @@ const QREW = { d: [{ g: 100 }, { g: 150, c: 1, h: 2 }, { g: 100, c: 1, h: 3 }], 
 const MONTH_T = ["Mrazivá výprava", "Únorové tání", "Jarní úklid", "Aprílová šibalství", "Májová zahrada", "Letní slunovrat", "Prázdninové dobrodružství", "Srpnová bouře", "Zářijová sklizeň", "Říjnová strašidla", "Listopadová mlha", "Vánoční nadílka"];
 function rngOf(seed) { let x = Math.abs(Math.floor(seed)) % 2147483646 + 1; return () => (x = x * 16807 % 2147483647) / 2147483647; }
 const nice = n => n < 10 ? Math.max(1, Math.round(n)) : n < 100 ? Math.round(n / 5) * 5 : n < 1000 ? Math.round(n / 10) * 10 : Math.round(n / 100) * 100;
+// Týdenní a měsíční úkoly podle délky hraní (6. 11. 2026, Petr: dřív moc lehké): přírůstek na 1 odehranou úroveň změřený robotem
+// (nastroje/mereni_ukolu.js, 30 úrovní, tým 2,87× výchozí síla; poškození/léčení na jednotku sc). Půl hodiny ≈ 10 úrovní.
+// Týden ≈ 7 × 30 min (70 úrovní), měsíc ≈ 12 × 30 min (120 úrovní); úkoly jednou denně (Noc bossů, titán) podle dnů.
+const Q_RATE = { wins: 0.75, kills: 13, boss: 1, bombs: 6, dias: 3, gems: 320, "g#": 64, skills: 18, "s#": 3.6, "kc#": 2.6, dmg: 10700, heal: 1600, winsH: 0.7, flawless: 0.4,
+  starsGot: 1.8, combo4: 2, ups: 0.3, rohl: 88, gran: 131, upsH: 0.15, upsC: 0.1, chests: 0.4, crits: 5.6, stApplied: 11.5, dot: 465, traitKills: 4, win3: 0.4, eqUps: 0.1, essGot: 6, shardsGot: 3.2, fast: 0.1 },
+  Q_DAY = { eventW: 1, titanHits: 3 }, Q_LV = { w: [30, 50, 70], m: [40, 60, 85, 110, 140] }, Q_DN = { w: [3, 5, 7], m: [5, 7, 9, 11, 12] };
 function makeQuests(seed, kind) {
   const r = rngOf(seed * 7919 + (kind === "w" ? 13 : kind === "m" ? 29 : 0)), pool = QT.filter(q => (kind === "d" ? !q.long : !q.max) && (!q.need || q.need())), out = [];
   for (let i = 0; i < (kind === "m" ? 5 : 3); i++) { const tp = pool.splice(Math.floor(r() * pool.length), 1)[0], tier = kind === "m" ? 2 : i, h = Math.floor(r() * 5);
-    const mult = kind === "d" ? 1 : (tp.wm || 5) * (kind === "m" ? M_F[i] : 1), n = nice(tp.n[tier] * mult * (tp.sc ? tp.sc() : 1));
+    const n = kind === "d" ? nice(tp.n[tier] * (tp.sc ? tp.sc() : 1)) : Q_DAY[tp.st] ? nice(Q_DAY[tp.st] * Q_DN[kind][i]) : nice((Q_RATE[tp.st] || tp.n[2] / 10) * Q_LV[kind][i] * (tp.sc ? tp.sc() : 1));
     out.push({ st: tp.st.replace("#", h), n, t: tp.t(n, h), rew: QREW[kind][i], got: false, max: !!tp.max }); }
   return out;
 }
@@ -442,9 +448,11 @@ function ensureExtra() {
   save.stars = save.stars || {}; save.chest = save.chest || { n: 0 }; save.talents = save.talents || {}; save.ach = save.ach || {}; save.ach2 = save.ach2 || {}; save.login = save.login || { last: -1, streak: 0 };
   if (!save.daily || save.daily.day !== dayNum() || !save.daily.v2) {  // nové úkoly: den, týden (od pondělí), měsíc
     save.daily = { v2: true, day: dayNum(), base: { ...save.stats }, combo: 0, q: makeQuests(dayNum(), "d"), bonus: false, event: save.daily && save.daily.day === dayNum() ? save.daily.event : false }; store(); }
-  if (!save.weekly || save.weekly.week !== weekNum()) { save.weekly = { week: weekNum(), base: { ...save.stats }, combo: 0, q: makeQuests(weekNum(), "w"), bonus: false }; store(); }
+  for (const [P, kind, seed] of [[save.weekly, "w", weekNum()], [save.monthly, "m", monthNum()]]) if (P && !P.v3 && (kind === "w" ? P.week === weekNum() : P.month === monthNum())) {
+    const nq = makeQuests(seed, kind); P.q.forEach((q, i) => { if (!q.got && nq[i] && nq[i].st === q.st) { q.n = nq[i].n; q.t = nq[i].t; } }); P.v3 = true; store(); }
+  if (!save.weekly || save.weekly.week !== weekNum()) { save.weekly = { v3: true, week: weekNum(), base: { ...save.stats }, combo: 0, q: makeQuests(weekNum(), "w"), bonus: false }; store(); }
   if (!save.monthly || save.monthly.month !== monthNum() || !save.monthly.v2) { const same = save.monthly && save.monthly.month === monthNum();
-    save.monthly = { v2: true, month: monthNum(), base: same ? save.monthly.base : { ...save.stats }, combo: same ? save.monthly.combo || 0 : 0, q: makeQuests(monthNum(), "m"), bonus: false }; store(); }
+    save.monthly = { v2: true, v3: true, month: monthNum(), base: same ? save.monthly.base : { ...save.stats }, combo: same ? save.monthly.combo || 0 : 0, q: makeQuests(monthNum(), "m"), bonus: false }; store(); }
 }
 
 const rewScale = () => 1 + (save.stage || 1) / 30;
@@ -1981,8 +1989,10 @@ function frame(now) {
   if (chestOpen > 0) chestOpen = Math.max(0, chestOpen - dt);
   if (!achDrag && Math.abs(achFly) > 10) { achScroll = Math.max(0, Math.min(achMax, achScroll + achFly * dt)); achFly *= Math.exp(-2.5 * dt); } else if (!achDrag) achFly = 0;
   if (tipBox || milkAsk) { g.save(); if (playLike()) g.translate(0, DY); drawOverlays(); g.restore(); }
-  if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; else { const a = Math.min(1, toast.t * 3, (2.4 - toast.t) * 6); g.globalAlpha = a; g.font = "700 22px 'Exo 2', sans-serif"; const tw = g.measureText(toast.text).width + 60;
-    g.fillStyle = "rgba(20,14,40,.95)"; rr(W / 2 - tw / 2, 60, tw, 56, 28); g.fill(); g.strokeStyle = "#ffd166"; g.lineWidth = 2; rr(W / 2 - tw / 2, 60, tw, 56, 28); g.stroke(); g.textAlign = "center"; g.fillStyle = "#ffd166"; g.fillText(toast.text, W / 2, 96); g.globalAlpha = 1; } }
+  if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; else { const a = Math.min(1, toast.t * 3, (2.4 - toast.t) * 6); g.globalAlpha = a; g.font = "700 22px 'Exo 2', sans-serif";
+    const parts = toast.text.split("  ·  "), L = []; let cur = ""; for (const q of parts) { const tr = cur ? cur + "  ·  " + q : q; if (g.measureText(tr).width > W - 120 && cur) { L.push(cur); cur = q; } else cur = tr; } if (cur) L.push(cur);
+    const LL = L.flatMap(l => g.measureText(l).width > W - 120 ? wrapLines(l, W - 120) : [l]), tw = Math.min(W - 40, Math.max(...LL.map(l => g.measureText(l).width)) + 60), th = 56 + (LL.length - 1) * 30;
+    g.fillStyle = "rgba(20,14,40,.95)"; rr(W / 2 - tw / 2, 60, tw, th, 28); g.fill(); g.strokeStyle = "#ffd166"; g.lineWidth = 2; rr(W / 2 - tw / 2, 60, tw, th, 28); g.stroke(); g.textAlign = "center"; g.fillStyle = "#ffd166"; LL.forEach((l, j) => g.fillText(l, W / 2, 96 + j * 30)); g.globalAlpha = 1; } }
   if (scene !== lastScene) { if (lastScene === "credits") creditsFree(); fadeT = 0.24; lastScene = scene; }  // nová obrazovka se prolne z tmy
   if (fadeT > 0) { fadeT -= dt; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = "rgba(8,5,18," + Math.max(0, fadeT / 0.24) * 0.85 + ")"; g.fillRect(0, 0, cv.width, cv.height); }
   requestAnimationFrame(frame);
@@ -2059,7 +2069,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2208,6 +2218,7 @@ function drawPanel() {
 // jeden řádek, který se zmenší, když je delší než maxW (font jako "700 23px 'Exo 2', sans-serif")
 function fitText(t, x, y, maxW, font) { g.font = font; const w = g.measureText(t).width; if (w > maxW) { const fs = parseFloat(font.match(/([\d.]+)px/)[1]); g.font = font.replace(/[\d.]+px/, Math.max(11, Math.floor(fs * maxW / w)) + "px"); } g.fillText(t, x, y); }
 // zalamování textu
+function fillWrapC(text, x, y, maxW, lh) { const L = wrapLines(text, maxW); L.forEach((l, j) => g.fillText(l, x, y + (j - (L.length - 1) / 2) * lh)); return L.length; }
 function wrap(text, x, y, maxW, lh) {
   const words = text.split(" "); let line = "", yy = y;
   for (const w of words) { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, yy); line = w; yy += lh; } else line = t; }
@@ -2597,19 +2608,32 @@ async function creditsBitmaps() {
     CBM.f[h.id] = { fr, fps: a.fps / 2, ar: a.w / a.h }; }
 }
 function creditsFree() { CBM.on = false; for (const id in CBM.f) CBM.f[id].fr.forEach(q => { q.width = q.height = 0; }); CBM.f = {}; }
+// odkazy na stránky koček (Facebook, Instagram) – ve věnování obou edic; v aplikaci otevře FB/IG aplikaci nebo prohlížeč
+const LINK_FB = "https://www.facebook.com/profile.php?id=61563108763404", LINK_IG = "https://www.instagram.com/mnoukgang";
+let creditLinks = [];
+function openLink(u) { try { if (window.Android && Android.openUrl) { Android.openUrl(u); return; } } catch (e) {} window.open(u, "_blank"); }
+function socialLogo(k, x, y, s) {
+  g.save(); g.translate(x, y); const r = s / 2;
+  if (k === "fb") { g.fillStyle = "#1877f2"; g.beginPath(); g.arc(0, 0, r, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "900 " + Math.round(s * 0.82) + "px Arial, sans-serif"; g.textAlign = "center"; g.fillText("f", s * 0.04, s * 0.33); }
+  else { const gr = g.createLinearGradient(-r, r, r, -r); gr.addColorStop(0, "#feda75"); gr.addColorStop(0.3, "#fa7e1e"); gr.addColorStop(0.6, "#d62976"); gr.addColorStop(1, "#4f5bd5"); g.fillStyle = gr; rr(-r, -r, s, s, s * 0.28); g.fill();
+    g.strokeStyle = "#fff"; g.lineWidth = s * 0.08; rr(-r * 0.62, -r * 0.62, s * 0.62, s * 0.62, s * 0.18); g.stroke(); g.beginPath(); g.arc(0, 0, s * 0.15, 0, 6.29); g.stroke(); g.fillStyle = "#fff"; g.beginPath(); g.arc(s * 0.19, -s * 0.19, s * 0.04, 0, 6.29); g.fill(); }
+  g.restore(); }
 function drawCredits() {
   menuBg(); creditsBitmaps();
   g.save(); g.beginPath(); g.rect(0, 150, W, 1005); g.clip();
   let y = 170 - scrollY; g.textAlign = "center";
   title(W / 2, y + 80, 0.62); y += 180;
-  g.fillStyle = "#fff"; g.font = "600 24px Baloo, sans-serif"; y = wrap("Hra o jedné výpravě, pěti hrdinech a spoustě nepřátel, kteří nemají rádi kočky.", W / 2, y, 600, 32) + 16;
+  g.fillStyle = "#fff"; g.font = "600 24px Baloo, sans-serif"; y = wrap("Hra o výpravě Mňoukgangu – tří koček a jejich rodiny, páníčků a paniček. Deset hrdinů proti spoustě nepřátel, kteří nemají rádi kočky.", W / 2, y, 600, 32) + 16;
   // věnování
-  g.fillStyle = "rgba(255,111,168,.16)"; rr(50, y, 620, 250, 26); g.fill(); g.strokeStyle = "#ff6fa8"; g.lineWidth = 3; rr(50, y, 620, 250, 26); g.stroke();
+  g.fillStyle = "rgba(255,111,168,.16)"; rr(50, y, 620, 340, 26); g.fill(); g.strokeStyle = "#ff6fa8"; g.lineWidth = 3; rr(50, y, 620, 340, 26); g.stroke();
   drawSymbol(1, W / 2, y + 44, 56);
   g.fillStyle = "#ffd1e3"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Věnováno", W / 2, y + 104);
   g.fillStyle = "#fff"; g.font = "600 22px Baloo, sans-serif";
-  wrap(ED.fan ? "Všem fanouškům stránky MňoukGang na Facebooku, kde Hepina, Kefír a Ňuňa natáčejí svá videa. Díky, že se díváte, lajkujete a fandíte – tahle hra je dárek pro vás. Hledejte MňoukGang na Facebooku." : "Lucince – za lásku, trpělivost a všechna společná rána. A našim kočkám Hepině, Kefírovi a Ňuňovi, bez kterých by doma bylo ticho a v kuchyni až podezřelý pořádek.", W / 2, y + 140, 560, 30);
-  y += 280;
+  wrap(ED.fan ? "Všem fanouškům stránky MňoukGang na Facebooku a Instagramu, kde Hepina, Kefír a Ňuňa natáčejí svá videa. Díky, že se díváte, lajkujete a fandíte – tahle hra je dárek pro vás." : "Lucince – za lásku, trpělivost a všechna společná rána. A našim kočkám Hepině, Kefírovi a Ňuňovi, bez kterých by doma bylo ticho a v kuchyni až podezřelý pořádek.", W / 2, y + 140, 560, 30);
+  { const by = y + 262; creditLinks = []; [["fb", "Facebook", LINK_FB], ["ig", "Instagram", LINK_IG]].forEach(([k, t, u], j) => { const b = { x: 110 + j * 260, y: by, w: 240, h: 60, u };
+      g.fillStyle = "rgba(20,14,40,.85)"; rr(b.x, b.y, b.w, b.h, 30); g.fill(); g.strokeStyle = k === "fb" ? "#4c8df6" : "#e1306c"; g.lineWidth = 2; rr(b.x, b.y, b.w, b.h, 30); g.stroke();
+      socialLogo(k, b.x + 34, b.y + 30, 40); g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 23px Baloo, sans-serif"; g.fillText(t, b.x + 64, b.y + 38); creditLinks.push(b); }); g.textAlign = "center"; }
+  y += 370;
   // autoři
   g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; g.fillText("Vytvořili", W / 2, y + 30); y += 70;
   g.fillStyle = "#fff"; g.font = "800 28px Baloo, sans-serif"; g.fillText("Petr Šafařík © 2026, Czech Republic", W / 2, y); y += 34;
@@ -3071,14 +3095,14 @@ function drawEnd() {
   if (scene === "win" && !eventMode && !seasonMode && levelUps[5]) for (let j = 0; j < 3; j++) { const t = Math.max(0, Math.min(1, (endT - 0.5 - j * 0.25) * 4)), on = j < levelUps[5], x = W / 2 + (j - 1) * 96, y = 400 - (j === 1 ? 18 : 0);
     if (t <= 0) continue; const sc = t < 1 ? 0.3 + 1.0 * t + 0.3 * Math.sin(t * Math.PI) : 1; drawStar(x, y, 40 * sc, on); }
   if (scene === "win" && levelUps[6] && endT > 1.4) { g.fillStyle = "#ffd166"; g.font = "700 20px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("Poprvé 3 hvězdy: +1 krystal", W / 2, 455); }
-  g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; g.fillText(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" && seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580);
+  g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; fillWrapC(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" && seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580, W - 60, 32);
   if (scene === "win") {
     const [gn, cr, bonus] = levelUps, e = winAnim * winAnim * (3 - 2 * winAnim);
     const shd = levelUps[7] || 0, X = shd ? [W / 2 - 290, W / 2 - 130, W / 2 + 40, W / 2 + 190] : [W / 2 - 250, W / 2 - 80, W / 2 + 100], [gr, gg2] = splitFood(gn);
     drawRohlik(X[0], 640, 50); drawGranule(X[1], 640, 46); drawDiamond(X[2], 640, 46, -1); if (shd) drawItem("ui_shard", X[3], 640, 56);
     g.textAlign = "left"; g.fillStyle = "#ffd166"; g.font = "800 40px Baloo, sans-serif"; g.fillText("+" + Math.round(gr * e), X[0] + 32, 654); g.fillText("+" + Math.round(gg2 * e), X[1] + 28, 654); g.fillText("+" + Math.round(cr * e), X[2] + 28, 654);
     if (shd) { g.fillStyle = "#5fe3d0"; g.fillText("+" + Math.round(shd * e), X[3] + 30, 654); }
-    g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 20px Baloo, sans-serif"; g.fillText(titanRes ? (titanRes.killed ? "Poražen na " + titanRes.n + ". útok · odměna ×" + String(titanRes.mult).replace(".", ",") + " · zítra stupeň " + (titanRes.lvl + 1) : titanRes.fin === "escape" ? "Utekl se " + Math.round(titanRes.left * 100) + " % energie · útěcha ×" + titanRes.mult.toFixed(2).replace(".", ",") + " · zítra nový titán" : "Titánovi zbývá " + Math.round(titanRes.left * 100) + " % · útoky dnes " + (TITAN_TRIES - ensureTitan().n) + "/" + TITAN_TRIES) : eventMode ? "odměna Noci bossů + kořist z bossů" : levelUps[4] ? "včetně bonusu " + foodText(bonus) + " za první výhru" + (levelUps[3] ? " · +" + levelUps[3] + " tlapkový svitek" : "") : "opakovaná výhra – jen 20 % odměny" + (levelUps[3] ? " · boss pustil tlapkový svitek!" : ""), W / 2, 690);
+    g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 20px Baloo, sans-serif"; fillWrapC(titanRes ? (titanRes.killed ? "Poražen na " + titanRes.n + ". útok · odměna ×" + String(titanRes.mult).replace(".", ",") + " · zítra stupeň " + (titanRes.lvl + 1) : titanRes.fin === "escape" ? "Utekl se " + Math.round(titanRes.left * 100) + " % energie · útěcha ×" + titanRes.mult.toFixed(2).replace(".", ",") + " · zítra nový titán" : "Titánovi zbývá " + Math.round(titanRes.left * 100) + " % · útoky dnes " + (TITAN_TRIES - ensureTitan().n) + "/" + TITAN_TRIES) : eventMode ? "odměna Noci bossů + kořist z bossů" : levelUps[4] ? "včetně bonusu " + foodText(bonus) + " za první výhru" + (levelUps[3] ? " · +" + levelUps[3] + " tlapkový svitek" : "") : "opakovaná výhra – jen 20 % odměny" + (levelUps[3] ? " · boss pustil tlapkový svitek!" : ""), W / 2, 690, W - 60, 24);
     g.fillText("Vylepši hrdiny v menu Hrdinové", W / 2, 960);
   }
   button({ ...END_GO, t: eventMode || titanMode ? "Menu" : seasonMode ? (scene === "win" && seasonMode.lvl < SEAS_N ? "Další úroveň" : "Znovu") : scene === "win" && localSt(stage) < PER_ACT ? "Další úroveň" : "Znovu" }, "gold"); button(END_MAP, "glass"); button(END_HER, "glass"); button(END_MENU, "glass");
@@ -3153,7 +3177,7 @@ function down(ev) { idleT = 0; hint = null;
     return;
   }
   if (scene === "best" && foeCard) { foeCard = null; SFX.click(); return; }
-  if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
+  if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
   if (scene === "heroes") {
     if (heroCard >= 0) { heroCard = -1; return; }
     if (eqHero >= 0) { const hit = eqBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else if (p.y < 130 || p.y > 1140) eqHero = -1; return; }
@@ -3208,6 +3232,7 @@ function up(ev) {
     // seznam hrdinů: ťuknutí (bez posunu) = tlačítko nebo karta hrdiny
     if (scene === "heroes" && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y };
       for (let k = 0; k < HEROES.length; k++) { if (inside(p, eqBtn(k)) && !heroFull(HEROES[k])) { SFX.click(); eqHero = k; break; } if (inside(p, heroBtn(k))) { if (!upgrade(k)) SFX.click(); break; } if (p.y > heroRowY(k) && p.y < heroRowY(k) + 102) { heroCard = k; SFX.hero(k); break; } } }
+    if (scene === "credits" && scrollDrag.moved < 14 && !scrollDrag.fly) { const l = creditLinks.find(b => inside({ x: scrollDrag.x, y: scrollDrag.y }, b)); if (l && l.y > 150 && l.y + l.h < 1155) { SFX.click(); openLink(l.u); } }
     if (scene === "map" && scrollDrag.moved < 14 && !scrollDrag.fly) { const done = progOf(mapAct, diff);  // ťuknutí na úroveň: okno s nepřáteli a odměnou
       for (let i = 0; i < PER_ACT; i++) { const q = stagePos(i); if (i + 1 <= done + 1 && Math.hypot(scrollDrag.x - q.x, scrollDrag.y - q.y) < 56) { levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); break; } } }
     // krátké ťuknutí (bez posunu a ne do rozjetého seznamu) otevře kartu nepřítele
