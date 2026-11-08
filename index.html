@@ -458,7 +458,7 @@ function ensureExtra() {
 const rewScale = () => 1 + (save.stage || 1) / 30;
 let toast = null;
 function giveRew(r, x = W / 2, y = 600) {
-  const gg = Math.round((r.g || 0) * rewScale()); addFood(gg); save.crystals += r.c || 0; save.scrolls += r.s || 0; if (r.h) { save.shards += r.h; save.stats.shardsGot += r.h; } if (r.e) { save.ess[r.ec || 0] += r.e; save.stats.essGot += r.e; } if (r.m) { milkTick(); save.milk.v += r.m; } store(); SFX.star();
+  const gg = Math.round((r.g || 0) * rewScale()); addFood(gg); save.crystals += r.c || 0; save.scrolls += r.s || 0; if (r.h) { save.shards += r.h; save.stats.shardsGot += r.h; } if (r.e) { save.ess[r.ec || 0] += r.e; save.stats.essGot += r.e; } if (r.m) { milkTick(); save.milk.v = Math.min(milkMax(), save.milk.v + r.m); } store(); SFX.star();
   for (let i = 0; i < 26; i++) burst(x + (Math.random() - .5) * 120, y, i % 2 ? "#ffd166" : "#fff");
   toast = { t: 2.4, text: "+" + rewText({ ...r, g: (r.g || 0) }).split(" + ").join("  ·  +") };
 }
@@ -469,14 +469,16 @@ const canQuest = () => qReady() > 0;
 const canLogin = () => save.login.last !== dayNum(), canChest = () => save.chest.n >= CHEST_N, canEvent = () => !save.daily.event;
 // ---------- mlíčko: energie na hraní (jako v E&P) ----------
 // každá úroveň kampaně (i sezónní) stojí 1; doplňuje se průběžně (za den tolik, kolik je maximum);
-// maximum 20 + 1 za každých 10 úrovní 5 nejlepších hrdinů (úroveň = hvězdy × 10 + úroveň), nejvýš 40; při zvýšení maxima se doplní celé
-const MILK_BASE = 20, MILK_CAP = 40, MILK_DAY = 864e5;
-const milkMax = () => { const ps = HEROES.map(h => { const s = (save.heroes || {})[h.id] || { lvl: 1, star: 0 }; return s.star * 10 + s.lvl; }).sort((a, b) => b - a).slice(0, 5);
-  return Math.min(MILK_CAP, MILK_BASE + Math.floor(ps.reduce((a, b) => a + b, 0) / 10)); };
+// maximum 20 + 5 za každou dohranou kampaň (lehkou i těžkou) – 20 až 70; mlíčko NIKDY nepřekročí maximum (ani z odměn); dohraná kampaň přidá +5 i do zásoby
+const MILK_BASE = 20, MILK_STEP = 5, MILK_DAY = 864e5, MILK_CAP = MILK_BASE + MILK_STEP * 2 * ACTS.length;
+const milkMax = () => MILK_BASE + MILK_STEP * ACTS.reduce((a, _, i) => a + (progOf(i + 1, "e") >= PER_ACT) + (progOf(i + 1, "h") >= PER_ACT), 0);
 const milkStep = () => MILK_DAY / milkMax();
 function milkTick() {
-  const now = Date.now(), mx = milkMax(); if (!save.milk) save.milk = { v: mx, t: now, m: mx }; const M = save.milk;
-  if (mx > (M.m || 0)) { if (M.m) toast = { t: 3, text: "🥛 Mlíčko doplněno – nové maximum " + mx }; M.v = Math.max(M.v, mx); M.m = mx; M.t = now; store(); }
+  const now = Date.now(), mx = milkMax(); if (!save.milk) save.milk = { v: mx, t: now, m: mx, v2: true }; const M = save.milk;
+  if (!M.v2) { M.v2 = true; M.m = mx; }  // přechod ze starého maxima (podle úrovní hrdinů) – bez bonusu
+  if (M.m && mx > M.m) { M.v = Math.min(mx, M.v + (mx - M.m)); toast = { t: 3, text: "🥛 Kampaň dohrána – mlíčko +" + (mx - M.m) + ", nové maximum " + mx }; }
+  if (mx !== M.m) { M.m = mx; store(); }
+  if (M.v > mx) { M.v = mx; M.t = now; store(); }  // nad maximum nikdy (i staré uložené hry)
   if (M.v >= mx) { M.t = now; return M; }
   const st = milkStep(), n = Math.floor((now - M.t) / st); if (n > 0) { M.v = Math.min(mx, M.v + n); M.t = M.v >= mx ? now : M.t + n * st; store(); }
   return M;
@@ -497,7 +499,7 @@ function tipText(k) {
   if (k === "s") return "Tlapkové svitky vylepšují kombo v menu Hrdinové: s každým stupněm sílí každé další spojení v jednom tahu. Padají z bossů, truhel a úkolů. Máš " + save.scrolls + ".";
   if (k === "lg") return "Rohlíky a granule, které jsi v tomto boji zatím získal. Po výhře se připíšou – lidé jedí rohlíky, kočky granule. Vedle jsou krystaly z boje.";
   const M = milkTick(), mx = milkMax(), nx = milkNext();
-  return "Energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko (i rychlé dohrání). Titán, Noc bossů, truhla a odměny jsou zdarma. Doplňuje se samo: +1 každých " + Math.round(milkStep() / 6e4) + " minut. Maximum roste s úrovní hrdinů (teď " + mx + ", nejvýš " + MILK_CAP + "). Máš " + M.v + "/" + mx + (nx ? " – další za " + hms(nx) + ", plné za " + hms(milkFull()) + "." : " – plné.") + " Když boj opustíš ještě v první vlně, mlíčko se vrátí.";
+  return "Energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko (i rychlé dohrání). Titán, Noc bossů, truhla a odměny jsou zdarma. Doplňuje se samo: +1 každých " + Math.round(milkStep() / 6e4) + " minut. Maximum je teď " + mx + " a za každou dohranou kampaň (lehkou i těžkou) vyskočí o 5, až na " + MILK_CAP + ". Nad maximum se nedoplní ani z odměn. Máš " + M.v + "/" + mx + (nx ? " – další za " + hms(nx) + ", plné za " + hms(milkFull()) + "." : " – plné.") + " Když boj opustíš ještě v první vlně, mlíčko se vrátí.";
 }
 function tipIcon(k, x, y, s) { if (k === "r" || k === "lg") drawRohlik(x, y, s); else if (k === "g") drawGranule(x, y, s); else if (k === "d") drawDiamond(x, y, s, -1); else if (k === "h") drawItem("ui_shard", x, y, s * 1.2); else if (k === "s") drawItem("ico_scroll", x, y, s * 1.1); else drawMilk(x, y, s); }
 function wrapLines(text, maxW) { const out = []; let cur = ""; for (const w of text.split(" ")) { const tr = cur ? cur + " " + w : w; if (g.measureText(tr).width > maxW && cur) { out.push(cur); cur = w; } else cur = tr; } if (cur) out.push(cur); return out; }
@@ -526,7 +528,7 @@ function curZones() {
 }
 // spustí hru za 1 mlíčko; když není, ukáže okno „Kočky odpočívají“ (vrací, jestli se hrálo)
 function playMilk(fn) { const M = milkTick(); if (M.v < 1) { milkAsk = true; SFX.bad(); return false; } M.v--; store(); fn(); milkPaid = true; return true; }
-function milkRefund() { if (!milkPaid) return; milkPaid = false; milkTick(); save.milk.v++; store(); toast = { t: 2.2, text: "🥛 Mlíčko vráceno – hra skončila v první vlně" }; }
+function milkRefund() { if (!milkPaid) return; milkPaid = false; milkTick(); save.milk.v = Math.min(milkMax(), save.milk.v + 1); store(); toast = { t: 2.2, text: "🥛 Mlíčko vráceno – hra skončila v první vlně" }; }
 function drawMilk(x, y, s) {  // lahvička mlíčka (když chybí obrázek ico_mlicko)
   if (drawItem("ico_mlicko", x, y, s * 1.15)) return; const k = s / 50; g.save(); g.translate(x, y); g.scale(k, k);
   g.fillStyle = "#e9f3ff"; g.beginPath(); g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(9, -12); g.quadraticCurveTo(18, -6, 18, 4); g.lineTo(18, 20); g.quadraticCurveTo(18, 25, 13, 25); g.lineTo(-13, 25); g.quadraticCurveTo(-18, 25, -18, 20); g.lineTo(-18, 4); g.quadraticCurveTo(-18, -6, -9, -12); g.closePath(); g.fill();
@@ -2069,7 +2071,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2471,7 +2473,7 @@ const HELP = [
       gl.addColorStop(0, "rgba(255,209,102," + (0.3 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 110, cy - 110, 220, 220); if (ok(img[k])) g.drawImage(img[k], x - 75, cy - 75, 150, 150);
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 55, cy - 55, 16, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 18px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("1", x + 55, cy - 49);
       g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText(["Úkoly", "Odměna", "Truhla"][j], x, cy + 110); }); } },
-  { t: "Mlíčko", d: "Mlíčko je energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko, rychlé dohrání taky. Titán, Noc bossů, truhla a odměny jsou zdarma. Mlíčko se doplňuje samo – za den přesně tolik, kolik je maximum (při 20 je to jedno za 72 minut). Maximum začíná na 20 a s úrovní a hvězdami hrdinů roste až na 40; když vyskočí, mlíčko se celé doplní. Lahve mlíčka navíc dávají denní úkoly, truhla a přihlášení. Když boj opustíš ještě v první vlně, mlíčko se vrátí. Zbývá-li 0, kočky odpočívají – odpočet uvidíš nahoře v menu.",
+  { t: "Mlíčko", d: "Mlíčko je energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko, rychlé dohrání taky. Titán, Noc bossů, truhla a odměny jsou zdarma. Mlíčko se doplňuje samo – za den přesně tolik, kolik je maximum (při 20 je to jedno za 72 minut). Maximum začíná na 20 a za každou dohranou kampaň, lehkou i těžkou, vyskočí o 5 (až na 70) – a 5 mlíček se rovnou přidá. Nad maximum se mlíčko nedoplní nikdy, ani lahvemi z úkolů, truhly a přihlášení. Když boj opustíš ještě v první vlně, mlíčko se vrátí. Zbývá-li 0, kočky odpočívají – odpočet uvidíš nahoře v menu.",
     draw(y) { const pu = 0.5 + 0.5 * Math.sin(perf * 3), gl = g.createRadialGradient(W / 2, y + 120, 10, W / 2, y + 120, 150); gl.addColorStop(0, "rgba(156,196,245," + (0.3 + 0.2 * pu) + ")"); gl.addColorStop(1, "rgba(156,196,245,0)"); g.fillStyle = gl; g.fillRect(W / 2 - 150, y - 30, 300, 300);
       drawMilk(W / 2, y + 120, 170 + 8 * pu); g.fillStyle = "rgba(20,14,40,.85)"; rr(210, y + 260, 300, 52, 26); g.fill(); g.strokeStyle = "rgba(156,196,245,.7)"; g.lineWidth = 1.5; rr(210, y + 260, 300, 52, 26); g.stroke();
       drawMilk(240, y + 286, 38); g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 25px Baloo, sans-serif"; g.fillText("14/20", 268, y + 295); g.textAlign = "right"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.fillText("+1 za 23:10", 490, y + 293); } },
