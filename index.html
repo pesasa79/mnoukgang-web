@@ -291,6 +291,9 @@ const DEF_TEAM = ["petr", "lucie", "hepina", "kefir", "nuna"], heroById = id => 
 function teamIds() { const t = ((save && save.team) || DEF_TEAM).filter(id => { const h = heroById(id); return h && !h.soon; });
   return (t.length ? t : DEF_TEAM).slice(0, 5).sort((a, b) => heroById(a).c - heroById(b).c || HEROES.indexOf(heroById(a)) - HEROES.indexOf(heroById(b))); }
 const teamHeroes = () => teamIds().map(heroById);
+// součet vybraného týmu – stejná „energie“ jako „Tvůj tým“ v okně úrovně (8. 11. 2026)
+const teamSum = () => teamHeroes().reduce((a, h) => { const s = heroStats(h); a.hp += s.hp; a.atk += s.atk; a.n++; return a; }, { hp: 0, atk: 0, n: 0 });
+function teamSumLine(y, maxW) { const s = teamSum(); g.textAlign = "center"; g.fillStyle = "#ffd166"; fitText("Tvůj tým (" + s.n + "): energie " + s.hp.toLocaleString("cs-CZ") + " · útok " + s.atk.toLocaleString("cs-CZ"), W / 2, y, maxW, "800 22px 'Exo 2', sans-serif"); }
 const atkScale = () => teamHeroes().reduce((x, h) => x + heroStats(h).atk, 0) / 156, hpScale = () => teamHeroes().reduce((x, h) => x + heroStats(h).hp, 0) / 2530;
 const QT = [
   { st: "wins", n: [2, 4, 7], t: n => "Vyhraj " + n + " " + pl(n, "boj", "boje", "bojů") },
@@ -2071,7 +2074,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2340,6 +2343,7 @@ function drawTeamPick() {
   const y0 = 222 + Math.ceil(HEROES.length / 2) * 136 + 20; g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 17px 'Exo 2', sans-serif"; g.fillText("Barvy kamenů v týmu (barva bez hrdiny útočí jen slabě):", W / 2, y0);
   for (let c = 0; c < 5; c++) { const x = W / 2 + (c - 2) * 110, n = teamHeroes().filter(h => h.c === c).length; drawSymbol(c, x, y0 + 46, 50); g.globalAlpha = n ? 1 : 0.9;
     g.fillStyle = n ? "#3ddc84" : "#ff5d6c"; g.font = "800 20px 'Exo 2', sans-serif"; g.fillText(n ? (n > 1 ? "✔×" + n : "✔") : "✖", x, y0 + 98); g.globalAlpha = 1; }
+  teamSumLine(y0 + 140, P.w - 40);
   const done = { x: 210, y: P.y + P.h - 96, w: 300, h: 76, t: "Hotovo (" + t.length + "/5)" }; button(done, "gold"); teamBtns.push([done, () => { teamPick = false; if (levelPop) LPI = levelInfo(levelPop); }]);
 }
 function drawHeroesInfo() {
@@ -2381,7 +2385,7 @@ function drawHeroesInfo() {
     g.globalAlpha = can || maxed ? 1 : 0.45; button(b, atCap ? "#c77dff" : col); g.globalAlpha = 1;
   });
   g.restore();
-  backBtn();
+  backBtn(); teamSumLine(1152, 640);
   if (eqHero >= 0) drawEq(eqHero);
 }
 // okno výstroje hrdiny: tři předměty, úroveň, účinek teď → po vylepšení, cena
