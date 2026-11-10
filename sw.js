@@ -1,4 +1,4 @@
-const V = "mnoukgang-1.3.4";
+const V = "mnoukgang-1.4.0";
 self.addEventListener("install", e => { self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(["./", "index.html", "edition.js", "lib/pixi.min.js", "img/anim.js"]))); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => { const r = e.request; if (r.method !== "GET") return; const page = r.mode === "navigate" || r.url.endsWith("index.html");

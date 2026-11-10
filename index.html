@@ -181,6 +181,18 @@ const FOES = {
   witch: { act: 90, season: "halloween", n: "Čarodějnice Ježibaba", t: "boss · čarodějnice", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Z kotle jí bublá jed a z koštěte jiskry." },
   vampire: { act: 90, season: "halloween", n: "Hrabě Upír", t: "boss · upír", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Vysaje sílu z celého týmu a uletí v hejnu netopýrů." },
   pumpkinking: { act: 90, season: "halloween", n: "Dýňový král", t: "boss · vládce Halloweenu", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Král dýňového pole. Jednou za rok vstane z hlíny." },
+  // Vánoce (11. 11. 2026): kočky shazují baňky, žerou řetězy a lezou do krabic – teď se jim to vrací
+  xmasball: { act: 91, season: "vanoce", n: "Baňka Kutálka", t: "rozbitá baňka", hp: 560, atk: 100, cd: 2, from: 1, d: "Kočky ji shodily ze stromečku. Teď se mstí." },
+  tinsel: { act: 91, season: "vanoce", n: "Lesklík Šustík", t: "řetězový had", hp: 540, atk: 104, cd: 2, from: 1, d: "Šustí, třpytí se a strašně láká. Hlavně ho nežrat!" },
+  gingerbread: { act: 91, season: "vanoce", n: "Perníček Drobek", t: "perníkový panáček", hp: 620, atk: 94, cd: 3, from: 2, d: "Utekl babičce z plechu. Kočky mu ukously ruku." },
+  snowman: { act: 91, season: "vanoce", n: "Sněhulák Mrkvoun", t: "sněhulák", hp: 760, atk: 96, cd: 3, from: 2, d: "Tvrdí, že mrkev je jeho. Ňuňa nesouhlasí." },
+  elf: { act: 91, season: "vanoce", n: "Skřítek Ponožkář", t: "zlodějský skřítek", hp: 520, atk: 110, cd: 2, from: 3, d: "Krade ponožky z krbu a kočkám myšky na hraní." },
+  present: { act: 91, season: "vanoce", n: "Dárek Kousálek", t: "kousavý dárek", hp: 800, atk: 98, cd: 3, from: 4, d: "Kočky chtěly do krabice. Krabice chtěla kočky." },
+  candycane: { act: 91, season: "vanoce", n: "Lízátko Hůlkoun", t: "zlá cukrová hůl", hp: 580, atk: 108, cd: 2, from: 6, d: "Sladká na pohled, lepí jako jed." },
+  reindeer: { act: 91, season: "vanoce", n: "Sob Cinkoš", t: "splašený sob", hp: 680, atk: 112, cd: 2, from: 7, d: "Rolničkou cinká ve tři ráno. Přímo u kočičího pelíšku." },
+  cert: { act: 91, season: "vanoce", n: "Čert Pytlík", t: "boss · čert", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Kdo zlobil, jde do pytle. Z pytle mu čouhá kočičí ocas." },
+  stromisko: { act: 91, season: "vanoce", n: "Stromisko Jehličák", t: "boss · živý stromeček", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Kočky ho třikrát shodily. Teď si to s nimi vyřídí." },
+  santa: { act: 91, season: "vanoce", n: "Santa Mňaukus", t: "boss · zlý vánoční kocour", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Místo dárků rozdává uhlí a škrábance. Sobi mu utekli." },
   // ---- Kampaň 5: Temný les ----
   wisp: { act: 5, n: "Bludička Světluška", t: "bludička", hp: 900, atk: 130, cd: 2, from: 1, d: "Svítí jako lucerna a láká z cesty. Kdo jde za ní, usne." },
   tick: { act: 5, n: "Klíště Krvinka", t: "lesní klíště", hp: 860, atk: 126, cd: 2, from: 1, d: "Malé, ale zákeřné. Přisaje se a nepustí." },
@@ -668,7 +680,7 @@ for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; loa
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
 for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
-load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("diamond", "img/gem_diamond.png");
+load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("bgX", "img/bg_vanoce.jpg"); for (const s of ["halloween", "vanoce", "velikonoce"]) load("menu_" + s, "img/bg_menu_" + s + ".jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
 function portrait(k, x, y, R) {
@@ -1074,6 +1086,8 @@ const VOICE = {
   root: ["creak", 1.1], badger: ["grunt", 1.1], mossgolem: ["thud", 0.7],
   pumpkin: ["growl", 1.2], ghost: ["ghost", 1.3], hbat: ["screech", 1.1], skeleton: ["creak", 1.4], zombie: ["grunt", 0.9], candy: ["giggle", 1.5], mummy: ["ghost", 0.9], witchcat: ["hiss", 1.1],
   witch: ["giggle", 0.7], vampire: ["human", 0.6], pumpkinking: ["roar", 0.65],
+  xmasball: ["giggle", 1.4], tinsel: ["hiss", 1.3], gingerbread: ["giggle", 1.2], snowman: ["grunt", 1.0], elf: ["giggle", 1.6], present: ["growl", 1.1], candycane: ["giggle", 1.5], reindeer: ["screech", 1.0],
+  cert: ["roar", 0.8], stromisko: ["creak", 0.7], santa: ["roar", 0.65],
   tickqueen: ["chitter", 0.55], wisplady: ["ghost", 0.8], greyfang: ["growl", 0.6], grizzly: ["roar", 0.5], willow: ["creak", 0.55], forestlord: ["roar", 0.7],
 };
 function voice(type, p, mode) {
@@ -1543,8 +1557,8 @@ const TRAITS = { heal: { ic: "💚", n: "Léčitel", d: "Když útočí, vyléč
   mute: { ic: "💤", n: "Uspávač", d: "Jeho útok umlčí hrdinu: 2 kola nenabíjí manu." },
   rage: { ic: "💢", n: "Zuřivec", d: "Když padne spojenec, rozzuří se: 3 kola útočí silněji a zaútočí dřív." } };
 const TRAIT = {};
-for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll shroom root", guard: "box hedgehog blanket brick ant stump mossgolem skeleton", poison: "spray wasp mosquito spider crayon tick viper",
-  burn: "dryer laser lamp robot hornet pumpkin", mute: "owl moth snorer jackbox wisp goblin ghost witchcat", rage: "bulldog doberman dino alarm wolf boar badger" })) for (const k of ks.split(" ")) TRAIT[k] = t;
+for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll shroom root gingerbread", guard: "box hedgehog blanket brick ant stump mossgolem skeleton present", poison: "spray wasp mosquito spider crayon tick viper candycane",
+  burn: "dryer laser lamp robot hornet pumpkin", mute: "owl moth snorer jackbox wisp goblin ghost witchcat tinsel", rage: "bulldog doberman dino alarm wolf boar badger reindeer" })) for (const k of ks.split(" ")) TRAIT[k] = t;
 function traitAct(e, i, tg) {
   const tr = TRAIT[e.k], p = enemyPos(i); if (!tr) return;
   const say = (t, c) => floats.push({ x: p.x, y: p.y - 110, text: t, col: c, t: 1.1 });
@@ -1588,6 +1602,9 @@ const BOSS_SK = {
   witch:     ["Kotel jedů!", "all", 1.0, "poison"],
   vampire:   ["Upíří kousnutí!", "drainHeal", 0.12],
   pumpkinking:["Dýňová bouře!", "all", 1.2, "burn"],
+  cert:      ["Do pytle!", "drainAll", 0.7, "mute"],
+  stromisko: ["Jehličková smršť!", "all", 1.1, "poison"],
+  santa:     ["Pytel uhlí!", "all", 1.2, "burn"],
   tickqueen: ["Sání krve!", "drainHeal", 0.12, "poison"],
   wisplady:  ["Bludný kruh!", "allSlow", 0.8, "mute"],
   greyfang:  ["Smečka!", "multi", 4],
@@ -1599,9 +1616,9 @@ const BOSS_SK = {
 const ATK_ST = {}, ATK_COL = { claw: "#ff3b3b", sting: "#ffd23f", water: "#4fb8ff", fire: "#ff7a1a", magic: "#c77dff", laser: "#ff2e4d", electric: "#7fd6ff", star: "#ffe066", slam: "#e8d5b0" },
   ATK_COLK = { wisp: "#5ff2d0", wisplady: "#5ff2d0", shroom: "#b8f25f", goblin: "#9be15d", forestlord: "#7bd88f", willow: "#9ab35a", root: "#b08a5a", tick: "#c0392b", tickqueen: "#c0392b", clay: "#7ee05a", swamptoad: "#9a7a4a", toad: "#7ee05a", lamp: "#fff2a8", nightmare: "#7b2ff7", crayon: "#ff6fa8", curtain: "#d8e8ff", mirror: "#bfe9ff", wardrobe: "#a58bff", snorer: "#8fb8ff", puppeteer: "#e0aaff", clownqueen: "#ff6fa8", underbed: "#9b5de5" };
 for (const [st, ks] of Object.entries({ claw: "hbat zombie tick ant viper wolf lynx centipede badger tickqueen greyfang mouse crow pigeon bulldog tomcat ratking rottweiler baron hedgehog mole fox bat owl ratninja marten doberman foxbaron nightowl spider roach moth mothqueen spidermother dustbunny dino underbed catcher",
-  sting: "wasp mosquito waspqueen fly hornet", water: "spray bath hose swamptoad clay", fire: "dryer", magic: "ghost mummy witchcat witch vampire pumpkinking toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon wisp shroom goblin wisplady forestlord",
-  laser: "laser archmage lamp", electric: "vac titan mower mulcher robot megabot rccar alarm ticktock", star: "teddy bigteddy soldier brick brickrex yoyo ball doll horse jackbox toyking kite",
-  slam: "pumpkin skeleton candy cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet stump boar root mossgolem grizzly willow" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
+  sting: "wasp mosquito waspqueen fly hornet candycane", water: "spray bath hose swamptoad clay snowman", fire: "dryer", magic: "ghost mummy witchcat witch vampire pumpkinking elf cert santa toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon wisp shroom goblin wisplady forestlord",
+  laser: "laser archmage lamp", electric: "vac titan mower mulcher robot megabot rccar alarm ticktock", star: "teddy bigteddy soldier brick brickrex yoyo ball doll horse jackbox toyking kite xmasball tinsel stromisko",
+  slam: "pumpkin skeleton candy gingerbread present reindeer cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet stump boar root mossgolem grizzly willow" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
 function atkImpact(st, x, y, col, boss) {
   const R = boss ? 1.4 : 1, up = (n, c) => { for (let q = 0; q < n; q++) particles.push({ x: x + (Math.random() - .5) * 90, y: y + (Math.random() - .5) * 40, vx: (Math.random() - .5) * 1.5, vy: -1 - Math.random() * 2, t: 0.9, col: c(q), fl: true }); };
   if (st === "water") { for (let q = 0; q < (boss ? 3 : 2); q++) burst(x, y, col); rings.push({ x, y: y + 20, t: 0.4, d: 0.4, col, R: 140 * R }); }
@@ -1955,8 +1972,8 @@ function frame(now) {
   if (!gpu) {
   const fb = g.createLinearGradient(0, 0, 0, FH); fb.addColorStop(0, "#2a1b4a"); fb.addColorStop(0.5, "#1b1330"); fb.addColorStop(1, "#0f0b1c");
   g.fillStyle = fb; g.fillRect(0, 0, W, FH);
-  const BGI = playLike() && ok(img[battleBg()]) ? img[battleBg()] : img.bg;
-  if (ok(BGI) && DY > 0) { const ih = FH, iw = ih * BGI.naturalWidth / BGI.naturalHeight; g.globalAlpha = scene === "play" ? 0.9 : 0.5; g.drawImage(BGI, (W - iw) / 2, 0, iw, ih); g.globalAlpha = 1;
+  const BGI = playLike() && ok(img[battleBg()]) ? img[battleBg()] : playLike() ? img.bg : menuBgImg();
+  if (ok(BGI) && DY > 0) { const ih = FH, iw = ih * BGI.naturalWidth / BGI.naturalHeight; g.globalAlpha = scene === "play" ? 0.9 : scene === "menu" && menuSeason() ? 0.95 : 0.5; g.drawImage(BGI, (W - iw) / 2, 0, iw, ih); g.globalAlpha = 1;  // sezónní menu výrazněji
     const lo = g.createLinearGradient(0, DY + 380, 0, FH); lo.addColorStop(0, "rgba(15,10,30,0)"); lo.addColorStop(0.35, "rgba(15,10,30,.8)"); lo.addColorStop(1, "rgba(10,6,20,.96)"); g.fillStyle = lo; g.fillRect(0, 0, W, FH); }
   if (!playLike()) g.translate(0, DY);
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#2a1b4a"); bg.addColorStop(0.45, "#1b1330"); bg.addColorStop(1, "#0f0b1c");
@@ -2102,8 +2119,8 @@ function title(x, y, s) {
   g.restore();
 }
 function drawMenu() {
-  if (ok(img.bg) && DY <= 0) { g.drawImage(img.bg, 0, 0, W, 1270); }
-  const vg = g.createLinearGradient(0, 0, 0, H); vg.addColorStop(0, "rgba(10,6,24,.82)"); vg.addColorStop(0.45, "rgba(14,8,30,.45)"); vg.addColorStop(0.7, "rgba(10,6,22,.8)"); vg.addColorStop(1, "rgba(8,5,18,.97)");
+  { const MB = menuBgImg(); if (ok(MB) && DY <= 0) g.drawImage(MB, 0, 0, W, 1270); }
+  const vs = menuSeason() ? 0.6 : 1, vg = g.createLinearGradient(0, 0, 0, H); vg.addColorStop(0, "rgba(10,6,24," + 0.82 * vs + ")"); vg.addColorStop(0.45, "rgba(14,8,30," + 0.45 * vs + ")"); vg.addColorStop(0.7, "rgba(10,6,22," + 0.8 * vs + ")"); vg.addColorStop(1, "rgba(8,5,18,.97)");
   g.fillStyle = vg; g.fillRect(0, -DY, W, FH);
   g.save(); g.translate(0, menuOff());
   // světlo za hrdiny a stín pod nimi
@@ -2132,7 +2149,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2294,7 +2311,7 @@ function header(t) {
 }
 const BACK = { x: 200, y: 1176, w: 320, h: 76, t: "Zpět" };
 function backBtn() { const fg = g.createLinearGradient(0, 1110, 0, H); fg.addColorStop(0, "rgba(12,5,28,0)"); fg.addColorStop(0.4, "rgba(12,5,28,.95)"); g.fillStyle = fg; g.fillRect(0, 1110, W, H - 1110); button(BACK, "#4a3a7a"); }
-function menuBg() { if (ok(img.bg) && DY <= 0) { g.globalAlpha = 0.3; g.drawImage(img.bg, 0, 0, W, 1270); g.globalAlpha = 1; } }
+function menuBg() { const MB = menuBgImg(); if (ok(MB) && DY <= 0) { g.globalAlpha = 0.3; g.drawImage(MB, 0, 0, W, 1270); g.globalAlpha = 1; } }
 const ITEM = {};
 function itemCanvas(k) { if (ITEM[k]) return ITEM[k]; const im = img[k]; if (!ok(im)) return null; const S = 256, P = 40, c = document.createElement("canvas"); c.width = c.height = S + 2 * P;
   const x = c.getContext("2d"); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 18; x.shadowOffsetY = 12; x.drawImage(im, P, P, S, S); return ITEM[k] = c; }
@@ -2314,8 +2331,14 @@ function eventWaves() {  // síla podle energie týmu (~75 % toho, co tým zvlá
 const SEASONS = [
   { id: "halloween", n: "Halloween", bg: "bgH", d: "Dýně, strašidla a Dýňový král.", from: [10, 10], to: [11, 15], col: "#ff8a1f",
     bosses: { 5: ["witch"], 8: ["vampire"], 10: ["pumpkinking", "witch", "vampire"] } },
+  { id: "vanoce", n: "Vánoce", bg: "bgX", d: "Perníčky, sněhuláci, čert a Santa Mňaukus.", from: [12, 23], to: [1, 2], col: "#e8414f",
+    bosses: { 5: ["cert"], 8: ["stromisko"], 10: ["santa", "cert", "stromisko"] } },
 ];
 const SEAS_N = 10, seasonById = id => SEASONS.find(S => S.id === id);
+// hlavní menu v atmosféře právě běžící sezóny (Halloween, Vánoce, Velikonoce); po sezóně zpět základní kuchyň
+function easterDate(y) { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), gg = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - gg + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), n = h + l - 7 * m + 114; return new Date(y, Math.floor(n / 31) - 1, n % 31 + 1); }
+function menuSeason(dt = new Date()) { const S = SEASONS.find(s => seasonOpen(s, dt)); if (S) return S.id; const dd = (dt - easterDate(dt.getFullYear())) / 864e5; return dd >= -10 && dd <= 8 ? "velikonoce" : null; }
+const menuBgImg = () => { const s = menuSeason(); return s && ok(img["menu_" + s]) ? img["menu_" + s] : img.bg; };
 let seasonMode = null, seasonPop = null;  // seasonMode = { id, lvl } během boje
 function seasonOpen(S, d = new Date()) { const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
 function seasonDaysTo(S) { const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return i; d.setDate(d.getDate() + 1); } return 0; }
@@ -3015,7 +3038,7 @@ function drawSeasons() {
     g.fillStyle = "#fff"; g.font = "800 15px Baloo, sans-serif"; g.textAlign = "center"; g.fillText(dn + " / " + SEAS_N + (dn >= SEAS_N ? " · dohráno ✔" : ""), b.x + 326, b.y + b.h - 19);
     if (!open) { g.fillStyle = "rgba(5,3,12,.68)"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.fillStyle = "#fff"; g.font = "800 30px Baloo, sans-serif"; const dd = seasonDaysTo(S); g.fillText("🔒 Vrátí se za " + dd + " " + pl(dd, "den", "dny", "dní"), W / 2, b.y + 70); } });
   const nb = seasCard(SEASONS.length); g.fillStyle = "rgba(20,12,40,.6)"; rr(nb.x, nb.y, nb.w, nb.h, 28); g.fill(); g.setLineDash([10, 10]); g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 3; rr(nb.x, nb.y, nb.w, nb.h, 28); g.stroke(); g.setLineDash([]);
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Další svátky připravujeme", W / 2, nb.y + 104); g.font = "600 20px Baloo, sans-serif"; g.fillText("Vánoce, Velikonoce a další…", W / 2, nb.y + 140);
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Další svátky připravujeme", W / 2, nb.y + 104); g.font = "600 20px Baloo, sans-serif"; g.fillText("Velikonoce, Den kočky a další…", W / 2, nb.y + 140);
   g.restore(); header("Sezónní kampaně"); backBtn();
   if (seasonPop) drawSeasonPop();
 }
