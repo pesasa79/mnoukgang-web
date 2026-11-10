@@ -2211,7 +2211,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.2" + (ED.test ? " · TEST" : ""), W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.3" + (ED.test ? " · TEST" : ""), W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2964,7 +2964,7 @@ function drawFoeCard(k) {
   g.fillStyle = "rgba(10,6,20,.85)"; rr(x + 24, y + 645, w - 48, 380, 24); g.fill();
   g.textAlign = "center"; g.fillStyle = boss ? "#ffd166" : "#fff"; g.font = "800 48px Baloo, sans-serif"; g.fillText(f.n, W / 2, y + 705);
   g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 22px Baloo, sans-serif";
-  g.fillText(f.t + " · " + ACTS[(f.act || 1) - 1].n + (boss ? " · " + f.boss + ". boss" : " · od úrovně " + f.from), W / 2, y + 739);
+  g.fillText(f.t + " · " + (f.season ? (seasonById(f.season) || { n: "" }).n : (ACTS[(f.act || 1) - 1] || { n: "" }).n) + (boss ? " · " + f.boss + ". boss" : " · od úrovně " + f.from), W / 2, y + 739);
   const bar = (lbl, v, txt, c, yy) => { g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.85)"; g.font = "700 22px Baloo, sans-serif"; g.fillText(lbl, x + 50, yy + 17);
     g.fillStyle = "rgba(0,0,0,.5)"; rr(x + 180, yy, 230, 20, 10); g.fill(); g.fillStyle = c; rr(x + 180, yy, 230 * Math.max(0.04, Math.min(1, v)), 20, 10); g.fill();
     g.fillStyle = "#fff"; g.fillText(txt, x + 426, yy + 17); };
