@@ -440,8 +440,8 @@ function drawItIcon(it, x, y, s, a = 1) { if (drawItem("it_" + it.id, x, y, s * 
   else { g.textAlign = "center"; g.fillStyle = "#fff"; g.font = Math.round(s * 0.62) + "px sans-serif"; g.fillText(it.ic, x, y + s * 0.22); }
   g.restore(); }
 // losování předmětů do inventáře (vzácnější = velké lahvičky, oživení, bomby); vrací názvy
-function rollItems(n) { const out = []; save.inv = save.inv || {};
-  for (let q = 0; q < n; q++) { let r = Math.random() * IT_WSUM; const it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.id); }
+function rollItems(n, uniq) { const out = []; save.inv = save.inv || {};
+  for (let q = 0; q < n; q++) { let it; for (let k = 0; k < 20; k++) { let r = Math.random() * IT_WSUM; it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; if (!uniq || !out.includes(it.id)) break; } save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.id); }
   if (n > 0) save.stats.itemsGot = (save.stats.itemsGot || 0) + n; return out; }
 const itNames = ids => ids.map(id => ITM[id].n + (ITM[id].pot ? (ITM[id].cat ? " (kočičí)" : " (lidský)") : ""));
 const kindIn = cat => teamHeroes().some(h => isCat(h) === cat);
@@ -452,6 +452,8 @@ function autoLoad() { const has = id => ITM[id] && (save.inv[id] || 0) > 0 && ki
   const changed = L.join() !== (save.load || []).join(); save.load = L; if (changed) store(); return changed && was > 0; }
 // krystaly navíc: šance při opakování a výměna jídla, které už není kam dát (10. 11. 2026, Petr: bez krystalů se nedalo pokračovat)
 const CR_REP = { e: 0.35, h: 0.6 }, IT_REP = { e: 0.3, h: 0.5 }, EX_MAX = 10, exPrice = () => Math.round(250 * rewScale() / 10) * 10;
+// 3 hvězdy = vždy 1 až 5 předmětů, každý jiný (11. 11. 2026, Petr: předmětů padalo málo)
+const star3Items = () => 1 + (Math.random() < 0.7) + (Math.random() < 0.45) + (Math.random() < 0.25) + (Math.random() < 0.12);
 const exLeft = () => { if (!save.exch || save.exch.d !== dayNum()) save.exch = { d: dayNum(), n: 0 }; return EX_MAX - save.exch.n; };
 // obsah truhly (3. 11. 2026: méně krystalů a střípků)
 const chestRoll = () => ({ i: 1 + (Math.random() < 0.5 ? 1 : 0), g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5), m: Math.random() < 0.4 ? 3 : 0 });
@@ -1684,14 +1686,14 @@ async function nextWave() {
       const R = first ? 2.5 : 0.2, bonus = Math.round((20 + 10 * seasonMode.st) * R), gain = Math.round(lootG * R) + bonus, cr = first ? 2 + Math.floor(n / 3) : 0, sc = first && (n === 5 || n === 10) ? 2 : 0;
       addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS + (first ? 3 : 0); save.stats.shardsGot += lootS; save.stats.seasonW++;
       if (first) { save.season[key] = n; if (n === SEAS_N) { save.crystals += 15; save.scrolls += 3; save.shards += 30; for (let c = 0; c < 5; c++) save.ess[c] += 10; save.stats.seasonAll++; toast = { t: 3, text: "Celý " + S.n + " dohrán! Sezónní truhla: 15 krystalů, 3 svitky, 30 střípků, 10 esencí od každé barvy" }; } }
-      winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS, rollItems(first ? 1 : Math.random() < 0.25 ? 1 : 0)]; store(); startEnd("win"); return; }
+      winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS, rollItems(first ? 1 + rnd(3) : 1 + (Math.random() < 0.4), true)]; store(); startEnd("win"); return; }
     if (eventMode) { save.stats.eventW++; const r = EVENT_REW, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { const c = rnd(5); save.ess[c]++; lootE[c]++; save.stats.essGot++; }
       levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh, rollItems(2)]; store(); startEnd("win"); return; }
     const hpF = heroes.reduce((a, h) => a + Math.max(0, h.cur), 0) / heroes.reduce((a, h) => a + h.hp, 0), stars = hpF >= 0.6 ? 3 : hpF >= 0.3 ? 2 : 1, sk = starKey(stage), prevS = save.stars[sk] || 0;
     save.stats.starsGot += stars; if (diff === "h") save.stats.winsH++; if (stars > prevS) save.stars[sk] = stars; const s3 = stars === 3 && prevS < 3; if (s3) { save.stats.stars3++; save.crystals += 1; }
     const c = actOf(stage), ls = localSt(stage), first = ls > progOf(c, diff), R = DIFF[diff].rew * (first ? 1 : 0.2);
     const bonus = Math.round(stageBonus(stage) * R), gain = Math.round(lootG * R) + bonus, cr = first ? Math.max(1, Math.round(lootC * R)) : Math.random() < CR_REP[diff] ? 1 : 0;  // opakování: krystal náhodou (10. 11. 2026 víc – hraní hlídá mlíčko)
-    const itg = rollItems(first ? ([5, 8, 10].includes(ls) ? 1 : 0) + (Math.random() < 0.4 ? 1 : 0) : Math.random() < IT_REP[diff] ? 1 : 0);
+    const itg = stars === 3 ? rollItems(star3Items() + (first && [5, 8, 10].includes(ls) ? 1 : 0), true) : rollItems(first ? ([5, 8, 10].includes(ls) ? 1 : 0) + (Math.random() < 0.4 ? 1 : 0) : Math.random() < IT_REP[diff] ? 1 : 0);
     const sc = first ? scrollsFor(ls, diff) : Math.random() < 0.1 ? 1 : 0;  // opakování: boss občas pustí svitek
     addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS; save.stats.shardsGot += lootS; if (stars === 3) save.stats.win3++; winAnim = 0; levelUps = [gain, cr, bonus, sc, first, stars, s3, lootS, itg];
     if (first) save.prog[c + diff] = ls; save.stage = Math.max(save.stage || 1, stage + 1);
@@ -2130,7 +2132,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2580,7 +2582,7 @@ const HELP = [
       gl.addColorStop(0, "rgba(255,209,102," + (0.3 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 110, cy - 110, 220, 220); if (ok(img[k])) g.drawImage(img[k], x - 75, cy - 75, 150, 150);
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 55, cy - 55, 16, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 18px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("1", x + 55, cy - 49);
       g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText(["Úkoly", "Odměna", "Truhla"][j], x, cy + 110); }); } },
-  { t: "Předměty a batoh", d: "V Batohu máš 15 kočičích a 15 lidských předmětů – kočičí vybereš jen s kočkou v týmu, lidské jen s člověkem. Před bojem zvol až 4 druhy, z každého půjdou do boje 3 kusy. V boji jsou předměty v liště nad hracím polem – ťukni a použij, tah to nestojí. Elixíry zdraví léčí, elixíry many nabíjejí manu, ostatní útočí, zdržují nebo chrání. Padají z výher, truhly, úkolů, titána a Noci bossů.",
+  { t: "Předměty a batoh", d: "V Batohu máš 15 kočičích a 15 lidských předmětů – kočičí vybereš jen s kočkou v týmu, lidské jen s člověkem. Před bojem zvol až 4 druhy, z každého půjdou do boje 3 kusy. V boji jsou předměty v liště nad hracím polem – ťukni a použij, tah to nestojí. Elixíry zdraví léčí, elixíry many nabíjejí manu, ostatní útočí, zdržují nebo chrání. Za výhru na 3 hvězdy padne vždy 1 až 5 různých předmětů, další dává truhla, úkoly, titán a Noc bossů.",
     draw(y) { const row = (ids, yy) => ids.forEach((id, j) => { const it = ITM[id], x = W / 2 + (j - (ids.length - 1) / 2) * Math.min(104, 600 / ids.length); drawItIcon(it, x, yy, 70); });
       g.textAlign = "center"; g.fillStyle = "#ff8a8a"; g.font = "700 17px 'Exo 2', sans-serif"; g.fillText("elixíry zdraví – malý, střední, velký", W / 2 - 160, y + 20); g.fillStyle = "#d99bff"; g.fillText("elixíry many", W / 2 + 170, y + 20);
       row(["c1", "c2", "c3", "c4", "c5", "c6"], y + 80); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("kočičí (baňky)", W / 2, y + 140);
@@ -2950,7 +2952,7 @@ const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 506, y: 1090, w: 
 function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(t, x, y); g.letterSpacing = "0px";
   const lg = g.createLinearGradient(x, 0, x + 600, 0); lg.addColorStop(0, "rgba(243,198,110,.5)"); lg.addColorStop(1, "rgba(243,198,110,0)"); g.fillStyle = lg; g.fillRect(x, y + 9, 600, 1.5); }
 const LP_FAST = { x: 58, y: 1004, w: 604, h: 66, t: "⚡ Rychle dohrát (3 hvězdy)" };
-function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(Math.random() < IT_REP[diff] ? 1 : 0); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itNames(itg).join(", ") : "") }; }
+function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(star3Items(), true); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itNames(itg).join(", ") : "") }; }
 function drawLevelPop() {
   const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX;
   g.fillStyle = "rgba(5,3,12,.8)"; g.fillRect(0, -DY, W, FH);
