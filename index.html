@@ -193,6 +193,54 @@ const FOES = {
   cert: { act: 91, season: "vanoce", n: "Čert Pytlík", t: "boss · čert", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Kdo zlobil, jde do pytle. Z pytle mu čouhá kočičí ocas." },
   stromisko: { act: 91, season: "vanoce", n: "Stromisko Jehličák", t: "boss · živý stromeček", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Kočky ho třikrát shodily. Teď si to s nimi vyřídí." },
   santa: { act: 91, season: "vanoce", n: "Santa Mňaukus", t: "boss · zlý vánoční kocour", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Místo dárků rozdává uhlí a škrábance. Sobi mu utekli." },
+  // Masopust (11. 11. 2026)
+  kobliha: { act: 92, season: "masopust", n: "Kobliha Marmeláda", t: "kobliha", hp: 640, atk: 92, cd: 3, from: 1, d: "Plná marmelády a zloby. Lepí se na tlapky." },
+  jitrnice: { act: 92, season: "masopust", n: "Jitrnice Špejle", t: "jitrnice", hp: 560, atk: 96, cd: 2, from: 1, d: "Voní tak, že se kočky zapomenou bránit." },
+  maska: { act: 92, season: "masopust", n: "Maska Škleba", t: "masopustní maska", hp: 540, atk: 104, cd: 2, from: 2, d: "Za maskou se šklebí… další maska." },
+  kobyla: { act: 92, season: "masopust", n: "Klibna Kobyla", t: "masopustní kobyla", hp: 660, atk: 98, cd: 3, from: 2, d: "Dva chlapi v jednom koni. Ani jeden neví, kam jde." },
+  kominik: { act: 92, season: "masopust", n: "Kominík Sazička", t: "kominík", hp: 780, atk: 94, cd: 3, from: 3, d: "Ušpiní každou bílou kočku. Kefír zuří." },
+  bubenik: { act: 92, season: "masopust", n: "Bubeník Bum", t: "bubeník", hp: 520, atk: 108, cd: 2, from: 4, d: "Bubnuje celou noc. Ňuňa sedí ve skříni." },
+  slamak: { act: 92, season: "masopust", n: "Slaměný Medvěd", t: "slaměný medvěd", hp: 820, atk: 100, cd: 3, from: 6, d: "Celý ze slámy. Tancuje za koblihu." },
+  turon: { act: 92, season: "masopust", n: "Turoň Rohatec", t: "masopustní býk", hp: 600, atk: 112, cd: 2, from: 7, d: "Masopustní býk. Trká do všeho, co se hýbe." },
+  hunac: { act: 92, season: "masopust", n: "Medvěd Huňáč", t: "boss · masopustní medvěd", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Vede ho medvědář na řetězu. Nebo on vede medvědáře?" },
+  smrtka: { act: 92, season: "masopust", n: "Smrtka Kostička", t: "boss · masopustní smrtka", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Tančí s kosou a chichotá se. Kočky zalezly i do pračky." },
+  knize: { act: 92, season: "masopust", n: "Kníže Koblihožrout", t: "boss · vládce masopustu", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Snědl všechny koblihy. Teď chce i granule." },
+  // Velikonoce (11. 11. 2026)
+  kraslice: { act: 93, season: "velikonoce", n: "Kraslice Pukavka", t: "prasklá kraslice", hp: 640, atk: 92, cd: 3, from: 1, d: "Kočky ji kutálely po zemi, až praskla. Teď kope." },
+  pomlazka: { act: 93, season: "velikonoce", n: "Pomlázka Šlehačka", t: "živá pomlázka", hp: 560, atk: 96, cd: 2, from: 1, d: "Vyšlehá každého. Kočky prchají pod gauč." },
+  kuratko: { act: 93, season: "velikonoce", n: "Kuřátko Pípal", t: "vzteklé kuřátko", hp: 540, atk: 104, cd: 2, from: 2, d: "Malé, žluté a neuvěřitelně hlasité." },
+  beranek: { act: 93, season: "velikonoce", n: "Beránek Bábovka", t: "beránek z bábovky", hp: 660, atk: 98, cd: 3, from: 2, d: "Upečený, pocukrovaný a strašně naštvaný." },
+  zajic: { act: 93, season: "velikonoce", n: "Zajíc Schovávač", t: "zlodějský zajíc", hp: 780, atk: 94, cd: 3, from: 3, d: "Schovává vajíčka. Kočkám i misky s granulemi." },
+  mazanec: { act: 93, season: "velikonoce", n: "Mazanec Křížák", t: "kulatý mazanec", hp: 520, atk: 108, cd: 2, from: 4, d: "Kulatý, sladký, s křížem na zádech a mandlemi místo zubů." },
+  jiva: { act: 93, season: "velikonoce", n: "Jívová Kočička", t: "jívová kočička", hp: 820, atk: 100, cd: 3, from: 6, d: "Říkají jí kočička, ale mňoukat neumí. Kefír je uražený." },
+  slepice: { act: 93, season: "velikonoce", n: "Slepice Snáška", t: "slepice", hp: 600, atk: 112, cd: 2, from: 7, d: "Snáší vejce rychleji, než je kočky stihnou shodit ze stolu." },
+  kohout: { act: 93, season: "velikonoce", n: "Kohout Kokrhel", t: "boss · kohout", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Kokrhá ve čtyři ráno. Kočky ho chtějí na pekáč." },
+  dlouhouch: { act: 93, season: "velikonoce", n: "Zajíc Dlouhouch", t: "boss · obří zajíc", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Velikonoční zajíc velký jako skříň. Vajíčka hází jako granáty." },
+  vrbous: { act: 93, season: "velikonoce", n: "Vrbový Král Šlehoun", t: "boss · vládce Velikonoc", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Král všech pomlázek. Kdo nedá vajíčko, dostane přes ocas." },
+  // Léto u rybníka (11. 11. 2026)
+  sosak: { act: 94, season: "leto", n: "Komár Sosák", t: "komár", hp: 640, atk: 92, cd: 3, from: 1, d: "Bzučí u ucha celou noc. Ňuňa ho honí po stropě." },
+  zabak: { act: 94, season: "leto", n: "Žabák Kvakoš", t: "žabák", hp: 560, atk: 96, cd: 2, from: 1, d: "Kváká pod oknem. Kočky ho chtějí jen… pozdravit." },
+  rak: { act: 94, season: "leto", n: "Rak Klepetáč", t: "rak", hp: 540, atk: 104, cd: 2, from: 2, d: "Štípne každou tlapku, co se přiblíží." },
+  zmrzlina: { act: 94, season: "leto", n: "Zmrzlina Rozteklá", t: "roztečená zmrzlina", hp: 660, atk: 98, cd: 3, from: 2, d: "Rozteče se ti po fousech a lepí." },
+  krokodyl: { act: 94, season: "leto", n: "Nafukovák Krokodýl", t: "nafukovací krokodýl", hp: 780, atk: 94, cd: 3, from: 3, d: "Nafukovací, ale kousne doopravdy." },
+  ovad: { act: 94, season: "leto", n: "Ovád Štípal", t: "ovád", hp: 520, atk: 108, cd: 2, from: 4, d: "Štípe i přes srst. Kočky ho nesnášejí." },
+  kapr: { act: 94, season: "leto", n: "Kapr Šupináč", t: "kapr", hp: 820, atk: 100, cd: 3, from: 6, d: "Uplaval z vany. Kočky ho chtěly na večeři." },
+  pistole: { act: 94, season: "leto", n: "Vodní Pistole Stříkal", t: "vodní pistole", hp: 600, atk: 112, cd: 2, from: 7, d: "Stříká na kočky. Nejhorší vynález lidstva." },
+  stika: { act: 94, season: "leto", n: "Štika Zubatice", t: "boss · štika", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Královna rybníka. Má víc zubů než celý tým." },
+  bourka: { act: 94, season: "leto", n: "Bouřka Hromovka", t: "boss · letní bouřka", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Hřmí a blýská se. Všechny kočky jsou pod postelí." },
+  vodnik: { act: 94, season: "leto", n: "Vodník Kebule", t: "boss · vládce rybníka", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Sbírá dušičky do hrníčků. Kočičí by chtěl nejvíc." },
+  // Houbaření (11. 11. 2026)
+  muchomurka: { act: 95, season: "houby", n: "Muchomůrka Tečkovaná", t: "muchomůrka", hp: 640, atk: 92, cd: 3, from: 1, d: "Krásná, červená a jedovatá. Kočkám čuchat zakázáno." },
+  kozak: { act: 95, season: "houby", n: "Hřib Kozák", t: "kozák", hp: 560, atk: 96, cd: 2, from: 1, d: "Vousatý hřib. Tváří se jako šéf lesa." },
+  liska: { act: 95, season: "houby", n: "Liška Žlutá", t: "liška (houba)", hp: 540, atk: 104, cd: 2, from: 2, d: "Je to houba, ne liška. Ňuňa to pořád plete." },
+  bedla: { act: 95, season: "houby", n: "Bedla Vysoká", t: "bedla", hp: 660, atk: 98, cd: 3, from: 2, d: "Vysoká jako deštník. Kočky se pod ní schovávají před deštěm." },
+  slimak: { act: 95, season: "houby", n: "Slimák Slizoun", t: "slimák", hp: 780, atk: 94, cd: 3, from: 3, d: "Sní všechny houby a nechá jen sliz." },
+  siska: { act: 95, season: "houby", n: "Šiška Padalka", t: "šiška", hp: 520, atk: 108, cd: 2, from: 4, d: "Padá ze stromu přímo na kočičí hlavy." },
+  satan: { act: 95, season: "houby", n: "Hřib Satan", t: "hřib satan", hp: 820, atk: 100, cd: 3, from: 6, d: "Jmenuje se fakt tak. A chová se taky tak." },
+  kosik: { act: 95, season: "houby", n: "Košík Chňapal", t: "houbařský košík", hp: 600, atk: 112, cd: 2, from: 7, d: "Vypadá jako košík na houby. Chňapne po tlapce." },
+  megamuch: { act: 95, season: "houby", n: "Mega Muchomůrka", t: "boss · obří muchomůrka", hp: 6200, atk: 196, cd: 3, boss: 1, d: "Obří a jedovatá. Kdo ji olízne, vidí barvy." },
+  kanec: { act: 95, season: "houby", n: "Divočák Kňour", t: "boss · divočák", hp: 6600, atk: 206, cd: 3, boss: 2, d: "Les je jeho. Houby taky." },
+  hribous: { act: 95, season: "houby", n: "Houbový Král Hřibouš", t: "boss · vládce lesa", hp: 7400, atk: 214, cd: 3, boss: 3, d: "Král všech hříbků. Nosí korunu z jehličí a nesnáší houbaře." },
   // ---- Kampaň 5: Temný les ----
   wisp: { act: 5, n: "Bludička Světluška", t: "bludička", hp: 900, atk: 130, cd: 2, from: 1, d: "Svítí jako lucerna a láká z cesty. Kdo jde za ní, usne." },
   tick: { act: 5, n: "Klíště Krvinka", t: "lesní klíště", hp: 860, atk: 126, cd: 2, from: 1, d: "Malé, ale zákeřné. Přisaje se a nepustí." },
@@ -680,7 +728,7 @@ for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; loa
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
 for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
-load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("bgX", "img/bg_vanoce.jpg"); for (const s of ["halloween", "vanoce", "velikonoce"]) load("menu_" + s, "img/bg_menu_" + s + ".jpg"); load("diamond", "img/gem_diamond.png");
+load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("bgX", "img/bg_vanoce.jpg"); for (const s of ["halloween", "vanoce", "velikonoce", "masopust", "leto", "houby"]) load("menu_" + s, "img/bg_menu_" + s + ".jpg"); load("bgM", "img/bg_masopust.jpg"); load("bgE", "img/bg_velikonoce.jpg"); load("bgL", "img/bg_leto.jpg"); load("bgO", "img/bg_houby.jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
 function portrait(k, x, y, R) {
@@ -1088,6 +1136,7 @@ const VOICE = {
   witch: ["giggle", 0.7], vampire: ["human", 0.6], pumpkinking: ["roar", 0.65],
   xmasball: ["giggle", 1.4], tinsel: ["hiss", 1.3], gingerbread: ["giggle", 1.2], snowman: ["grunt", 1.0], elf: ["giggle", 1.6], present: ["growl", 1.1], candycane: ["giggle", 1.5], reindeer: ["screech", 1.0],
   cert: ["roar", 0.8], stromisko: ["creak", 0.7], santa: ["roar", 0.65],
+  kobliha: ["giggle", 1.0], jitrnice: ["grunt", 1.1], maska: ["ghost", 1.2], kobyla: ["human", 1.3], kominik: ["human", 1.4], bubenik: ["growl", 1.0], slamak: ["growl", 1.1], turon: ["roar", 1.2], hunac: ["roar", 0.80], smrtka: ["giggle", 0.75], knize: ["human", 0.70], kraslice: ["giggle", 1.0], pomlazka: ["hiss", 1.1], kuratko: ["screech", 1.2], beranek: ["grunt", 1.3], zajic: ["giggle", 1.4], mazanec: ["growl", 1.0], jiva: ["hiss", 1.1], slepice: ["screech", 1.2], kohout: ["roar", 0.80], dlouhouch: ["grunt", 0.75], vrbous: ["roar", 0.70], sosak: ["screech", 1.0], zabak: ["grunt", 1.1], rak: ["growl", 1.2], zmrzlina: ["giggle", 1.3], krokodyl: ["growl", 1.4], ovad: ["screech", 1.0], kapr: ["grunt", 1.1], pistole: ["giggle", 1.2], stika: ["roar", 0.80], bourka: ["roar", 0.75], vodnik: ["human", 0.70], muchomurka: ["giggle", 1.0], kozak: ["grunt", 1.1], liska: ["giggle", 1.2], bedla: ["creak", 1.3], slimak: ["grunt", 1.4], siska: ["growl", 1.0], satan: ["roar", 1.1], kosik: ["growl", 1.2], megamuch: ["roar", 0.80], kanec: ["roar", 0.75], hribous: ["roar", 0.70],
   tickqueen: ["chitter", 0.55], wisplady: ["ghost", 0.8], greyfang: ["growl", 0.6], grizzly: ["roar", 0.5], willow: ["creak", 0.55], forestlord: ["roar", 0.7],
 };
 function voice(type, p, mode) {
@@ -1557,8 +1606,8 @@ const TRAITS = { heal: { ic: "💚", n: "Léčitel", d: "Když útočí, vyléč
   mute: { ic: "💤", n: "Uspávač", d: "Jeho útok umlčí hrdinu: 2 kola nenabíjí manu." },
   rage: { ic: "💢", n: "Zuřivec", d: "Když padne spojenec, rozzuří se: 3 kola útočí silněji a zaútočí dřív." } };
 const TRAIT = {};
-for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll shroom root gingerbread", guard: "box hedgehog blanket brick ant stump mossgolem skeleton present", poison: "spray wasp mosquito spider crayon tick viper candycane",
-  burn: "dryer laser lamp robot hornet pumpkin", mute: "owl moth snorer jackbox wisp goblin ghost witchcat tinsel", rage: "bulldog doberman dino alarm wolf boar badger reindeer" })) for (const k of ks.split(" ")) TRAIT[k] = t;
+for (const [t, ks] of Object.entries({ heal: "bath gnome pillow doll shroom root gingerbread jitrnice beranek zmrzlina bedla", guard: "box hedgehog blanket brick ant stump mossgolem skeleton present slamak mazanec rak kozak", poison: "spray wasp mosquito spider crayon tick viper candycane kobliha jiva sosak muchomurka slimak",
+  burn: "dryer laser lamp robot hornet pumpkin kominik satan", mute: "owl moth snorer jackbox wisp goblin ghost witchcat tinsel maska kuratko ovad kosik", rage: "bulldog doberman dino alarm wolf boar badger reindeer bubenik pomlazka krokodyl siska" })) for (const k of ks.split(" ")) TRAIT[k] = t;
 function traitAct(e, i, tg) {
   const tr = TRAIT[e.k], p = enemyPos(i); if (!tr) return;
   const say = (t, c) => floats.push({ x: p.x, y: p.y - 110, text: t, col: c, t: 1.1 });
@@ -1605,6 +1654,18 @@ const BOSS_SK = {
   cert:      ["Do pytle!", "drainAll", 0.7, "mute"],
   stromisko: ["Jehličková smršť!", "all", 1.1, "poison"],
   santa:     ["Pytel uhlí!", "all", 1.2, "burn"],
+  hunac: ["Medvědí tanec!", "all", 1.0, "mute"],
+  smrtka: ["Kosa smíchu!", "drainAll", 0.7, "mute"],
+  knize: ["Masopustní hostina!", "allHeal", 1.1],
+  kohout: ["Budíček!", "all", 1.0, "mute"],
+  dlouhouch: ["Vaječná palba!", "multi", 4],
+  vrbous: ["Velikonoční šlehání!", "all", 1.2, "poison"],
+  stika: ["Kousnutí z hlubin!", "drainHeal", 0.12],
+  bourka: ["Hrom a blesk!", "all", 1.1, "mute"],
+  vodnik: ["Dušičky do hrníčků!", "drainAll", 0.7, "poison"],
+  megamuch: ["Jedovaté výtrusy!", "all", 1.0, "poison"],
+  kanec: ["Ryjákový nájezd!", "multi", 4],
+  hribous: ["Královské hřibobití!", "all", 1.2, "burn"],
   tickqueen: ["Sání krve!", "drainHeal", 0.12, "poison"],
   wisplady:  ["Bludný kruh!", "allSlow", 0.8, "mute"],
   greyfang:  ["Smečka!", "multi", 4],
@@ -1615,10 +1676,10 @@ const BOSS_SK = {
 // každý nepřítel útočí po svém: zvířata drápy, hmyz žihadla, voda, oheň, magie, laser, elektřina, hračky hvězdičky, těžcí dunivý úder
 const ATK_ST = {}, ATK_COL = { claw: "#ff3b3b", sting: "#ffd23f", water: "#4fb8ff", fire: "#ff7a1a", magic: "#c77dff", laser: "#ff2e4d", electric: "#7fd6ff", star: "#ffe066", slam: "#e8d5b0" },
   ATK_COLK = { wisp: "#5ff2d0", wisplady: "#5ff2d0", shroom: "#b8f25f", goblin: "#9be15d", forestlord: "#7bd88f", willow: "#9ab35a", root: "#b08a5a", tick: "#c0392b", tickqueen: "#c0392b", clay: "#7ee05a", swamptoad: "#9a7a4a", toad: "#7ee05a", lamp: "#fff2a8", nightmare: "#7b2ff7", crayon: "#ff6fa8", curtain: "#d8e8ff", mirror: "#bfe9ff", wardrobe: "#a58bff", snorer: "#8fb8ff", puppeteer: "#e0aaff", clownqueen: "#ff6fa8", underbed: "#9b5de5" };
-for (const [st, ks] of Object.entries({ claw: "hbat zombie tick ant viper wolf lynx centipede badger tickqueen greyfang mouse crow pigeon bulldog tomcat ratking rottweiler baron hedgehog mole fox bat owl ratninja marten doberman foxbaron nightowl spider roach moth mothqueen spidermother dustbunny dino underbed catcher",
-  sting: "wasp mosquito waspqueen fly hornet candycane", water: "spray bath hose swamptoad clay snowman", fire: "dryer", magic: "ghost mummy witchcat witch vampire pumpkinking elf cert santa toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon wisp shroom goblin wisplady forestlord",
-  laser: "laser archmage lamp", electric: "vac titan mower mulcher robot megabot rccar alarm ticktock", star: "teddy bigteddy soldier brick brickrex yoyo ball doll horse jackbox toyking kite xmasball tinsel stromisko",
-  slam: "pumpkin skeleton candy gingerbread present reindeer cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet stump boar root mossgolem grizzly willow" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
+for (const [st, ks] of Object.entries({ claw: "hbat zombie tick ant viper wolf lynx centipede badger tickqueen greyfang mouse crow pigeon bulldog tomcat ratking rottweiler baron hedgehog mole fox bat owl ratninja marten doberman foxbaron nightowl spider roach moth mothqueen spidermother dustbunny dino underbed catcher kuratko zajic slepice kohout rak liska",
+  sting: "wasp mosquito waspqueen fly hornet candycane pomlazka sosak ovad", water: "spray bath hose swamptoad clay snowman zabak zmrzlina kapr pistole stika vodnik slimak", fire: "dryer kominik satan", magic: "ghost mummy witchcat witch vampire pumpkinking elf cert santa toad insomnia nightmare curtain mirror wardrobe puppeteer clownqueen snorer crayon wisp shroom goblin wisplady forestlord maska smrtka jiva vrbous muchomurka megamuch hribous",
+  laser: "laser archmage lamp", electric: "vac titan mower mulcher robot megabot rccar alarm ticktock bubenik bourka", star: "teddy bigteddy soldier brick brickrex yoyo ball doll horse jackbox toyking kite xmasball tinsel stromisko",
+  slam: "pumpkin skeleton candy gingerbread present reindeer cucumber giant box pillow blanket slipper sock scarecrow gnome gardener broom cone vet stump boar root mossgolem grizzly willow kobliha jitrnice kobyla slamak turon hunac knize kraslice beranek mazanec dlouhouch krokodyl kozak bedla siska kosik kanec" })) for (const k of ks.split(" ")) ATK_ST[k] = st;
 function atkImpact(st, x, y, col, boss) {
   const R = boss ? 1.4 : 1, up = (n, c) => { for (let q = 0; q < n; q++) particles.push({ x: x + (Math.random() - .5) * 90, y: y + (Math.random() - .5) * 40, vx: (Math.random() - .5) * 1.5, vy: -1 - Math.random() * 2, t: 0.9, col: c(q), fl: true }); };
   if (st === "water") { for (let q = 0; q < (boss ? 3 : 2); q++) burst(x, y, col); rings.push({ x, y: y + 20, t: 0.4, d: 0.4, col, R: 140 * R }); }
@@ -2149,7 +2210,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2333,15 +2394,29 @@ const SEASONS = [
     bosses: { 5: ["witch"], 8: ["vampire"], 10: ["pumpkinking", "witch", "vampire"] } },
   { id: "vanoce", n: "Vánoce", bg: "bgX", d: "Perníčky, sněhuláci, čert a Santa Mňaukus.", from: [12, 23], to: [1, 2], col: "#e8414f",
     bosses: { 5: ["cert"], 8: ["stromisko"], 10: ["santa", "cert", "stromisko"] } },
+  { id: "masopust", n: "Masopust", bg: "bgM", d: "Koblihy, maškary, medvěd a Kníže Koblihožrout.", easter: [-60, -47], col: "#ff6fa8",
+    bosses: { 5: ["hunac"], 8: ["smrtka"], 10: ["knize", "hunac", "smrtka"] } },
+  { id: "velikonoce", n: "Velikonoce", bg: "bgE", d: "Kraslice, pomlázky, kohout a Vrbový Král.", easter: [-10, 8], col: "#7bd88f",
+    bosses: { 5: ["kohout"], 8: ["dlouhouch"], 10: ["vrbous", "kohout", "dlouhouch"] } },
+  { id: "leto", n: "Léto u rybníka", bg: "bgL", d: "Komáři, raci, bouřka a Vodník Kebule.", from: [7, 15], to: [8, 31], col: "#4fb8ff",
+    bosses: { 5: ["stika"], 8: ["bourka"], 10: ["vodnik", "stika", "bourka"] } },
+  { id: "houby", n: "Houbaření", bg: "bgO", d: "Muchomůrky, kozáci, divočák a Houbový Král.", from: [9, 1], to: [9, 30], col: "#d9a441",
+    bosses: { 5: ["megamuch"], 8: ["kanec"], 10: ["hribous", "megamuch", "kanec"] } },
 ];
 const SEAS_N = 10, seasonById = id => SEASONS.find(S => S.id === id);
 // hlavní menu v atmosféře právě běžící sezóny (Halloween, Vánoce, Velikonoce); po sezóně zpět základní kuchyň
 function easterDate(y) { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), gg = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - gg + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), n = h + l - 7 * m + 114; return new Date(y, Math.floor(n / 31) - 1, n % 31 + 1); }
-function menuSeason(dt = new Date()) { const S = SEASONS.find(s => seasonOpen(s, dt)); if (S) return S.id; const dd = (dt - easterDate(dt.getFullYear())) / 864e5; return dd >= -10 && dd <= 8 ? "velikonoce" : null; }
+function menuSeason(dt = new Date()) { const S = SEASONS.find(s => seasonOpen(s, dt)); return S ? S.id : null; }
 const menuBgImg = () => { const s = menuSeason(); return s && ok(img["menu_" + s]) ? img["menu_" + s] : img.bg; };
 let seasonMode = null, seasonPop = null;  // seasonMode = { id, lvl } během boje
-function seasonOpen(S, d = new Date()) { const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
-function seasonDaysTo(S) { const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return i; d.setDate(d.getDate() + 1); } return 0; }
+function seasonOpen(S, d = new Date()) { if (S.easter) { const dd = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - easterDate(d.getFullYear())) / 864e5); return dd >= S.easter[0] && dd <= S.easter[1]; }
+  const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
+const _sdt = {}; function seasonDaysTo(S) { const k = S.id + dayNum(); if (k in _sdt) return _sdt[k]; const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return _sdt[k] = i; d.setDate(d.getDate() + 1); } return _sdt[k] = 0; }
+let _ssD = -1, _ssL = null; const seasonsSorted = () => { const d = dayNum(); if (d !== _ssD) { _ssD = d; _ssL = SEASONS.slice().sort((a, b) => seasonDaysTo(a) - seasonDaysTo(b)); } return _ssL; };  // běžící nahoře, pak nejbližší (počítá se jednou za den)
+function seasonRange(S) { const f = d => d.getDate() + ". " + (d.getMonth() + 1) + ".";  // „23. 12. – 2. 1.“; pohyblivé podle nejbližších Velikonoc
+  if (!S.easter) return S.from[1] + ". " + S.from[0] + ". – " + S.to[1] + ". " + S.to[0] + ".";
+  const now = new Date(); let y = now.getFullYear(), e = easterDate(y); if ((now - e) / 864e5 > S.easter[1]) e = easterDate(++y);
+  const a = new Date(e), b = new Date(e); a.setDate(a.getDate() + S.easter[0]); b.setDate(b.getDate() + S.easter[1]); return f(a) + " – " + f(b); }
 const seasonKey = S => S.id + new Date().getFullYear(), seasonDone = S => ((save.season || {})[seasonKey(S)] || 0);
 function seasonWaves(S, n) {  // síla podle týmu: běžná úroveň, kterou tým zvládne, × (1,05 … 1,37)
   const d0 = diff; diff = "e"; let st = 1; const want = 0.9 * hpScale(); for (let x = 1; x <= STAGES; x++) if (stageF(x) <= want) st = x;
@@ -2656,7 +2731,7 @@ const HELP = [
   { t: "Titán dne", d: "Ikona Titán dole v menu: každý den nový obří boss a 3 útoky po 2:30 minuty (čas stojí při pauze). Energie titána se mezi útoky přenáší. Zabiješ-li ho do 3 útoků, dostaneš velkou odměnu – za 1. útok ×1,5, za 2. ×1,25 – a zítřejší bude silnější. Když uteče, dostaneš menší odměnu podle ubrané energie. Zlatý terč je slabé místo: kameny ve sloupci pod ním dávají o 50 % víc. Tečky pod ikonou ukazují zbylé útoky, po dohrání odpočet do nového titána.",
     draw(y) { drawItem("ui_titan", W / 2, y + 160, 300); const pu = 0.5 + 0.5 * Math.sin(perf * 6), wx = W / 2 + 60 * Math.sin(perf * 0.8), wy = y + 170;
       g.strokeStyle = "rgba(255,209,102," + (0.6 + 0.4 * pu) + ")"; g.lineWidth = 4; g.beginPath(); g.arc(wx, wy, 36 + 6 * pu, 0, 6.29); g.stroke(); g.globalAlpha = 0.25; g.fillStyle = "#ffd166"; g.fillRect(wx - 50, wy + 42, 100, 220); g.globalAlpha = 1; } },
-  { t: "Sezónní kampaně", d: "V Kampaních je nahoře karta Sezónní kampaně: Halloween, Vánoce a další svátky. Hrají se zvlášť, jen v období svátku, mají 10 úrovní a jednu obtížnost – nepřátelé jsou silní podle týmu, se kterým jdeš do boje. Odměny jsou velké, za celou sezónu je sezónní truhla. Každý rok jdou znovu.",
+  { t: "Sezónní kampaně", d: "V Kampaních je nahoře karta Sezónní kampaně: Masopust, Velikonoce, Léto u rybníka, Houbaření, Halloween a Vánoce. Hrají se zvlášť, jen v daném období (pak se změní i hlavní menu), mají 10 úrovní a jednu obtížnost – nepřátelé jsou silní podle týmu, se kterým jdeš do boje. Odměny jsou velké, za celou sezónu je sezónní truhla. Každý rok jdou znovu.",
     draw(y) { const S = SEASONS[0]; coverImg(img[S.bg], 120, y, 480, 250); g.strokeStyle = S.col; g.lineWidth = 4; rr(120, y, 480, 250, 24); g.stroke(); ["pumpkinking", "witch", "vampire"].forEach((k, j) => { const im = img["e_" + k]; if (ok(im)) g.drawImage(im, 150 + j * 150, y + 60, 170, 170); }); } },
   { t: "Velké výzvy a nastavení", d: "V Úkolech je karta Výzvy: dlouhodobé cíle jako celá lehká nebo těžká obtížnost, celý pokoj, všechny hvězdy nebo kompletní bestiář, s velkými odměnami. Tlačítko ×2 vedle pauzy zrychlí boj. Vibrace, nápovědu tahu a efekty vypneš v Nastavení, kde si vybereš i vzhled kamenů.",
     draw(y) { drawItem("ui_trophy", 205, y + 155, 230); const on = Math.sin(perf * 1.5) > 0, b = { x: 420, y: y + 110, w: 150, h: 90 };
@@ -3027,18 +3102,18 @@ function drawSeasonsCard() {
 }
 function drawSeasons() {
   menuBg(); scrollMax = Math.max(0, 148 + (SEASONS.length + 1) * 246 - 1112); g.save(); g.beginPath(); g.rect(0, 138, W, 1112 - 138); g.clip();
-  SEASONS.forEach((S, i) => { const b = seasCard(i), open = seasonOpen(S), dn = seasonDone(S);
+  seasonsSorted().forEach((S, i) => { const b = seasCard(i), open = seasonOpen(S), dn = seasonDone(S);
     g.fillStyle = "#1a1030"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); coverImg(img[S.bg], b.x, b.y, b.w, b.h);
     const sh = g.createLinearGradient(0, b.y, 0, b.y + b.h); sh.addColorStop(0, "rgba(10,5,25,.1)"); sh.addColorStop(1, "rgba(10,5,25,.92)"); g.fillStyle = sh; rr(b.x, b.y, b.w, b.h, 28); g.fill();
     g.strokeStyle = open ? S.col : "#5a5370"; g.lineWidth = 4; rr(b.x, b.y, b.w, b.h, 28); g.stroke();
-    g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.fillText(S.from[0] === S.to[0] ? "" : (S.from[1] + ". " + S.from[0] + ". – " + S.to[1] + ". " + S.to[0] + ".").toUpperCase(), b.x + 28, b.y + b.h - 120);
+    g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.fillText(seasonRange(S), b.x + 28, b.y + b.h - 120);
     g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.font = "800 44px Baloo, sans-serif"; g.strokeText(S.n, b.x + 28, b.y + b.h - 76); g.fillStyle = "#fff"; g.fillText(S.n, b.x + 28, b.y + b.h - 76);
     g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px Baloo, sans-serif"; g.fillText(S.d, b.x + 28, b.y + b.h - 46);
     g.fillStyle = "rgba(0,0,0,.55)"; rr(b.x + 28, b.y + b.h - 34, 596, 20, 10); g.fill(); g.fillStyle = S.col; rr(b.x + 28, b.y + b.h - 34, Math.max(20, 596 * dn / SEAS_N), 20, 10); g.fill();
     g.fillStyle = "#fff"; g.font = "800 15px Baloo, sans-serif"; g.textAlign = "center"; g.fillText(dn + " / " + SEAS_N + (dn >= SEAS_N ? " · dohráno ✔" : ""), b.x + 326, b.y + b.h - 19);
     if (!open) { g.fillStyle = "rgba(5,3,12,.68)"; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.fillStyle = "#fff"; g.font = "800 30px Baloo, sans-serif"; const dd = seasonDaysTo(S); g.fillText("🔒 Vrátí se za " + dd + " " + pl(dd, "den", "dny", "dní"), W / 2, b.y + 70); } });
   const nb = seasCard(SEASONS.length); g.fillStyle = "rgba(20,12,40,.6)"; rr(nb.x, nb.y, nb.w, nb.h, 28); g.fill(); g.setLineDash([10, 10]); g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 3; rr(nb.x, nb.y, nb.w, nb.h, 28); g.stroke(); g.setLineDash([]);
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Další svátky připravujeme", W / 2, nb.y + 104); g.font = "600 20px Baloo, sans-serif"; g.fillText("Velikonoce, Den kočky a další…", W / 2, nb.y + 140);
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Další kampaně připravujeme", W / 2, nb.y + 104); g.font = "600 20px Baloo, sans-serif"; g.fillText("Den kočky, Pouť a další……", W / 2, nb.y + 140);
   g.restore(); header("Sezónní kampaně"); backBtn();
   if (seasonPop) drawSeasonPop();
 }
@@ -3449,7 +3524,7 @@ function up(ev) {
     if (scrollTarget !== null) scrollY = scrollTarget; scrollTarget = null;
     scrollV = dtm > 10 && performance.now() - b[0] < 80 ? Math.max(-9000, Math.min(9000, -(b[1] - a[1]) / dtm * 1000 * 1.15)) : 0;
     // seznam kampaní: ťuknutí (bez posunu) otevře kampaň
-    if (scene === "seasons" && !seasonPop && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y }; SEASONS.forEach((S, i) => { if (inside(p, seasCard(i))) { SFX.click(); if (seasonOpen(S)) seasonPop = S.id; else SFX.bad(); } }); }
+    if (scene === "seasons" && !seasonPop && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y }; seasonsSorted().forEach((S, i) => { if (inside(p, seasCard(i))) { SFX.click(); if (seasonOpen(S)) seasonPop = S.id; else SFX.bad(); } }); }
     if (scene === "camps" && !campPop && scrollDrag.moved < 14 && !scrollDrag.fly && inside({ x: scrollDrag.x, y: scrollDrag.y }, SEAS_TOP())) { SFX.click(); scene = "seasons"; scrollY = 0; scrollV = 0; seasonPop = null; }
     if (scene === "camps" && !campPop && scrollDrag.moved < 14 && !scrollDrag.fly) { const p = { x: scrollDrag.x, y: scrollDrag.y }; ACTS.forEach((A, i) => { if (inside(p, campCard(i))) { SFX.click(); if (campOpen(i + 1)) campPop = i + 1; else SFX.bad(); } }); }
     // seznam hrdinů: ťuknutí (bez posunu) = tlačítko nebo karta hrdiny
