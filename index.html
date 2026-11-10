@@ -618,7 +618,7 @@ function tipText(k) {
   const M = milkTick(), mx = milkMax(), nx = milkNext();
   return "Energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko (i rychlé dohrání). Titán, Noc bossů, truhla a odměny jsou zdarma. Doplňuje se samo: +1 každých " + Math.round(milkStep() / 6e4) + " minut. Maximum je teď " + mx + " a za každou dohranou kampaň (lehkou i těžkou) vyskočí o 5, až na " + MILK_CAP + ". Nad maximum se nedoplní ani z odměn. Máš " + M.v + "/" + mx + (nx ? " – další za " + hms(nx) + ", plné za " + hms(milkFull()) + "." : " – plné.") + " Když boj opustíš ještě v první vlně, mlíčko se vrátí.";
 }
-function tipIcon(k, x, y, s) { if (k === "r" || k === "lg") drawRohlik(x, y, s); else if (k === "g") drawGranule(x, y, s); else if (k === "d") drawDiamond(x, y, s, -1); else if (k === "h") drawItem("ui_shard", x, y, s * 1.2); else if (k === "s") drawItem("ico_scroll", x, y, s * 1.1); else drawMilk(x, y, s); }
+function tipIcon(k, x, y, s) { if (k.startsWith("it:")) return drawItIcon(ITM[k.slice(3)], x, y, s * 1.3); if (k === "r" || k === "lg") drawRohlik(x, y, s); else if (k === "g") drawGranule(x, y, s); else if (k === "d") drawDiamond(x, y, s, -1); else if (k === "h") drawItem("ui_shard", x, y, s * 1.2); else if (k === "s") drawItem("ico_scroll", x, y, s * 1.1); else drawMilk(x, y, s); }
 function wrapLines(text, maxW) { const out = []; let cur = ""; for (const w of text.split(" ")) { const tr = cur ? cur + " " + w : w; if (g.measureText(tr).width > maxW && cur) { out.push(cur); cur = w; } else cur = tr; } if (cur) out.push(cur); return out; }
 // okno s vysvětlivkou: ztmaví obrazovku, ťuknutí kamkoli ho zavře (boj mezitím stojí)
 function infoWin(k, title, text, col = "#f3c66e") {
@@ -631,7 +631,8 @@ function infoWin(k, title, text, col = "#f3c66e") {
   g.fillStyle = "rgba(255,255,255,.45)"; g.font = "500 17px 'Exo 2', sans-serif"; g.fillText("ťukni pro zavření", W / 2, by + bh - 20);
 }
 function drawOverlays() {
-  if (tipBox) infoWin(tipBox, TIP_T[tipBox], tipText(tipBox));
+  if (tipBox && tipBox.startsWith("it:")) { const it = ITM[tipBox.slice(3)], s = bag.find(b => b.id === it.id); infoWin(tipBox, it.n, itDesc(it) + " V tomto boji ještě " + (s ? s.n : 0) + " ks. Ťuknutím předmět použiješ, tah to nestojí.", it.pot === "e" ? "#ff8a8a" : it.pot === "m" ? "#d99bff" : "#f3c66e"); }
+  else if (tipBox) infoWin(tipBox, TIP_T[tipBox], tipText(tipBox));
   else if (milkAsk) infoWin("m", "Kočky odpočívají", "Došlo mlíčko, tak si dávají šlofíka. Další mlíčko bude za " + hms(milkNext()) + ", plné (" + milkMax() + ") za " + hms(milkFull()) + ". Mezitím zkus Titána nebo Noc bossů a vyzvedni si odměny – ty mlíčko nestojí.", "#9cc4f5");
 }
 // kde jde podržet prst na měně (souřadnice obrazovky; v boji horní lišta s kořistí)
@@ -1992,7 +1993,7 @@ function frame(now) {
   scrollStep(dt);
   if (scene === "play" && titanMode && !titanRes && !paused && !bagOpen && !bossIntro && !tipBox && heroCard < 0 && !dropHold) { titanT = Math.max(0, titanT - rdt);
     if (titanT <= 0 && !busy && !titanUp) { titanUp = true; busy = true; drag = null; msg = { text: "Čas vypršel!", t: 1.2 }; setTimeout(() => { busy = false; if (titanMode && !titanRes) finishTitan(false); }, 900); } }
-  if (press && press.kind === "cur" && !press.shown && performance.now() - press.t0 > 420) { press.shown = true; tipBox = press.k; buzz(12, 70); SFX.click(); }
+  if (press && (press.kind === "cur" || press.kind === "it") && !press.shown && performance.now() - press.t0 > 420) { press.shown = true; tipBox = press.kind === "it" ? "it:" + bag[press.i].id : press.k; buzz(12, 70); SFX.click(); }
   if (scene === "play" && board && enemies && !busy && !paused && !bossIntro && heroCard < 0 && !drag && enemies.some(e => e.cur > 0) && board.every(col => col.every(tl => tl.alive && tl.y === 0))) {
     idleT += rdt; if (idleT > 8 && !hint && settings().hint) { hint = bestMove(); if (hint) SFX.hint(); }
     if ((guardT += dt) > 0.5) { guardT = 0; if (!hasMoves()) { busy = true; hint = null; idleT = 0; reshuffle().finally(() => { busy = false; }); } }
@@ -2210,7 +2211,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.2" + (ED.test ? " · TEST" : ""), W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2406,10 +2407,12 @@ const SEASONS = [
 const SEAS_N = 10, seasonById = id => SEASONS.find(S => S.id === id);
 // hlavní menu v atmosféře právě běžící sezóny (Halloween, Vánoce, Velikonoce); po sezóně zpět základní kuchyň
 function easterDate(y) { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), gg = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - gg + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), n = h + l - 7 * m + 114; return new Date(y, Math.floor(n / 31) - 1, n % 31 + 1); }
-function menuSeason(dt = new Date()) { const S = SEASONS.find(s => seasonOpen(s, dt)); return S ? S.id : null; }
+function menuSeason(dt = new Date()) { if (ED.test) return save.testSeason || null;  // test_MG: menu podle naposledy hrané sezóny
+  const S = SEASONS.find(s => seasonOpen(s, dt)); return S ? S.id : null; }
 const menuBgImg = () => { const s = menuSeason(); return s && ok(img["menu_" + s]) ? img["menu_" + s] : img.bg; };
 let seasonMode = null, seasonPop = null;  // seasonMode = { id, lvl } během boje
-function seasonOpen(S, d = new Date()) { if (S.easter) { const dd = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - easterDate(d.getFullYear())) / 864e5); return dd >= S.easter[0] && dd <= S.easter[1]; }
+function seasonOpen(S, d = new Date()) { if (ED.test) return true;  // testovací verze test_MG: všechno odemčené
+  if (S.easter) { const dd = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - easterDate(d.getFullYear())) / 864e5); return dd >= S.easter[0] && dd <= S.easter[1]; }
   const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
 const _sdt = {}; function seasonDaysTo(S) { const k = S.id + dayNum(); if (k in _sdt) return _sdt[k]; const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return _sdt[k] = i; d.setDate(d.getDate() + 1); } return _sdt[k] = 0; }
 let _ssD = -1, _ssL = null; const seasonsSorted = () => { const d = dayNum(); if (d !== _ssD) { _ssD = d; _ssL = SEASONS.slice().sort((a, b) => seasonDaysTo(a) - seasonDaysTo(b)); } return _ssL; };  // běžící nahoře, pak nejbližší (počítá se jednou za den)
@@ -2429,7 +2432,7 @@ function seasonWaves(S, n) {  // síla podle týmu: běžná úroveň, kterou t�
   const B = S.bosses[n]; if (B) waves.push(B.map(k => { const e = mk(k, (B.length === 3 ? 0.27 : 0.33) * (1 + 0.02 * n)); if (B.length === 3) e.atk = Math.round(e.atk * 0.6); return e; }));  // tři bossové najednou: slabší rány (Petr 3. 11.)
   return { st, waves };
 }
-function startSeason(id, n) { const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
+function startSeason(id, n) { if (ED.test) save.testSeason = id; const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
 const battleBg = () => seasonMode ? seasonById(seasonMode.id).bg : ACTS[actOf(stage) - 1].bg;
 // Titán týdne: jeden obří boss na celý týden, 3 pokusy denně, poškození se sčítá (f = zbývající část energie); po poražení přijde silnější
 const TITAN_TIME = 150, TITAN_TRIES = 3, TITAN_MULT = [1.5, 1.25, 1];
@@ -2758,22 +2761,41 @@ function scrollStep(dt) {
   scrollY += scrollV * dt; scrollV *= Math.exp(-2.2 * dt);
   if (scrollY < 0 || scrollY > scrollMax) { scrollY = Math.max(0, Math.min(scrollMax, scrollY)); scrollV = 0; }
 }
-let bestList = null, bestRows = [], foeCard = null;
+let bestList = null, bestRows = [], foeCard = null, bestCat = null, bestScroll = 0;
+const bestCats = () => [...ACTS.map((A, i) => ({ n: A.n, bg: A.bg, col: "#f3c66e", keys: Object.keys(FOES).filter(k => !FOES[k].season && (FOES[k].act || 1) === i + 1) })),
+  ...SEASONS.map(S => ({ n: S.n, bg: S.bg, col: S.col, sez: true, keys: Object.keys(FOES).filter(k => FOES[k].season === S.id) }))].filter(c => c.keys.length);
+const bestTile = i => ({ x: 30 + (i % 2) * 336, y: 170 + Math.floor(i / 2) * 178 - scrollY, w: 324, h: 166 });
+function drawBestCats() {  // kategorie bestiáře: kampaně a sezónní kampaně, u každé kolik druhů už jsi porazil
+  menuBg(); const C = bestCats(); bestRows = [];
+  g.save(); g.beginPath(); g.rect(0, 150, W, 1005); g.clip();
+  C.forEach((c, i) => { const b = bestTile(i), seen = c.keys.filter(k => save.kinds[k]).length, boss = c.keys.find(k => FOES[k].boss && FOES[k].boss === Math.max(...c.keys.map(x => FOES[x].boss || 0)));
+    if (b.y < -b.h || b.y > H) return; bestRows.push(["cat" + i, b.y, b.y + b.h, b.x, b.x + b.w]);
+    g.fillStyle = "#1a1030"; rr(b.x, b.y, b.w, b.h, 22); g.fill(); coverImg(img[c.bg], b.x, b.y, b.w, b.h);
+    const sh = g.createLinearGradient(0, b.y, 0, b.y + b.h); sh.addColorStop(0, "rgba(10,5,25,.05)"); sh.addColorStop(1, "rgba(10,5,25,.9)"); g.fillStyle = sh; rr(b.x, b.y, b.w, b.h, 22); g.fill();
+    const ei = boss && img["e_" + boss]; if (ok(ei)) g.drawImage(ei, b.x + b.w - 128, b.y + 6, 122, 122);
+    g.strokeStyle = c.sez ? c.col : "rgba(243,198,110,.6)"; g.lineWidth = 2.5; rr(b.x, b.y, b.w, b.h, 22); g.stroke();
+    g.textAlign = "left"; g.fillStyle = c.sez ? c.col : "rgba(255,255,255,.7)"; g.font = "700 15px 'Exo 2', sans-serif"; g.fillText(c.sez ? "SEZÓNNÍ KAMPAŇ" : "KAMPAŇ " + (i + 1), b.x + 18, b.y + b.h - 64);
+    g.fillStyle = "#fff"; fitText(c.n, b.x + 18, b.y + b.h - 36, b.w - 30, "800 26px Baloo, sans-serif");
+    g.fillStyle = seen === c.keys.length ? "#3ddc84" : "rgba(255,255,255,.75)"; g.font = "600 16px 'Exo 2', sans-serif"; g.fillText("poraženo " + seen + " / " + c.keys.length + " druhů", b.x + 18, b.y + b.h - 14); });
+  scrollMax = Math.max(0, 170 + Math.ceil(C.length / 2) * 178 - 1120);
+  g.restore(); header("Bestiář"); backBtn();
+}
 const BOSS_DESC = { all: "Udeří všechny hrdiny naráz.", allDrain: "Udeří všechny a vysaje jim kus many.", allHeal: "Udeří všechny a trochu se vyléčí.",
   allSlow: "Udeří všechny a na 2 kola zpomalí nabíjení many.", drainAll: "Vysaje manu všem hrdinům.", drainHeal: "Vysaje manu hrdinovi s nejvíc manou a vyléčí se.",
   drainOne: "Vysaje všechnu manu hrdinovi s nejvíc manou.", drainTwo: "Vysaje manu dvěma hrdinům.", heal: "Vyléčí se.", healCharge: "Vyléčí se a hned má půl many na další schopnost.",
   multi: "Rychlá série úderů na náhodné hrdiny.", one: "Drtivý úder na jednoho hrdinu.", rally: "Popožene spojence – zaútočí dřív a ostatní bossové nabijí manu.", weakest: "Udeří nejslabšího hrdinu." };
 function drawBestiary() {
-  menuBg();
+  if (bestCat === null) return drawBestCats();
+  menuBg(); const CAT = bestCats()[bestCat];
   const grp = k => ((FOES[k].act || 1) - 1) * 2 + (FOES[k].boss ? 1 : 0);
-  const list = bestList = bestList || Object.keys(FOES).sort((a, b) => grp(a) - grp(b) || (FOES[a].boss || 0) - (FOES[b].boss || 0) || (FOES[a].from || 0) - (FOES[b].from || 0));
+  const list = bestList = CAT.keys.slice().sort((a, b) => grp(a) - grp(b) || (FOES[a].boss || 0) - (FOES[b].boss || 0) || (FOES[a].from || 0) - (FOES[b].from || 0));
   bestRows = [];
   g.save(); g.beginPath(); g.rect(0, 150, W, 1005); g.clip();
   let y = 170 - scrollY;
   list.forEach((k, i) => {
     const f = FOES[k], boss = !!f.boss;
     g.textAlign = "left";
-    if (i === 0 || grp(k) !== grp(list[i - 1])) { g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; g.fillText((f.season ? seasonById(f.season).n + " (sezónní)" : ACTS[(f.act || 1) - 1].n) + " – " + (boss ? "bossové" : "nepřátelé"), 40, y + 34); y += 56; }
+    if (i === 0 || grp(k) !== grp(list[i - 1])) { g.fillStyle = "#ffd166"; g.font = "800 32px Baloo, sans-serif"; fitText(CAT.n + " – " + (boss ? "bossové" : "nepřátelé"), 40, y + 34, 640, g.font); y += 56; }
     const hgt = 214;
     if (y > -hgt && y < H) {
       bestRows.push([k, y, y + hgt - 14]);
@@ -2795,7 +2817,7 @@ function drawBestiary() {
     y += hgt;
   });
   scrollMax = Math.max(0, y + scrollY - 1120);
-  g.restore(); header("Bestiář"); backBtn();
+  g.restore(); header(CAT.n); backBtn();
 }
 
 // ---------- O hře: věnování, autoři, příběhy hrdinů s obrázky ----------
@@ -3220,7 +3242,7 @@ window.goBack = function () {
   audioInit(); SFX.click();
   if (teamPick) { teamPick = false; if (levelPop) LPI = levelInfo(levelPop); return "ok"; }
   if (scene === "menu") { if (menuPanel) { menuPanel = null; return "ok"; } if (exitAsk) return "exit"; exitAsk = true; return "ok"; }
-  if (levelPop) { levelPop = 0; return "ok"; } if (foeCard) { foeCard = null; return "ok"; } if (heroCard >= 0) { heroCard = -1; return "ok"; } if (eqHero >= 0) { eqHero = -1; return "ok"; }
+  if (levelPop) { levelPop = 0; return "ok"; } if (foeCard) { foeCard = null; return "ok"; } if (scene === "best" && bestCat !== null) { bestCat = null; scrollY = bestScroll; return "ok"; } if (heroCard >= 0) { heroCard = -1; return "ok"; } if (eqHero >= 0) { eqHero = -1; return "ok"; }
   if (campPop) { campPop = 0; return "ok"; } if (resetStep) { resetStep = 0; return "ok"; }
   if (scene === "play") { if (paused) { paused = false; quitAsk = false; } else { paused = true; quitAsk = true; } return "ok"; }
   if (scene === "win" || scene === "lose") { playMusic("menu"); openMap(actOf(stage)); return "ok"; }
@@ -3431,7 +3453,7 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 56); if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
   if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); } exitAsk = false; SFX.click(); return; }
   if (scene === "menu") {
-    const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; };
+    const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; bestCat = null; };
     if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.bag)) { SFX.click(); bagPick = true; bagInfo = null; } else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
     else if (Math.hypot(p.x - GEAR.x, p.y - gearY()) < 50) go("settings");
     else if (Math.hypot(p.x - (W - GEAR.x), p.y - gearY()) < 50) { SFX.click(); exitAsk = true; }
@@ -3474,7 +3496,7 @@ function down(ev) { idleT = 0; hint = null;
     return;
   }
   if (scene === "best" && foeCard) { foeCard = null; SFX.click(); return; }
-  if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
+  if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); if (scene === "best" && bestCat !== null) { bestCat = null; scrollY = bestScroll; scrollV = 0; } else scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
   if (scene === "heroes") {
     if (heroCard >= 0) { heroCard = -1; return; }
     if (exchOpen) { const hit = exBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else exchOpen = false; return; }
@@ -3491,7 +3513,7 @@ function down(ev) { idleT = 0; hint = null;
     leave(eventMode || titanMode ? "menu" : "map"); return; }
   if (heroCard >= 0) { heroCard = -1; return; }
   if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
-  if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { if (bag[j].n > 0) useItem(j); else SFX.bad(); return; } }
+  if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { press = { kind: "it", i: j, t0: performance.now(), x: p.x, y: p.y }; return; } }
   if (Math.hypot(p.x - PAUSE.x, p.y - PAUSE.y) < 44) { paused = true; SFX.pause(); return; }
   if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed > 1 ? 1 : 2; store(); SFX.click(); return; }
   // hrdina nebo nepřítel: krátké ťuknutí = schopnost / cíl (až při puštění), podržení = karta se stavy
@@ -3517,7 +3539,7 @@ function move(ev) {
 }
 function up(ev) {
   if (achDrag) { achFly = achDrag.v; achDrag = null; }
-  if (press) { const pr = press; press = null; if (pr.kind === "cur") { if (!pr.shown && pr.k === "m") tipBox = "m"; return; } if (!pr.shown && scene === "play" && !paused) { if (pr.kind === "h") tapHero(pr.i); else if (enemies[pr.i] && enemies[pr.i].cur > 0) target = pr.i; } return; }
+  if (press) { const pr = press; press = null; if (pr.kind === "it") { if (!pr.shown) { if (bag[pr.i] && bag[pr.i].n > 0) useItem(pr.i); else SFX.bad(); } return; } if (pr.kind === "cur") { if (!pr.shown && pr.k === "m") tipBox = "m"; return; } if (!pr.shown && scene === "play" && !paused) { if (pr.kind === "h") tapHero(pr.i); else if (enemies[pr.i] && enemies[pr.i].cur > 0) target = pr.i; } return; }
   if (helpSwipe !== null) { const dx = ev && (ev.changedTouches || ev.clientX !== undefined) ? pos(ev).x - helpSwipe : 0; helpSwipe = null;
     if (dx < -60) helpPg = Math.min(HELP.length - 1, helpPg + 1); else if (dx > 60) helpPg = Math.max(0, helpPg - 1); }
   if (scrollDrag) { const q = scrollDrag.pts, a = q[0], b = q[q.length - 1], dtm = b[0] - a[0];
@@ -3534,7 +3556,8 @@ function up(ev) {
     if (scene === "map" && scrollDrag.moved < 14 && !scrollDrag.fly) { const done = progOf(mapAct, diff);  // ťuknutí na úroveň: okno s nepřáteli a odměnou
       for (let i = 0; i < PER_ACT; i++) { const q = stagePos(i); if (i + 1 <= done + 1 && Math.hypot(scrollDrag.x - q.x, scrollDrag.y - q.y) < 56) { levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); break; } } }
     // krátké ťuknutí (bez posunu a ne do rozjetého seznamu) otevře kartu nepřítele
-    if (scene === "best" && scrollDrag.moved < 14 && !scrollDrag.fly && performance.now() - q[0][0] < 500) { const r = bestRows.find(r => scrollDrag.y >= r[1] && scrollDrag.y <= r[2] && scrollDrag.y > 150 && scrollDrag.y < 1155); if (r) { scrollV = 0; foeCard = r[0]; SFX.foe(r[0], FOES[r[0]].boss, "attack"); } } }
+    if (scene === "best" && scrollDrag.moved < 14 && !scrollDrag.fly && performance.now() - q[0][0] < 500) { const r = bestRows.find(r => scrollDrag.y >= r[1] && scrollDrag.y <= r[2] && scrollDrag.y > 150 && scrollDrag.y < 1155 && (r[3] === undefined || (scrollDrag.x >= r[3] && scrollDrag.x <= r[4])));
+      if (r && String(r[0]).startsWith("cat")) { SFX.click(); bestScroll = scrollY; bestCat = +r[0].slice(3); scrollY = 0; scrollV = 0; } else if (r) { scrollV = 0; foeCard = r[0]; SFX.foe(r[0], FOES[r[0]].boss, "attack"); } } }
   scrollDrag = null;
   if (drag && !busy && scene === "play" && board[drag.c][drag.r].sp === "diamond") tapDiamond(drag.c, drag.r);
   drag = null;
