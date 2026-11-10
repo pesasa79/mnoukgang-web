@@ -382,8 +382,8 @@ CHAL.push(...[
 const CHAL_F = 0.4; CHAL.forEach(C => { for (const k of ["g", "c", "h"]) if (C.rew[k]) C.rew[k] = Math.max(1, Math.round(C.rew[k] * CHAL_F)); });
 const chalCan = c => !save.chal[c.id] && c.v() >= c.n;
 // odměny úkolů (3. 11. 2026 zmenšeny – měsíční dávaly víc než celá kampaň)
-const QREW = { d: [{ g: 100 }, { g: 150, c: 1, h: 2 }, { g: 100, c: 1, h: 3 }], w: [{ g: 400, c: 2, h: 5 }, { g: 300, c: 3, h: 8 }, { c: 4, s: 1, h: 10 }], m: [{ g: 500, c: 2, h: 8 }, { g: 700, c: 3, s: 1, h: 12 }, { g: 900, c: 4, s: 1, h: 16 }, { g: 1200, c: 6, s: 1, h: 20 }, { g: 1600, c: 8, s: 2, h: 30 }] },
-  QBONUS = { d: { s: 1, m: 5 }, w: { s: 1, c: 3 }, m: { c: 8, s: 2, h: 30 } }, M_F = [0.8, 1.2, 1.7, 2.4, 3.2], M_TIER = ["LEHKÝ", "STŘEDNÍ", "TĚŽKÝ", "MISTROVSKÝ", "LEGENDÁRNÍ"];
+const QREW = { d: [{ g: 100 }, { g: 150, c: 1, h: 2 }, { g: 100, c: 1, h: 3, i: 1 }], w: [{ g: 400, c: 2, h: 5, i: 1 }, { g: 300, c: 3, h: 8, i: 1 }, { c: 4, s: 1, h: 10, i: 2 }], m: [{ g: 500, c: 2, h: 8, i: 1 }, { g: 700, c: 3, s: 1, h: 12, i: 2 }, { g: 900, c: 4, s: 1, h: 16, i: 2 }, { g: 1200, c: 6, s: 1, h: 20, i: 3 }, { g: 1600, c: 8, s: 2, h: 30, i: 3 }] },
+  QBONUS = { d: { s: 1, m: 5, i: 2 }, w: { s: 1, c: 3, i: 4 }, m: { c: 8, s: 2, h: 30, i: 8 } }, M_F = [0.8, 1.2, 1.7, 2.4, 3.2], M_TIER = ["LEHKÝ", "STŘEDNÍ", "TĚŽKÝ", "MISTROVSKÝ", "LEGENDÁRNÍ"];
 const MONTH_T = ["Mrazivá výprava", "Únorové tání", "Jarní úklid", "Aprílová šibalství", "Májová zahrada", "Letní slunovrat", "Prázdninové dobrodružství", "Srpnová bouře", "Zářijová sklizeň", "Říjnová strašidla", "Listopadová mlha", "Vánoční nadílka"];
 function rngOf(seed) { let x = Math.abs(Math.floor(seed)) % 2147483646 + 1; return () => (x = x * 16807 % 2147483647) / 2147483647; }
 const nice = n => n < 10 ? Math.max(1, Math.round(n)) : n < 100 ? Math.round(n / 5) * 5 : n < 1000 ? Math.round(n / 10) * 10 : Math.round(n / 100) * 100;
@@ -402,9 +402,54 @@ function makeQuests(seed, kind) {
 }
 const weekNum = () => Math.floor((dayNum() + 3) / 7), monthNum = () => { const d = new Date(); return d.getFullYear() * 12 + d.getMonth(); };
 const qProgOf = (q, P) => Math.max(0, Math.min(q.n, q.max ? P.combo : (save.stats[q.st] || 0) - (P.base[q.st] || 0)));
+// ---------- předměty do boje (10. 11. 2026): 15 kočičích a 15 lidských, do boje 4 druhy, z každého nejvýš 3 kusy ----------
+// Kočičí jdou vybrat jen s kočkou v týmu, lidské jen s člověkem; lektvary, ochrana a oživení působí jen na ně. pot: e = energie (červená), m = mana (fialová), sz = velikost lahvičky.
+const ITEMS = [
+  ["c1", 1, "Malý elixír zdraví", "", "heal1", 0.3, 14, "e", 0.7], ["c2", 1, "Střední elixír zdraví", "", "healAll", 0.25, 9, "e", 0.85], ["c3", 1, "Velký elixír zdraví", "", "healAll", 0.5, 4, "e", 1],
+  ["c4", 1, "Malý elixír many", "", "mana1", 0.5, 12, "m", 0.7], ["c5", 1, "Střední elixír many", "", "manaAll", 0.4, 8, "m", 0.85], ["c6", 1, "Velký elixír many", "", "manaAll", 1, 3, "m", 1],
+  ["c7", 1, "Drápky", "🐾", "hit", 10, 9], ["c8", 1, "Kočičí skok", "🐈", "jump", 6, 7], ["c9", 1, "Klubíčková bomba", "💣", "bomb", 4, 5],
+  ["c10", 1, "Syčení", "😾", "stunAll", 2, 6], ["c11", 1, "Pelíšek", "🧺", "shield", 4, 6], ["c12", 1, "Zježená srst", "🙀", "weakAll", 3, 6],
+  ["c13", 1, "Olízání srsti", "👅", "clean", 0.05, 6], ["c14", 1, "Devátý život", "💫", "revive", 0.5, 3], ["c15", 1, "Barevné klubíčko", "🧶", "paint", 9, 5],
+  ["l1", 0, "Malý elixír zdraví", "", "heal1", 0.3, 14, "e", 0.7], ["l2", 0, "Střední elixír zdraví", "", "healAll", 0.25, 9, "e", 0.85], ["l3", 0, "Velký elixír zdraví", "", "healAll", 0.5, 4, "e", 1],
+  ["l4", 0, "Malý elixír many", "", "mana1", 0.5, 12, "m", 0.7], ["l5", 0, "Střední elixír many", "", "manaAll", 0.4, 8, "m", 0.85], ["l6", 0, "Velký elixír many", "", "manaAll", 1, 3, "m", 1],
+  ["l7", 0, "Pánev", "🍳", "pan", 8, 9], ["l8", 0, "Bačkory", "🩴", "throw3", 4, 7], ["l9", 0, "Petarda", "🧨", "fireAll", 3, 5],
+  ["l10", 0, "Budík", "⏰", "stun1", 3, 6], ["l11", 0, "Deštník", "☂️", "guard", 3, 6], ["l12", 0, "Pepřový sprej", "🌶️", "charmAll", 3, 6],
+  ["l13", 0, "Náplast", "🩹", "clean", 0.05, 6], ["l14", 0, "Lékárnička", "⛑️", "revive", 0.5, 3], ["l15", 0, "Kouzelná hůlka", "🪄", "wand", 2, 5],
+].map(([id, cat, n, ic, k, v, w, pot, sz]) => ({ id, cat: !!cat, n, ic, k, v, w, pot, sz }));
+const ITM = Object.fromEntries(ITEMS.map(it => [it.id, it])), IT_WSUM = ITEMS.reduce((a, it) => a + it.w, 0), BAG_MAX = 4, BAG_PER = 3;
+function itDesc(it) { const who = it.cat ? "kočkám" : "lidem", pc = Math.round(it.v * 100) + " %", T = teamHeroes().map(heroStats), A = T.reduce((a, h) => a + h.atk, 0) / Math.max(1, T.length), d = f => " Síla " + String(f).replace(".", ",") + "× průměrný útok týmu (teď asi " + Math.round(A * f).toLocaleString("cs-CZ") + ").";
+  return { heal1: "Komu: nejzraněnější " + (it.cat ? "kočce" : "člověku") + " v týmu. Vrátí " + pc + " energie.", healAll: "Komu: všem " + who + " v týmu. Každé vrátí " + pc + " energie.",
+    mana1: "Komu: " + (it.cat ? "kočce" : "člověku") + " s nejméně manou. Přidá polovinu many.", manaAll: "Komu: všem " + who + " v týmu. " + (it.v >= 1 ? "Nabije manu naplno." : "Přidá " + pc + " many."),
+    hit: "Komu: vybranému nepříteli. Silný škrábanec." + d(it.v), jump: "Komu: vybranému nepříteli a jeho sousedům (poloviční síla)." + d(it.v), bomb: "Komu: všem nepřátelům. Výbuch." + d(it.v),
+    stunAll: "Komu: všem nepřátelům. Zaútočí o 2 kola později.", shield: "Komu: celému týmu. Příští 4 zásahy nepřátel budou poloviční.", weakAll: "Komu: všem nepřátelům. 3 kola dostávají o 30 % víc poškození.",
+    clean: "Komu: všem " + who + ". Smyje jed, hoření i umlčení a 3 kola léčí 5 % energie za kolo.", revive: "Komu: padl" + (it.cat ? "é kočce" : "ému člověku") + ". Oživí ji s polovinou energie; když nikdo nepadl, vyléčí nejzraněnějšího o 30 %.",
+    paint: "Komu: hracímu poli. Přebarví 9 kamenů na barvu kočky z týmu a rozjede kombo.", pan: "Komu: vybranému nepříteli. Rána pánví, nepřítel zaútočí o kolo později." + d(it.v), throw3: "Komu: 3 náhodným nepřátelům. Každá bačkora" + d(it.v).toLowerCase().replace(" síla", ""),
+    fireAll: "Komu: všem nepřátelům. Výbuch a hoření na 2 kola." + d(it.v), stun1: "Komu: vybranému nepříteli. 3 kola nezaútočí.", guard: "Komu: všem lidem v týmu. 3 kola dostávají o 40 % méně poškození.",
+    charmAll: "Komu: všem nepřátelům. 3 kola útočí o 30 % slaběji.", wand: "Komu: hracímu poli. Vyčaruje diamant v barvě člověka z týmu a dvě bomby." }[it.k]; }
+// lahvička: kočičí = kulatá baňka, lidská = vysoká láhev; energie červená, mana fialová; velikost podle sz
+function drawFlask(x, y, s, pot, round) {
+  const [lt, dk] = pot === "e" ? ["#ff7a7a", "#b3122a"] : ["#d99bff", "#6a1fb0"]; g.save(); g.translate(x, y); g.scale(s / 100, s / 100);
+  g.fillStyle = "#8a5a2b"; rr(-11, -54, 22, 13, 4); g.fill(); g.fillStyle = "rgba(225,238,255,.6)"; rr(-8, -43, 16, 20, 3); g.fill();
+  if (round) { g.beginPath(); g.arc(0, 10, 34, 0, 6.29); } else rr(-25, -26, 50, 72, 13);
+  g.fillStyle = "rgba(225,238,255,.25)"; g.fill(); g.save(); g.clip(); const lg = g.createLinearGradient(0, -8, 0, 46); lg.addColorStop(0, lt); lg.addColorStop(1, dk); g.fillStyle = lg; g.fillRect(-40, -6, 80, 60);
+  g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(-40, -8, 80, 5); g.restore();
+  if (round) { g.beginPath(); g.arc(0, 10, 34, 0, 6.29); } else rr(-25, -26, 50, 72, 13); g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 3.5; g.stroke();
+  g.fillStyle = "rgba(255,255,255,.6)"; g.beginPath(); g.ellipse(-13, round ? 0 : -6, 5, 12, 0.35, 0, 6.29); g.fill(); g.restore(); }
+function drawItIcon(it, x, y, s, a = 1) { if (drawItem("it_" + it.id, x, y, s * 1.1, a)) return; g.save(); g.globalAlpha *= a;
+  if (it.pot) drawFlask(x, y + s * 0.04, s * (0.55 + 0.45 * it.sz), it.pot, it.cat);
+  else { g.textAlign = "center"; g.fillStyle = "#fff"; g.font = Math.round(s * 0.62) + "px sans-serif"; g.fillText(it.ic, x, y + s * 0.22); }
+  g.restore(); }
+// losování předmětů do inventáře (vzácnější = velké lahvičky, oživení, bomby); vrací názvy
+function rollItems(n) { const out = []; save.inv = save.inv || {};
+  for (let q = 0; q < n; q++) { let r = Math.random() * IT_WSUM; const it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.n); }
+  if (n > 0) save.stats.itemsGot = (save.stats.itemsGot || 0) + n; return out; }
+const kindIn = cat => teamHeroes().some(h => isCat(h) === cat);
+// krystaly navíc: šance při opakování a výměna jídla, které už není kam dát (10. 11. 2026, Petr: bez krystalů se nedalo pokračovat)
+const CR_REP = { e: 0.35, h: 0.6 }, IT_REP = { e: 0.3, h: 0.5 }, EX_MAX = 10, exPrice = () => Math.round(250 * rewScale() / 10) * 10;
+const exLeft = () => { if (!save.exch || save.exch.d !== dayNum()) save.exch = { d: dayNum(), n: 0 }; return EX_MAX - save.exch.n; };
 // obsah truhly (3. 11. 2026: méně krystalů a střípků)
-const chestRoll = () => ({ g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5), m: Math.random() < 0.4 ? 3 : 0 });
-const LOGIN_REW = [{ g: 100 }, { c: 1 }, { g: 200, m: 5 }, { c: 2 }, { g: 300 }, { s: 1 }, { c: 3, g: 500, m: 10 }], CHEST_N = 30, TALENT_MAX = 5, talentCost = t => [35, 50, 60, 75, 90][t] || 99;
+const chestRoll = () => ({ i: 1 + (Math.random() < 0.5 ? 1 : 0), g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5), m: Math.random() < 0.4 ? 3 : 0 });
+const LOGIN_REW = [{ g: 100 }, { c: 1, i: 1 }, { g: 200, m: 5 }, { c: 2, i: 1 }, { g: 300 }, { s: 1, i: 2 }, { c: 3, g: 500, m: 10 }], CHEST_N = 30, TALENT_MAX = 5, talentCost = t => [35, 50, 60, 75, 90][t] || 99;
 const TALENT_N = ["Mistr kovář", "Laskavé srdce", "Princeznin majestát", "Vrchní inspektor", "Šéfkuchařka", "Královna parketu", "Premiantka", "Pilot rallye"];
 // Úspěchy: řady se stupni (každý stupeň je samostatný úspěch) + dobytí kampaní. Odměna roste se stupněm.
 const ACH_REW = [{ g: 100 }, { g: 150, c: 1, h: 2 }, { c: 1, h: 4 }, { c: 2, s: 1, h: 6 }, { c: 3, s: 1, h: 10 }];
@@ -445,6 +490,7 @@ function ensureExtra() {
   save.stats = save.stats || {}; for (const k of ["kills", "boss", "bombs", "dias", "gems", "skills", "wins", "stars3", "combo", "rohl", "gran", "upsH", "upsC", "seasonW", "seasonAll"]) save.stats[k] = save.stats[k] || 0;
   if (save.rohliky === undefined) { const r = Math.round((save.granule || 0) * 0.7); save.rohliky = r; save.granule = (save.granule || 0) - r; }  // přechod na rohlíky: 70 % granulí -> rohlíky
   for (let k = 5; k < HEROES.length; k++) save.stats["s" + k] = save.stats["s" + k] || 0; save.team = save.team || DEF_TEAM.slice();
+  save.inv = save.inv || {}; save.load = (save.load || []).filter(id => ITM[id]); if (!save.invGift) { save.invGift = 1; for (const id of ["c1", "c4", "c7", "c10", "l1", "l4", "l7", "l11"]) save.inv[id] = (save.inv[id] || 0) + 3; if (!save.load.length) save.load = ["c1", "c7", "l1", "l7"]; }
   for (let k = 0; k < 5; k++) for (const x of ["g", "s", "kc"]) save.stats[x + k] = save.stats[x + k] || 0;
   for (const k of ["dmg", "heal", "winsH", "flawless", "starsGot", "combo4", "ups", "chests", "eventW", "crits", "stApplied", "dot", "titanHits", "titanKills", "eqUps", "shardsGot", "win3", "fast", "traitKills"]) save.stats[k] = save.stats[k] || 0;
   save.kinds = save.kinds || {}; save.shards = save.shards || 0; save.ess = save.ess || [0, 0, 0, 0, 0]; save.stats.essGot = save.stats.essGot || 0; save.eq = save.eq || {}; save.chal = save.chal || {};
@@ -461,11 +507,11 @@ function ensureExtra() {
 const rewScale = () => 1 + (save.stage || 1) / 30;
 let toast = null;
 function giveRew(r, x = W / 2, y = 600) {
-  const gg = Math.round((r.g || 0) * rewScale()); addFood(gg); save.crystals += r.c || 0; save.scrolls += r.s || 0; if (r.h) { save.shards += r.h; save.stats.shardsGot += r.h; } if (r.e) { save.ess[r.ec || 0] += r.e; save.stats.essGot += r.e; } if (r.m) { milkTick(); save.milk.v = Math.min(milkMax(), save.milk.v + r.m); } store(); SFX.star();
+  const gg = Math.round((r.g || 0) * rewScale()); addFood(gg); save.crystals += r.c || 0; save.scrolls += r.s || 0; if (r.h) { save.shards += r.h; save.stats.shardsGot += r.h; } if (r.e) { save.ess[r.ec || 0] += r.e; save.stats.essGot += r.e; } if (r.m) { milkTick(); save.milk.v = Math.min(milkMax(), save.milk.v + r.m); } const itg = r.i ? rollItems(r.i) : []; store(); SFX.star();
   for (let i = 0; i < 26; i++) burst(x + (Math.random() - .5) * 120, y, i % 2 ? "#ffd166" : "#fff");
-  toast = { t: 2.4, text: "+" + rewText({ ...r, g: (r.g || 0) }).split(" + ").join("  ·  +") };
+  toast = { t: itg.length ? 3.2 : 2.4, text: "+" + rewText({ ...r, g: (r.g || 0), i: 0 }).split(" + ").join("  ·  +") + (itg.length ? "  ·  🎒 " + itg.join(", ") : "") };
 }
-const rewText = r => [r.g ? foodText(Math.round(r.g * rewScale())) : "", r.c ? r.c + " " + pl(r.c, "krystal", "krystaly", "krystalů") : "", r.s ? r.s + " " + pl(r.s, "svitek", "svitky", "svitků") : "", r.h ? r.h + " " + pl(r.h, "střípek", "střípky", "střípků") : "", r.e ? essName(r.ec || 0, r.e) : "", r.m ? r.m + " " + pl(r.m, "mlíčko", "mlíčka", "mlíček") : ""].filter(Boolean).join(" + ");
+const rewText = r => [r.g ? foodText(Math.round(r.g * rewScale())) : "", r.c ? r.c + " " + pl(r.c, "krystal", "krystaly", "krystalů") : "", r.s ? r.s + " " + pl(r.s, "svitek", "svitky", "svitků") : "", r.h ? r.h + " " + pl(r.h, "střípek", "střípky", "střípků") : "", r.e ? essName(r.ec || 0, r.e) : "", r.m ? r.m + " " + pl(r.m, "mlíčko", "mlíčka", "mlíček") : "", r.i ? r.i + " " + pl(r.i, "předmět", "předměty", "předmětů") : ""].filter(Boolean).join(" + ");
 // co je k vyzvednutí (pro svítící ikony v menu)
 const qPeriods = () => [save.daily, save.weekly, save.monthly], qReady = () => qPeriods().reduce((a, P) => a + P.q.filter(q => !q.got && qProgOf(q, P) >= q.n).length + (P.bonus === false && P.q.every(q => q.got) ? 1 : 0), 0) + CHAL.filter(chalCan).length;
 const canQuest = () => qReady() > 0;
@@ -497,7 +543,7 @@ function tipText(k) {
   const hum = HEROES.filter(h => !isCat(h)).map(h => h.name).join(", "), cat = HEROES.filter(isCat).map(h => h.name).join(", ");
   if (k === "r") return "Jídlo lidí. Za rohlíky zvyšuješ úroveň lidských hrdinů: " + hum + ". Padají z bojů, truhel, úkolů a titána – čím víc lidí máš v týmu, tím víc rohlíků. Máš " + save.rohliky.toLocaleString("cs-CZ") + ".";
   if (k === "g") return "Jídlo koček. Za granule zvyšuješ úroveň koček: " + cat + ". Padají z bojů, truhel, úkolů a titána – čím víc koček máš v týmu, tím víc granulí. Máš " + save.granule.toLocaleString("cs-CZ") + ".";
-  if (k === "d") return "Za krystaly dáváš hrdinům hvězdy ★ (vyšší strop úrovní a víc síly) a kupuješ jim talenty. Padají hlavně z bossů, titána, Noci bossů, truhel a za první 3 hvězdy v úrovni. Máš " + save.crystals + ".";
+  if (k === "d") return "Za krystaly dáváš hrdinům hvězdy ★ (vyšší strop úrovní a víc síly) a kupuješ jim talenty. Padají z bossů, titána, Noci bossů, truhel, za první 3 hvězdy a při opakování úrovní (lehká 35 %, těžká 60 %). Jídlo navíc vyměníš za krystaly v menu Hrdinové (⇄). Máš " + save.crystals + ".";
   if (k === "h") return "Materiál na výstroj hrdinů – útok, rychlost many a kritický zásah (menu Hrdinové). K vylepšení potřebuješ i esenci barvy hrdiny. Střípky padají z nepřátel, bossů, titána a truhel. Máš " + save.shards + ".";
   if (k === "s") return "Tlapkové svitky vylepšují kombo v menu Hrdinové: s každým stupněm sílí každé další spojení v jednom tahu. Padají z bossů, truhel a úkolů. Máš " + save.scrolls + ".";
   if (k === "lg") return "Rohlíky a granule, které jsi v tomto boji zatím získal. Po výhře se připíšou – lidé jedí rohlíky, kočky granule. Vedle jsou krystaly z boje.";
@@ -523,7 +569,7 @@ function drawOverlays() {
 // kde jde podržet prst na měně (souřadnice obrazovky; v boji horní lišta s kořistí)
 function curZones() {
   if (teamPick || paused || quitAsk || exitAsk) return [];
-  if (scene === "heroes" && heroCard < 0 && eqHero < 0) return [[40, 104, 168, 54, "r"], [208, 104, 160, 54, "g"], [368, 104, 150, 54, "d"], [518, 104, 162, 54, "h"]];
+  if (scene === "heroes" && heroCard < 0 && eqHero < 0) return [[40, 104, 168, 54, "r"], [208, 104, 160, 54, "g"], [368, 104, 150, 54, "d"], [518, 104, 84, 54, "h"]];
   if (scene === "map" && !levelPop) return [[40, 118, 140, 52, "r"], [180, 118, 126, 52, "g"], [306, 118, 114, 52, "d"], [420, 118, 120, 52, "s"], [540, 118, 140, 52, "m"]];
   if (scene === "menu" && !menuPanel) { const b = MILK_PILL(); return [[b.x, b.y, b.w, b.h, "m"]]; }
   if (scene === "play" && heroCard < 0 && !busy) { const y = LOOT_G().y - 24; return [[16, y, 96, 48, "lg"], [112, y, 100, 48, "d"]]; }
@@ -586,7 +632,8 @@ let WAVES = [], stage = 1, levelUps = [], lastGain = 0;
 const img = {};
 // vzhled kamenů (Nastavení → Kameny): diamant, kruh a ostatní předměty jsou společné
 const THEMES = [["stit", "Štíty"], ["drahokam", "Drahokamy"], ["runa", "Runy"], ["sklo", "Sklo"], ["koule", "Koule"]];
-function applyTheme() { const th = (save.set && save.set.theme) || "stit"; for (let k = 0; k < 5; k++) { img["gem" + k] = img["gem_" + th + k] || img["gem_stit" + k]; try { delete TXI["gem" + k]; delete TXI["gsh" + k]; } catch (e) {} } }
+function applyTheme() { const th = (save.set && save.set.theme) || "stit"; for (let k = 0; k < 5; k++) { for (const x of ["gem", "dia", "bomb"]) img[x + k] = img[x + "_" + th + k] || img[x + "_stit" + k];  // kameny, diamant i bomba podle tématu
+    try { for (const x of ["gem", "gsh", "dia", "bomb"]) delete TXI[x + k]; } catch (e) {} } }
 function load(name, src) { const i = new Image(); i.src = src; img[name] = i; }
 const ok = i => i && i.complete && i.naturalWidth;
 // Animované postavy: pás snímků img/anim_<klíč>.webp (H3 smyčka), popis v img/anim.js (window.ANIM)
@@ -609,10 +656,10 @@ function drawAnim(key, cx, footY, h, phase = 0) {
   const f = Math.floor(perf * a.fps + phase) % a.n, w = h * a.w / a.h;
   const c = a.c || a.n; g.drawImage(im, (f % c) * a.w, Math.floor(f / c) * a.h, a.w, a.h, cx - w / 2, footY - h, w, h); return true;
 }
-for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; load(h.id, "img/" + h.id + ".jpg"); load("gem_stit" + k, "img/gem_" + h.id + ".png"); for (const [t] of THEMES.slice(1)) load("gem_" + t + k, "img/gem_" + t + "_" + h.id + ".png"); load("dia" + k, "img/dia_" + h.id + ".png"); load("bomb" + k, "img/bomb_" + h.id + ".png"); }
+for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; load(h.id, "img/" + h.id + ".jpg"); load("gem_stit" + k, "img/gem_" + h.id + ".png"); for (const [t] of THEMES.slice(1)) load("gem_" + t + k, "img/gem_" + t + "_" + h.id + ".png"); load("dia_stit" + k, "img/dia_" + h.id + ".png"); load("bomb_stit" + k, "img/bomb_" + h.id + ".png"); for (const [t] of THEMES.slice(1)) { load("dia_" + t + k, "img/dia_" + t + "_" + h.id + ".png"); load("bomb_" + t + k, "img/bomb_" + t + "_" + h.id + ".png"); } }
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
-for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x))]) load(k, "img/" + k + ".png");
+for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
 load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
@@ -1175,6 +1222,7 @@ let board, heroes, enemies, wave, target, shield, busy, scene = "menu", particle
 
 function rnd(n) { return Math.floor(Math.random() * n); }
 function newTile(t) { return { t: t === undefined ? rnd(5) : t, y: 0, vy: 0, pop: 0, alive: true }; }
+let bag = [], bagOpen = false;
 let eventMode = false; const EVENT_REW = { g: 500, c: 2, s: 1 };  // Noc bossů: odměna za přežití (+6 střípků, 3 esence, polovina kořisti)
 function startGame(st, waves) {
   eventMode = !!waves; seasonMode = null; milkPaid = false;
@@ -1183,7 +1231,7 @@ function startGame(st, waves) {
   paused = false;
   heroCard = -1; stage = st || stage; WAVES = waves || stageWaves(stage); levelUps = []; for (const wv of WAVES) for (const e of wv) needAnim(e.k);
   heroes = teamIds().map(id => { const k = HEROES.indexOf(heroById(id)), x = heroStats(HEROES[k]); return { ...x, k, cur: x.hp, ch: 0 }; });
-  wave = 0; shield = 0; turn = 0; startWave();
+  wave = 0; shield = 0; turn = 0; bagOpen = false; bag = (save.load || []).filter(id => ITM[id] && (save.inv[id] || 0) > 0 && kindIn(ITM[id].cat)).slice(0, BAG_MAX).map(id => ({ id, n: Math.min(BAG_PER, save.inv[id]) })); startWave();
   board = [];
   for (let c = 0; c < COLS; c++) { board[c] = []; for (let r = 0; r < ROWS; r++) {
     let t; do { t = rnd(5); } while ((r >= 2 && board[c][r - 1].t === t && board[c][r - 2].t === t) || (c >= 2 && board[c - 1][r].t === t && board[c - 2][r].t === t));
@@ -1630,15 +1678,16 @@ async function nextWave() {
       const R = first ? 2.5 : 0.2, bonus = Math.round((20 + 10 * seasonMode.st) * R), gain = Math.round(lootG * R) + bonus, cr = first ? 2 + Math.floor(n / 3) : 0, sc = first && (n === 5 || n === 10) ? 2 : 0;
       addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS + (first ? 3 : 0); save.stats.shardsGot += lootS; save.stats.seasonW++;
       if (first) { save.season[key] = n; if (n === SEAS_N) { save.crystals += 15; save.scrolls += 3; save.shards += 30; for (let c = 0; c < 5; c++) save.ess[c] += 10; save.stats.seasonAll++; toast = { t: 3, text: "Celý " + S.n + " dohrán! Sezónní truhla: 15 krystalů, 3 svitky, 30 střípků, 10 esencí od každé barvy" }; } }
-      winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS]; store(); startEnd("win"); return; }
+      winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS, rollItems(first ? 1 : Math.random() < 0.25 ? 1 : 0)]; store(); startEnd("win"); return; }
     if (eventMode) { save.stats.eventW++; const r = EVENT_REW, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { save.ess[rnd(5)]++; save.stats.essGot++; }
-      levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh]; store(); startEnd("win"); return; }
+      levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh, rollItems(2)]; store(); startEnd("win"); return; }
     const hpF = heroes.reduce((a, h) => a + Math.max(0, h.cur), 0) / heroes.reduce((a, h) => a + h.hp, 0), stars = hpF >= 0.6 ? 3 : hpF >= 0.3 ? 2 : 1, sk = starKey(stage), prevS = save.stars[sk] || 0;
     save.stats.starsGot += stars; if (diff === "h") save.stats.winsH++; if (stars > prevS) save.stars[sk] = stars; const s3 = stars === 3 && prevS < 3; if (s3) { save.stats.stars3++; save.crystals += 1; }
     const c = actOf(stage), ls = localSt(stage), first = ls > progOf(c, diff), R = DIFF[diff].rew * (first ? 1 : 0.2);
-    const bonus = Math.round(stageBonus(stage) * R), gain = Math.round(lootG * R) + bonus, cr = first ? Math.max(1, Math.round(lootC * R)) : Math.random() < (diff === "h" ? 0.25 : 0.1) ? 1 : 0;  // opakování: krystal jen náhodou (3. 11. 2026 – opakováním se dalo farmit)
+    const bonus = Math.round(stageBonus(stage) * R), gain = Math.round(lootG * R) + bonus, cr = first ? Math.max(1, Math.round(lootC * R)) : Math.random() < CR_REP[diff] ? 1 : 0;  // opakování: krystal náhodou (10. 11. 2026 víc – hraní hlídá mlíčko)
+    const itg = rollItems(first ? ([5, 8, 10].includes(ls) ? 1 : 0) + (Math.random() < 0.4 ? 1 : 0) : Math.random() < IT_REP[diff] ? 1 : 0);
     const sc = first ? scrollsFor(ls, diff) : Math.random() < 0.1 ? 1 : 0;  // opakování: boss občas pustí svitek
-    addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS; save.stats.shardsGot += lootS; if (stars === 3) save.stats.win3++; winAnim = 0; levelUps = [gain, cr, bonus, sc, first, stars, s3, lootS];
+    addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS; save.stats.shardsGot += lootS; if (stars === 3) save.stats.win3++; winAnim = 0; levelUps = [gain, cr, bonus, sc, first, stars, s3, lootS, itg];
     if (first) save.prog[c + diff] = ls; save.stage = Math.max(save.stage || 1, stage + 1);
     store(); lastGain = gain; startEnd("win"); return;
   }
@@ -1855,7 +1904,7 @@ function frame(now) {
   if (finisher) { finisher.t -= rdt; if (finisher.t <= 0) finisher = null; else if (finisher.t > 0.4) dt *= 0.25; }  // poslední úder: zpomalení
   dt *= spd(); perf += dt; frameDt = dt;
   scrollStep(dt);
-  if (scene === "play" && titanMode && !titanRes && !paused && !bossIntro && !tipBox && heroCard < 0 && !dropHold) { titanT = Math.max(0, titanT - rdt);
+  if (scene === "play" && titanMode && !titanRes && !paused && !bagOpen && !bossIntro && !tipBox && heroCard < 0 && !dropHold) { titanT = Math.max(0, titanT - rdt);
     if (titanT <= 0 && !busy && !titanUp) { titanUp = true; busy = true; drag = null; msg = { text: "Čas vypršel!", t: 1.2 }; setTimeout(() => { busy = false; if (titanMode && !titanRes) finishTitan(false); }, 900); } }
   if (press && press.kind === "cur" && !press.shown && performance.now() - press.t0 > 420) { press.shown = true; tipBox = press.k; buzz(12, 70); SFX.click(); }
   if (scene === "play" && board && enemies && !busy && !paused && !bossIntro && heroCard < 0 && !drag && enemies.some(e => e.cur > 0) && board.every(col => col.every(tl => tl.alive && tl.y === 0))) {
@@ -1938,6 +1987,7 @@ function frame(now) {
     g.restore();
   }
   if (teamPick && !playLike()) drawTeamPick();
+  if (bagPick && !playLike()) drawBagPick();
   g.globalCompositeOperation = "lighter";
   for (const b of beams) { g.globalAlpha = Math.min(1, b.t * 3); g.beginPath(); g.moveTo(b.x1, b.y1); g.lineTo(b.x2, b.y2); g.strokeStyle = b.col; g.globalAlpha *= 0.35; g.lineWidth = 18; g.stroke(); g.globalAlpha = Math.min(1, b.t * 3); g.lineWidth = 6; g.stroke(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke(); }
   g.shadowBlur = 0;
@@ -2003,7 +2053,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 // ---------- menu ----------
-const BTN = { play: { x: 140, y: 786, w: 440, h: 88, t: "Hrát" }, heroes: { x: 170, y: 886, w: 380, h: 58, t: "Hrdinové" }, best: { x: 170, y: 952, w: 380, h: 58, t: "Bestiář" }, help: { x: 170, y: 1018, w: 380, h: 58, t: "Nápověda" }, credits: { x: 170, y: 1084, w: 380, h: 58, t: "O hře" } };
+const BTN = { play: { x: 140, y: 786, w: 440, h: 88, t: "Hrát" }, heroes: { x: 170, y: 886, w: 226, h: 58, t: "Hrdinové" }, bag: { x: 404, y: 886, w: 146, h: 58, t: "Batoh" }, best: { x: 170, y: 952, w: 380, h: 58, t: "Bestiář" }, help: { x: 170, y: 1018, w: 380, h: 58, t: "Nápověda" }, credits: { x: 170, y: 1084, w: 380, h: 58, t: "O hře" } };
 const GEAR = { x: 650, y: 30, r: 40 };
 // na vysokém displeji jde obsah menu nahoru (víc místa dole pro ikony), ozubené kolo do horního rohu
 const menuOff = () => -DY * 0.62, gearY = () => -DY + 64;
@@ -2061,7 +2111,7 @@ function drawMenu() {
     if (ok(fi)) { const hh = tall(h), ww = hh * fi.naturalWidth / fi.naturalHeight, br = Math.sin(perf * 2.4 + j) * 0.02;
       g.save(); g.translate(x, base); g.rotate(Math.sin(perf * 1.1 + j * 2) * 0.025); g.scale(1 - br * 0.5, 1 + br); if (!drawAnim("h_" + h.id, 0, bob, hh, j * 4)) g.drawImage(fi, -ww / 2, -hh + bob, ww, hh); g.restore(); }
     else { const R = 54; g.beginPath(); g.arc(x, 560 + bob, R + 6, 0, 6.29); g.fillStyle = COLORS[h.c]; g.fill(); portrait(k, x, 560 + bob, R); } });
-  button(BTN.play, "gold"); button(BTN.heroes, "glass"); button(BTN.best, "glass"); button(BTN.help, "glass"); button(BTN.credits, "glass"); g.restore();
+  button(BTN.play, "gold"); button(BTN.heroes, "glass"); button(BTN.bag, "glass"); button(BTN.best, "glass"); button(BTN.help, "glass"); button(BTN.credits, "glass"); g.restore();
   // nastavení: skleněné kolečko s tenkým zlatým ozubeným kolem
   g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(GEAR.x, gearY(), 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
   { const ex = W - GEAR.x, ey = gearY(); g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(ex, ey, 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
@@ -2074,7 +2124,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.2.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2310,7 +2360,7 @@ function finishTitan(killed) {
   if (fin) { const R = titanRew(lvl); gg += Math.round(R.g * mult * rewScale()); cr += Math.max(1, Math.round(R.c * mult)); sc += killed ? R.s : 0; sh += Math.round(R.h * mult); ne += killed ? 10 : 4; }
   addFood(gg); save.crystals += cr; save.scrolls += sc; save.shards += sh; save.stats.shardsGot += sh;
   save.ess[T0.c] += ne; save.stats.essGot += ne; toast = { t: 2.6, text: "+" + essName(T0.c, ne) };
-  titanRes = { dmg, frac, killed, fin, mult, lvl, n: T0.n, left: T0.f }; levelUps = [gg, cr, 0, sc, true, 0, false, sh]; winAnim = 0; store(); startEnd("win");
+  titanRes = { dmg, frac, killed, fin, mult, lvl, n: T0.n, left: T0.f }; levelUps = [gg, cr, 0, sc, true, 0, false, sh, rollItems(killed ? 3 : 1)]; winAnim = 0; store(); startEnd("win");
 }
 const weakHit = (ti, x) => { const e = enemies[ti]; return !!(e && e.titan && Math.abs(x - (enemyPos(ti).x + (e.wx || 0) * enemySize(e))) < T * 0.75); };
 function startEvent() { const E = eventWaves(); save.daily.event = true; store(); diff = "e"; startGame(E.st, E.w); }
@@ -2320,7 +2370,38 @@ function eqBtn(k) { return { x: 502, y: heroRowY(k) + 88, w: 172, h: 58, t: "Vý
 let eqHero = -1, eqBtns = [];
 const COMBO_BTN = { x: 400, y: 168, w: 280, h: 50 };
 // výběr družiny: až 5 z celé rodiny, uloží se; ukáže, které barvy kamenů mají hrdinu
-let teamPick = false, teamBtns = [], teamFrom = null;
+let teamPick = false, teamBtns = [], teamFrom = null, bagPick = false, bagBtns = [], bagInfo = null;
+const bagTile = i => ({ x: 40 + (i % 15 % 3) * 216, y: (i < 15 ? 312 : 680) + Math.floor(i % 15 / 3) * 66, w: 208, h: 60 });
+function drawBagPick() {
+  bagBtns = []; const P = { x: 20, y: 96, w: 680, h: 1100 }, inv = save.inv;
+  g.fillStyle = "rgba(5,3,12,.88)"; g.fillRect(0, -DY, W, FH); const bg = g.createLinearGradient(0, P.y, 0, P.y + P.h); bg.addColorStop(0, "#251842"); bg.addColorStop(1, "#110b20");
+  g.fillStyle = bg; rr(P.x, P.y, P.w, P.h, 30); g.fill(); g.strokeStyle = "rgba(242,196,109,.7)"; g.lineWidth = 2; rr(P.x + 1, P.y + 1, P.w - 2, P.h - 2, 29); g.stroke();
+  g.textAlign = "center"; g.fillStyle = "#f3c66e"; g.font = "800 38px 'Exo 2', sans-serif"; g.fillText("Batoh", W / 2, P.y + 52);
+  g.fillStyle = "rgba(255,255,255,.75)"; fitText("Do boje vezmeš až " + BAG_MAX + " druhy, z každého nejvýš " + BAG_PER + " kusy · ťukni na předmět", W / 2, P.y + 84, P.w - 40, "500 18px 'Exo 2', sans-serif");
+  // výbava do boje
+  for (let j = 0; j < BAG_MAX; j++) { const id = save.load[j], it = ITM[id], x = W / 2 + (j - 1.5) * 132, y = P.y + 140, okK = it && kindIn(it.cat);
+    g.fillStyle = it ? "rgba(255,209,102,.14)" : "rgba(255,255,255,.05)"; g.beginPath(); g.arc(x, y, 38, 0, 6.29); g.fill(); g.strokeStyle = it ? "#ffd166" : "rgba(255,255,255,.2)"; g.lineWidth = 2.5; g.stroke();
+    if (it) { drawItIcon(it, x, y, 64, okK && inv[id] ? 1 : 0.35); g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "800 17px 'Exo 2', sans-serif"; g.fillText("×" + Math.min(BAG_PER, inv[id] || 0), x + 30, y + 36);
+      bagBtns.push([{ x: x - 40, y: y - 40, w: 80, h: 80 }, () => { save.load.splice(j, 1); bagInfo = id; store(); SFX.click(); }]); }
+    else { g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.3)"; g.font = "700 26px 'Exo 2', sans-serif"; g.fillText("+", x, y + 9); } }
+  for (let s = 0; s < 2; s++) { const cat = s === 0, has = kindIn(cat); g.textAlign = "left"; g.fillStyle = has ? "#f3c66e" : "rgba(243,198,110,.5)"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "2px";
+    fitText((cat ? "KOČIČÍ PŘEDMĚTY" : "LIDSKÉ PŘEDMĚTY") + (has ? "" : " · v týmu " + (cat ? "není žádná kočka" : "není žádný člověk")), 44, cat ? 300 : 668, 630, g.font); g.letterSpacing = "0px"; }
+  ITEMS.forEach((it, i) => { const b = bagTile(i), n = inv[it.id] || 0, on = save.load.includes(it.id), okK = kindIn(it.cat), a = n && okK ? 1 : 0.4;
+    g.fillStyle = on ? "rgba(255,209,102,.16)" : bagInfo === it.id ? "rgba(255,255,255,.1)" : "rgba(255,255,255,.05)"; rr(b.x, b.y, b.w, b.h, 14); g.fill();
+    g.strokeStyle = on ? "#ffd166" : bagInfo === it.id ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.1)"; g.lineWidth = on ? 3 : 1.5; rr(b.x, b.y, b.w, b.h, 14); g.stroke();
+    drawItIcon(it, b.x + 32, b.y + 30, 48, a); g.globalAlpha = a; g.textAlign = "left"; g.fillStyle = "#fff"; fitText(it.n, b.x + 62, b.y + 26, b.w - 70, "700 16px 'Exo 2', sans-serif");
+    g.fillStyle = n ? "#ffd166" : "rgba(255,255,255,.6)"; fitText(n ? "máš " + n : "zatím nemáš", b.x + 62, b.y + 49, b.w - 70, "600 15px 'Exo 2', sans-serif"); g.globalAlpha = 1;
+    bagBtns.push([b, () => { bagInfo = it.id;
+      if (on) { save.load.splice(save.load.indexOf(it.id), 1); store(); SFX.click(); return; }
+      if (!okK) { toast = { t: 2.4, text: (it.cat ? "Kočičí předměty potřebují v týmu kočku" : "Lidské předměty potřebují v týmu člověka") }; SFX.bad(); return; }
+      if (!n) { toast = { t: 2.6, text: "Zatím ho nemáš – předměty padají z výher, truhly, úkolů a titána" }; SFX.bad(); return; }
+      if (save.load.length >= BAG_MAX) { toast = { t: 2.4, text: "Do boje nejvýš " + BAG_MAX + " druhy – nejdřív nějaký odeber" }; SFX.bad(); return; }
+      save.load.push(it.id); store(); SFX.click(); }]); });
+  const iy = 1050; g.textAlign = "center";
+  if (bagInfo && ITM[bagInfo]) { const it = ITM[bagInfo]; g.fillStyle = "#ffd166"; fitText(it.n, W / 2, iy, P.w - 60, "800 20px 'Exo 2', sans-serif"); g.fillStyle = "rgba(255,255,255,.85)"; g.font = "500 17px 'Exo 2', sans-serif"; fillWrapC(itDesc(it), W / 2, iy + 34, P.w - 60, 22); }
+  else { g.fillStyle = "rgba(255,255,255,.6)"; g.font = "500 17px 'Exo 2', sans-serif"; fillWrapC("Lektvary: červené léčí, fialové nabíjejí manu (malý jednomu, ostatní všem). Použití v boji nestojí tah.", W / 2, iy + 16, P.w - 60, 22); }
+  const done = { x: 230, y: P.y + P.h - 84, w: 260, h: 68, t: "Hotovo" }; button(done, "gold"); bagBtns.push([done, () => { bagPick = false; SFX.click(); }]);
+}
 const teamTile = j => ({ x: 34 + (j % 2) * 330, y: 222 + Math.floor(j / 2) * 136, w: 322, h: 128 });
 function drawTeamPick() {
   teamBtns = []; const t = save.team.filter(id => heroById(id)), P = { x: 20, y: 110, w: 680, h: 1080 };
@@ -2344,16 +2425,17 @@ function drawTeamPick() {
   for (let c = 0; c < 5; c++) { const x = W / 2 + (c - 2) * 110, n = teamHeroes().filter(h => h.c === c).length; drawSymbol(c, x, y0 + 46, 50); g.globalAlpha = n ? 1 : 0.9;
     g.fillStyle = n ? "#3ddc84" : "#ff5d6c"; g.font = "800 20px 'Exo 2', sans-serif"; g.fillText(n ? (n > 1 ? "✔×" + n : "✔") : "✖", x, y0 + 98); g.globalAlpha = 1; }
   teamSumLine(y0 + 140, P.w - 40);
-  const done = { x: 210, y: P.y + P.h - 96, w: 300, h: 76, t: "Hotovo (" + t.length + "/5)" }; button(done, "gold"); teamBtns.push([done, () => { teamPick = false; if (levelPop) LPI = levelInfo(levelPop); }]);
+  const bb = { x: 56, y: P.y + P.h - 96, w: 226, h: 76, t: "Batoh" }; button(bb, "glass"); teamBtns.push([bb, () => { bagPick = true; bagInfo = null; }]);
+  const done = { x: 300, y: P.y + P.h - 96, w: 364, h: 76, t: "Hotovo (" + t.length + "/5)" }; button(done, "gold"); teamBtns.push([done, () => { teamPick = false; if (levelPop) LPI = levelInfo(levelPop); }]);
 }
 function drawHeroesInfo() {
   menuBg(); header("Hrdinové");
   g.fillStyle = "rgba(10,6,20,.7)"; rr(40, 104, 640, 54, 27); g.fill();
   gemIcon("r", 62, 131, 34); gemIcon("g", 222, 131, 32); gemIcon("d", 382, 131, 32); drawItem("ui_shard", 532, 131, 40);
-  g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; fitText(save.rohliky.toLocaleString("cs-CZ"), 84, 140, 124, g.font); fitText(save.granule.toLocaleString("cs-CZ"), 242, 140, 124, g.font); fitText(String(save.crystals), 402, 140, 112, g.font); fitText(String(save.shards), 556, 140, 110, g.font);
+  g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; fitText(save.rohliky.toLocaleString("cs-CZ"), 84, 140, 124, g.font); fitText(save.granule.toLocaleString("cs-CZ"), 242, 140, 124, g.font); fitText(String(save.crystals), 402, 140, 112, g.font); fitText(String(save.shards), 556, 140, 44, g.font); button(EX_BTN, "gold");
   // kombo a tlapkové svitky
   g.fillStyle = "rgba(10,6,20,.7)"; rr(40, 166, 640, 54, 27); g.fill(); drawItem("ico_scroll", 70, 193, 38);
-  g.fillStyle = "#ffd1e3"; g.font = "800 21px Baloo, sans-serif"; g.fillText("Kombo " + save.combo + "/" + COMBO_MAX + " · ×" + comboStep().toFixed(2).replace(".", ",") + " za krok · " + save.scrolls + " svitků", 92, 200);
+  g.textAlign = "left"; g.fillStyle = "#ffd1e3"; fitText("Kombo " + save.combo + "/" + COMBO_MAX + " · ×" + comboStep().toFixed(2).replace(".", ",") + " za krok · " + save.scrolls + " svitků", 92, 200, 368, "800 21px Baloo, sans-serif");
   const cmax = save.combo >= COMBO_MAX, cc = comboCost(save.combo); g.globalAlpha = cmax || save.scrolls >= cc ? 1 : 0.45;
   button({ ...COMBO_BTN, y: 170, h: 46, x: 470, w: 200, t: cmax ? "Maximum" : "Vylepšit · " + cc }, "#ff6fa8"); g.globalAlpha = 1;
   // esence pěti barev (materiál na výstroj)
@@ -2387,6 +2469,21 @@ function drawHeroesInfo() {
   g.restore();
   backBtn(); teamSumLine(1152, 640);
   if (eqHero >= 0) drawEq(eqHero);
+  if (exchOpen) drawExch();
+}
+const EX_BTN = { x: 606, y: 110, w: 68, h: 42, t: "⇄" }; let exchOpen = false, exBtns = [];
+function drawExch() {
+  exBtns = []; const P = { x: 50, y: 360, w: 620, h: 560 }, left = exLeft(), pr = exPrice();
+  g.fillStyle = "rgba(5,3,12,.85)"; g.fillRect(0, -DY, W, FH); const bg = g.createLinearGradient(0, P.y, 0, P.y + P.h); bg.addColorStop(0, "#251842"); bg.addColorStop(1, "#110b20"); g.fillStyle = bg; rr(P.x, P.y, P.w, P.h, 30); g.fill();
+  g.strokeStyle = "rgba(242,196,109,.7)"; g.lineWidth = 2; rr(P.x + 1, P.y + 1, P.w - 2, P.h - 2, 29); g.stroke();
+  g.textAlign = "center"; g.fillStyle = "#f3c66e"; fitText("Výměna za krystaly", W / 2, P.y + 62, P.w - 40, "800 34px 'Exo 2', sans-serif");
+  g.fillStyle = "rgba(255,255,255,.85)"; g.font = "500 20px 'Exo 2', sans-serif"; fillWrapC("Jídlo, které už nemáš kam dát, vyměníš za krystaly na hvězdy hrdinů. Dnes ještě " + left + " z " + EX_MAX + ".", W / 2, P.y + 122, P.w - 70, 28);
+  [["granule", granN(pr)], ["rohliky", rohlN(pr)]].forEach(([key, txt], j) => { const b = { x: P.x + 50, y: P.y + 200 + j * 100, w: P.w - 100, h: 80, t: "1 krystal za " + txt }, can = left > 0 && save[key] >= pr;
+    g.globalAlpha = can ? 1 : 0.45; button(b, j ? "#c47a2c" : "#8a5a2b"); g.globalAlpha = 1;
+    exBtns.push([b, () => { if (left <= 0) { toast = { t: 2.2, text: "Dnes už víc výměn nejde – zítra zase" }; SFX.bad(); return; } if (save[key] < pr) { SFX.bad(); return; }
+      save[key] -= pr; save.crystals++; save.exch.n++; store(); SFX.star(); toast = { t: 1.8, text: "+1 krystal" }; }]); });
+  g.fillStyle = "rgba(255,255,255,.6)"; g.font = "500 17px 'Exo 2', sans-serif"; fillWrapC("Cena roste s tím, jak daleko jsi ve hře. Máš " + granN(save.granule) + " a " + rohlN(save.rohliky) + ".", W / 2, P.y + 420, P.w - 70, 24);
+  const cb = { x: 230, y: P.y + P.h - 88, w: 260, h: 68, t: "Zavřít" }; button(cb, "glass"); exBtns.push([cb, () => { exchOpen = false; }]);
 }
 // okno výstroje hrdiny: tři předměty, úroveň, účinek teď → po vylepšení, cena
 function drawEq(k) {
@@ -2477,6 +2574,15 @@ const HELP = [
       gl.addColorStop(0, "rgba(255,209,102," + (0.3 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 110, cy - 110, 220, 220); if (ok(img[k])) g.drawImage(img[k], x - 75, cy - 75, 150, 150);
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 55, cy - 55, 16, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 18px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("1", x + 55, cy - 49);
       g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText(["Úkoly", "Odměna", "Truhla"][j], x, cy + 110); }); } },
+  { t: "Předměty a batoh", d: "V Batohu máš 15 kočičích a 15 lidských předmětů – kočičí vybereš jen s kočkou v týmu, lidské jen s člověkem. Před bojem zvol až 4 druhy, z každého půjdou do boje 3 kusy. V boji ťukni nahoře na 🎒 a na předmět, použití nestojí tah. Elixíry zdraví léčí, elixíry many nabíjejí manu, ostatní útočí, zdržují nebo chrání. Padají z výher, truhly, úkolů, titána a Noci bossů.",
+    draw(y) { const row = (ids, yy) => ids.forEach((id, j) => { const it = ITM[id], x = W / 2 + (j - (ids.length - 1) / 2) * Math.min(104, 600 / ids.length); drawItIcon(it, x, yy, 70); });
+      g.textAlign = "center"; g.fillStyle = "#ff8a8a"; g.font = "700 17px 'Exo 2', sans-serif"; g.fillText("elixíry zdraví – malý, střední, velký", W / 2 - 160, y + 20); g.fillStyle = "#d99bff"; g.fillText("elixíry many", W / 2 + 170, y + 20);
+      row(["c1", "c2", "c3", "c4", "c5", "c6"], y + 80); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("kočičí (baňky)", W / 2, y + 140);
+      row(["l1", "l2", "l3", "l4", "l5", "l6"], y + 200); g.fillText("lidské (láhve)", W / 2, y + 260);
+      row(["c7", "c9", "c10", "c11", "l7", "l9", "l10"], y + 320); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("útoky, zdržení a ochrana – popis v Batohu", W / 2, y + 380); } },
+  { t: "Krystaly navíc", d: "Krystaly jsou na hvězdy hrdinů – bez nich se úroveň nezvedne nad 10. Padají i při opakování úrovní: na lehkou s 35% šancí, na těžkou s 60% šancí. Granule a rohlíky navíc vyměníš v menu Hrdinové tlačítkem ⇄, nejvýš za 10 krystalů denně.",
+    draw(y) { drawGranule(W / 2 - 230, y + 160, 90); drawRohlik(W / 2 - 110, y + 160, 90); g.textAlign = "center"; g.fillStyle = "#ffd166"; g.font = "800 70px 'Exo 2', sans-serif"; g.fillText("⇄", W / 2 + 20, y + 185); gemIcon("d", W / 2 + 170, y + 160, 110);
+      g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText("opakování: lehká 35 % · těžká 60 %", W / 2, y + 330); } },
   { t: "Mlíčko", d: "Mlíčko je energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko, rychlé dohrání taky. Titán, Noc bossů, truhla a odměny jsou zdarma. Mlíčko se doplňuje samo – za den přesně tolik, kolik je maximum (při 20 je to jedno za 72 minut). Maximum začíná na 20 a za každou dohranou kampaň, lehkou i těžkou, vyskočí o 5 (až na 70) – a 5 mlíček se rovnou přidá. Nad maximum se mlíčko nedoplní nikdy, ani lahvemi z úkolů, truhly a přihlášení. Když boj opustíš ještě v první vlně, mlíčko se vrátí. Zbývá-li 0, kočky odpočívají – odpočet uvidíš nahoře v menu.",
     draw(y) { const pu = 0.5 + 0.5 * Math.sin(perf * 3), gl = g.createRadialGradient(W / 2, y + 120, 10, W / 2, y + 120, 150); gl.addColorStop(0, "rgba(156,196,245," + (0.3 + 0.2 * pu) + ")"); gl.addColorStop(1, "rgba(156,196,245,0)"); g.fillStyle = gl; g.fillRect(W / 2 - 150, y - 30, 300, 300);
       drawMilk(W / 2, y + 120, 170 + 8 * pu); g.fillStyle = "rgba(20,14,40,.85)"; rr(210, y + 260, 300, 52, 26); g.fill(); g.strokeStyle = "rgba(156,196,245,.7)"; g.lineWidth = 1.5; rr(210, y + 260, 300, 52, 26); g.stroke();
@@ -2834,11 +2940,11 @@ function levelInfo(st) {
   return { waves, first, gran: Math.round(lg * R) + Math.round(stageBonus(st) * R), cr: first ? Math.max(1, Math.round(lc * R)) : 0, sc: first ? scrollsFor(ls, diff) : 0,
     foeHp: all.reduce((a, e) => a + e.hp, 0), team: teamHeroes().reduce((a, h) => a + heroStats(h).hp, 0), rec: Math.round(DEF_TEAM.map(heroById).reduce((a, h) => a + h.hp, 0) * stageT(st)) };
 }
-const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 452, y: 1090, w: 210, h: 84, t: "Do boje" }, LP_BACK = { x: 58, y: 1090, w: 170, h: 84, t: "Zpět" }, LP_TEAM = { x: 240, y: 1090, w: 200, h: 84, t: "Tým" };
+const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 506, y: 1090, w: 156, h: 84, t: "Do boje" }, LP_BACK = { x: 58, y: 1090, w: 138, h: 84, t: "Zpět" }, LP_TEAM = { x: 206, y: 1090, w: 140, h: 84, t: "Tým" }, LP_BAG = { x: 356, y: 1090, w: 140, h: 84, t: "Batoh" };
 function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(t, x, y); g.letterSpacing = "0px";
   const lg = g.createLinearGradient(x, 0, x + 600, 0); lg.addColorStop(0, "rgba(243,198,110,.5)"); lg.addColorStop(1, "rgba(243,198,110,0)"); g.fillStyle = lg; g.fillRect(x, y + 9, 600, 1.5); }
 const LP_FAST = { x: 58, y: 1004, w: 604, h: 66, t: "⚡ Rychle dohrát (3 hvězdy)" };
-function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0; addFood(I.gran); save.crystals += I.cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (I.cr ? "  ·  +" + I.cr + " krystalů" : "") + (sh ? "  ·  +" + sh + " ⚙" : "") }; }
+function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(Math.random() < IT_REP[diff] ? 1 : 0); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itg.join(", ") : "") }; }
 function drawLevelPop() {
   const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX;
   g.fillStyle = "rgba(5,3,12,.8)"; g.fillRect(0, -DY, W, FH);
@@ -2867,10 +2973,10 @@ function drawLevelPop() {
   g.fillText(r >= 1 ? "Tým je připravený" : r >= 0.85 ? "Těsné – bude to chtít štěstí a dobrá komba" : "Nepřátelé jsou silnější – vylepši hrdiny", W / 2, y + 44); y += 78;
   secLabel(I.first ? "ODMĚNA ZA PRVNÍ VÝHRU" : "ODMĚNA ZA OPAKOVÁNÍ", b.x + 34, y); y += 46;
   g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "700 26px 'Exo 2', sans-serif";
-  { const [fr, fg] = splitFood(I.gran); gemIcon("r", b.x + 44, y - 9, 36); g.fillText(fr.toLocaleString("cs-CZ"), b.x + 68, y); gemIcon("g", b.x + 186, y - 9, 34); g.fillText(fg.toLocaleString("cs-CZ"), b.x + 208, y); gemIcon("d", b.x + 316, y - 9, 34); g.fillText(I.cr, b.x + 340, y); }
+  { const [fr, fg] = splitFood(I.gran); gemIcon("r", b.x + 44, y - 9, 36); g.fillText(fr.toLocaleString("cs-CZ"), b.x + 68, y); gemIcon("g", b.x + 186, y - 9, 34); g.fillText(fg.toLocaleString("cs-CZ"), b.x + 208, y); gemIcon("d", b.x + 316, y - 9, 34); g.fillText(I.first ? I.cr : Math.round(CR_REP[diff] * 100) + " %", b.x + 340, y); }
   drawItem("ico_scroll", b.x + 436, y - 9, 38); g.font = "700 26px 'Exo 2', sans-serif"; g.fillText(I.sc ? "+" + I.sc : I.first ? "–" : "10 %", b.x + 460, y);
   if (!I.first && (save.stars[starKey(st)] || 0) >= 3) button(LP_FAST, "glass");
-  button(LP_BACK, "glass"); button(LP_TEAM, "glass"); button(LP_GO, "gold");
+  button(LP_BACK, "glass"); button(LP_TEAM, "glass"); button(LP_BAG, "glass"); button(LP_GO, "gold");
 }
 let mapAct = 1, campPop = 0;
 const campCard = i => ({ x: 34, y: 148 + (i + 1) * 246 - (scene === "camps" ? scrollY : 0), w: 652, h: 228 });  // slot 0 = Sezónní kampaně  // seznam kampaní se posouvá (přibývají)
@@ -3031,6 +3137,68 @@ function drawPause() {
   button(P_CONT, "#3ddc84"); button(P_QUIT, "#e5484d"); button(P_HELP, "glass");
   g.fillStyle = "rgba(255,255,255,.6)"; g.font = "600 22px Baloo, sans-serif"; g.fillText(titanMode ? "Odchodem ukončíš útok – poškození se započítá." : "Při odchodu z boje kořist nezískáš.", W / 2, 930);
 }
+const BAG_BTN = { x: 472, w: 78, h: 44, get y() { return 14 + TOP_Y; } }, TRAY = j => ({ x: 34 + j * 166, y: 78 + TOP_Y, w: 154, h: 150 });
+function drawBagBtn() {
+  const b = BAG_BTN, left = bag.reduce((a, s) => a + s.n, 0); g.fillStyle = bagOpen ? "rgba(255,209,102,.35)" : "rgba(10,6,20,.6)"; rr(b.x, b.y, b.w, b.h, 22); g.fill();
+  g.strokeStyle = bagOpen ? "#ffd166" : "rgba(255,255,255,.18)"; g.lineWidth = 2; rr(b.x, b.y, b.w, b.h, 22); g.stroke();
+  g.save(); g.globalAlpha = left ? 1 : 0.4; g.textAlign = "center"; g.font = "26px sans-serif"; g.fillText("🎒", b.x + 30, b.y + 32); g.restore();
+  if (left) { g.fillStyle = "#ffd166"; g.beginPath(); g.arc(b.x + b.w - 16, b.y + 22, 13, 0, 6.29); g.fill(); g.fillStyle = "#2a1640"; g.textAlign = "center"; g.font = "800 16px 'Exo 2', sans-serif"; g.fillText(left, b.x + b.w - 16, b.y + 28); }
+  if (!bagOpen) return;
+  g.fillStyle = "rgba(12,6,26,.94)"; rr(20, 68 + TOP_Y, 680, 214, 24); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 2; rr(20, 68 + TOP_Y, 680, 214, 24); g.stroke();
+  for (let j = 0; j < BAG_MAX; j++) { const s = bag[j], r = TRAY(j); g.fillStyle = "rgba(255,255,255,.06)"; rr(r.x, r.y, r.w, r.h, 18); g.fill();
+    if (!s) { g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.3)"; g.font = "600 18px 'Exo 2', sans-serif"; g.fillText("–", r.x + r.w / 2, r.y + 80); continue; }
+    const it = ITM[s.id]; drawItIcon(it, r.x + r.w / 2, r.y + 52, 76, s.n ? 1 : 0.3); g.textAlign = "center"; g.fillStyle = "#fff"; fitText(it.n, r.x + r.w / 2, r.y + 112, r.w - 12, "700 15px 'Exo 2', sans-serif");
+    g.fillStyle = s.n ? "#ffd166" : "rgba(255,255,255,.4)"; g.font = "800 20px 'Exo 2', sans-serif"; g.fillText("×" + s.n, r.x + r.w / 2, r.y + 138); }
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.65)"; fitText("Ťukni na předmět · použití nestojí tah · mimo podnos zavřeš", W / 2, 270 + TOP_Y, 640, "500 16px 'Exo 2', sans-serif");
+}
+async function useItem(j) { try { await useItemInner(j); } catch (e) { console.error(e); } finally { busy = false; } }
+async function useItemInner(j) {
+  const s = bag[j]; if (!s || s.n <= 0 || scene !== "play") return; if (busy) { toast = { t: 1.6, text: "Počkej, až doběhne tah" }; return; }
+  const it = ITM[s.id], v = it.v, col = it.pot === "e" ? "#ff6b6b" : it.pot === "m" ? "#c77dff" : "#ffd166", own = h => isCat(h) === it.cat;
+  const mine = heroes.filter(h => h.cur > 0 && own(h)), dead = heroes.filter(h => h.cur <= 0 && own(h)), foes = enemies.map((e, i) => [e, i]).filter(([e]) => e.cur > 0);
+  const alive = heroes.filter(h => h.cur > 0), A = alive.reduce((a, h) => a + h.atk, 0) / Math.max(1, alive.length), hurt = mine.filter(h => h.cur < h.hp);
+  const can = { heal1: hurt.length, healAll: hurt.length, mana1: mine.some(h => h.ch < CHARGE), manaAll: mine.some(h => h.ch < CHARGE), revive: dead.length || hurt.length, clean: mine.length, guard: mine.length, paint: true, wand: true, shield: true }[it.k];
+  if (can === 0 || can === false || (can === undefined && !foes.length)) { toast = { t: 2, text: it.n + " by teď nepomohl" + (it.k === "mana1" || it.k === "manaAll" ? " – mana je plná" : "") }; SFX.bad(); return; }
+  busy = true; s.n--; save.inv[s.id] = Math.max(0, (save.inv[s.id] || 0) - 1); save.stats.itemsUsed = (save.stats.itemsUsed || 0) + 1; store();
+  floats.push({ x: W / 2, y: BY - 60, text: it.n + "!", col, t: 1.3, big: true }); SFX.star(); buzz(25, 120);
+  const heal = (h, f) => { const k = heroes.indexOf(h), n = Math.min(h.hp - h.cur, Math.round(h.hp * f)); if (n <= 0) return; h.cur += n; save.stats.heal += n; floats.push({ x: heroX(k), y: HERO_Y - 10, text: "+" + n, col: "#3ddc84", t: 1.1 }); rings.push({ x: heroX(k), y: HERO_Y, t: 0.8, d: 0.8, col, R: 140 }); };
+  const mana = (h, f) => { const k = heroes.indexOf(h); h.ch = Math.min(CHARGE, h.ch + Math.ceil(CHARGE * f)); rings.push({ x: heroX(k), y: HERO_Y, t: 0.8, d: 0.8, col, R: 140 }); for (let q = 0; q < 6; q++) particles.push({ x: heroX(k), y: HERO_Y - 40, vx: (Math.random() - .5), vy: -1.5 - Math.random() * 2, t: 1, col, fl: true }); };
+  const strike = (i, f, c = col) => { const q = enemyPos(i); slashes.push({ x: q.x, y: q.y, t: 0.38, a: Math.random() * 3, col: c }); rings.push({ x: q.x, y: q.y, t: 0.5, d: 0.5, col: c, R: 180 }); hitEnemy(i, Math.round(A * f), c); };
+  const tgt = () => { const ti = pickTarget(); return ti >= 0 ? ti : foes.length ? foes[0][1] : -1; };
+  switch (it.k) {
+    case "heal1": heal(hurt.reduce((a, b) => (b.cur / b.hp < a.cur / a.hp ? b : a)), v); SFX.heal(); break;
+    case "healAll": mine.forEach(h => heal(h, v)); SFX.heal(); break;
+    case "mana1": mana(mine.reduce((a, b) => (b.ch < a.ch ? b : a)), v); break;
+    case "manaAll": mine.forEach(h => mana(h, v)); break;
+    case "hit": { const ti = tgt(); strike(ti, v); shake = 0.5; break; }
+    case "pan": { const ti = tgt(); strike(ti, v, "#e0e0e0"); if (enemies[ti].cur > 0) enemies[ti].left += 1; shake = 0.6; break; }
+    case "jump": { const ti = tgt(); strike(ti, v); for (const d of [-1, 1]) { const e = enemies[ti + d]; if (e && e.cur > 0) strike(ti + d, v / 2); } shake = 0.6; break; }
+    case "throw3": for (let q = 0; q < 3; q++) { const al = enemies.map((e, i) => [e, i]).filter(([e]) => e.cur > 0); if (!al.length) break; strike(al[rnd(al.length)][1], v, "#ff8a5c"); await sleep(180); } break;
+    case "bomb": scrFlash = 0.3; shake = 0.9; foes.forEach(([e, i]) => { const q = enemyPos(i); flashes.push({ x: q.x, y: q.y, t: 0.4, d: 0.4, col: "#ffb347", R: 260 }); hitEnemy(i, Math.round(A * v), "#ffb347"); }); SFX.diamond(); break;
+    case "fireAll": scrFlash = 0.25; shake = 0.7; foes.forEach(([e, i]) => { hitEnemy(i, Math.round(A * v), "#ff7a1a"); if (e.cur > 0) addSt(e, "burn", 2, Math.round(A * 1.2)); }); SFX.diamond(); break;
+    case "stunAll": foes.forEach(([e, i]) => { e.left += v; const q = enemyPos(i); floats.push({ x: q.x, y: q.y - 110, text: "+" + v + " kola", col: "#c9b8ff", t: 1.1 }); }); break;
+    case "stun1": { const ti = tgt(), q = enemyPos(ti); enemies[ti].left += v; floats.push({ x: q.x, y: q.y - 110, text: "⏰ +" + v + " kola", col: "#c9b8ff", t: 1.2 }); break; }
+    case "weakAll": foes.forEach(([e]) => addSt(e, "weak", v)); break;
+    case "charmAll": foes.forEach(([e]) => addSt(e, "charm", v)); break;
+    case "shield": shield = Math.max(shield, v); rings.push({ x: W / 2, y: HERO_Y, t: 0.7, d: 0.7, col: "#9ec8ff", R: 420 }); break;
+    case "guard": mine.forEach(h => addSt(h, "guard", v)); rings.push({ x: W / 2, y: HERO_Y, t: 0.7, d: 0.7, col: "#9ec8ff", R: 420 }); break;
+    case "clean": mine.forEach(h => { if (h.st) for (const b of ["poison", "burn", "mute"]) delete h.st[b]; addSt(h, "regen", 3, Math.round(h.hp * v)); }); SFX.heal(); break;
+    case "revive": if (dead.length) { const h = dead[rnd(dead.length)], k = heroes.indexOf(h); h.cur = Math.max(1, Math.round(h.hp * v)); h.st = {}; h.ch = 0; save.stats.heal += h.cur;
+        floats.push({ x: heroX(k), y: HERO_Y - 110, text: "Zpátky ve hře!", col, t: 1.4, big: true }); flashes.push({ x: heroX(k), y: HERO_Y, t: 0.5, d: 0.5, col: "#fff", R: 260 }); }
+      else heal(hurt.reduce((a, b) => (b.cur / b.hp < a.cur / a.hp ? b : a)), 0.3); SFX.heal(); break;
+    case "paint": { const cols = mine.map(h => h.c), c0 = cols.length ? cols[rnd(cols.length)] : rnd(5), cand = [];
+      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const tl = board[c][r]; if (!tl.sp && tl.t >= 0 && tl.t !== c0) cand.push(tl); }
+      for (let q = 0; q < v && cand.length; q++) { const tl = cand.splice(rnd(cand.length), 1)[0]; tl.t = c0; tl.pop = 0.3; }
+      await sleep(350); combo = 0; await resolve(); break; }
+    case "wand": { const cols = mine.map(h => h.c), cells = [];
+      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (!board[c][r].sp) cells.push([c, r]);
+      for (let q = 0; q < 1 + v && cells.length; q++) { const [c, r] = cells.splice(rnd(cells.length), 1)[0], tc = q === 0 && cols.length ? cols[rnd(cols.length)] : board[c][r].t >= 0 ? board[c][r].t : rnd(5);
+        board[c][r] = { ...newTile(tc), sp: q === 0 ? "diamond" : "bomb", dc: tc }; burst(BX + c * T + T / 2, BY + r * T + T / 2, "#fff"); }
+      SFX.diamondMade(); await sleep(350); if (findMatches().length) { combo = 0; await resolve(); } break; }
+  }
+  await sleep(450);
+  if (enemies.every(e => e.cur <= 0)) await nextWave();
+}
 const LOOT_G = () => ({ x: 46, y: 40 + TOP_Y }), LOOT_C = () => ({ x: 146, y: 40 + TOP_Y });
 function drawHud() {
   // kořist v boji
@@ -3039,13 +3207,14 @@ function drawHud() {
   drawRohlik(lg.x, lg.y, 36); drawDiamond(lc.x, lc.y, 34, -1);
   g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; g.fillText(lootG, lg.x + 22, lg.y + 8); g.fillText(lootC, lc.x + 22, lc.y + 8);
   // pruh výhod: každý kámen je silný proti kameni napravo od sebe
-  const y0 = lg.y; g.fillStyle = "rgba(10,6,20,.6)"; rr(222, y0 - 24, 300, 48, 24); g.fill();
+  const y0 = lg.y; g.fillStyle = "rgba(10,6,20,.6)"; rr(222, y0 - 24, 240, 48, 24); g.fill();
   if (titanMode) { const low = titanT < 20, pu = low ? 0.5 + 0.5 * Math.sin(perf * 10) : 0, col = low ? "rgba(255," + Math.round(90 + 80 * pu) + ",90,1)" : "#ffd166";  // časomíra útoku na titána
-    g.textAlign = "left"; g.fillStyle = col; g.font = "800 26px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 240, y0 + 9);
-    g.fillStyle = "rgba(0,0,0,.55)"; rr(350, y0 - 5, 154, 10, 5); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(350, y0 - 5, Math.max(10, 154 * titanT / TITAN_TIME), 10, 5); g.fill(); }
+    g.textAlign = "left"; g.fillStyle = col; g.font = "800 26px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 236, y0 + 9);
+    g.fillStyle = "rgba(0,0,0,.55)"; rr(334, y0 - 5, 114, 10, 5); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(334, y0 - 5, Math.max(10, 114 * titanT / TITAN_TIME), 10, 5); g.fill(); }
   else { const seq = [...ADV_ORDER, ADV_ORDER[0]];
-  seq.forEach((k, j) => { const x = 246 + j * 50; drawSymbol(k, x, y0, 28);
-    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 21, y0 - 6); g.lineTo(x + 30, y0); g.lineTo(x + 21, y0 + 6); g.fill(); } }); }
+  seq.forEach((k, j) => { const x = 242 + j * 40; drawSymbol(k, x, y0, 26);
+    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 15, y0 - 5); g.lineTo(x + 24, y0); g.lineTo(x + 15, y0 + 5); g.fill(); } }); }
+  drawBagBtn();
   // létající kořist
   for (const l of lootFly) { if (l.t < 0) continue; const k = Math.min(1, l.t / 0.9), e = k * k * (3 - 2 * k), dst = l.kind === "g" ? lg : lc;
     const x = l.x + (dst.x - l.x) * e, y = l.y + (dst.y - l.y) * e - Math.sin(k * Math.PI) * 120;
@@ -3100,6 +3269,7 @@ function drawEnd() {
   g.fillText(TT, W / 2, 520); g.shadowBlur = 0; g.restore();
   if (scene === "win" && !eventMode && !seasonMode && levelUps[5]) for (let j = 0; j < 3; j++) { const t = Math.max(0, Math.min(1, (endT - 0.5 - j * 0.25) * 4)), on = j < levelUps[5], x = W / 2 + (j - 1) * 96, y = 400 - (j === 1 ? 18 : 0);
     if (t <= 0) continue; const sc = t < 1 ? 0.3 + 1.0 * t + 0.3 * Math.sin(t * Math.PI) : 1; drawStar(x, y, 40 * sc, on); }
+  if (scene === "win" && levelUps[8] && levelUps[8].length && endT > 1) { g.textAlign = "center"; g.fillStyle = "#e7c6ff"; fitText("🎒 " + levelUps[8].join(", "), W / 2, 518, W - 80, "700 22px 'Exo 2', sans-serif"); }
   if (scene === "win" && levelUps[6] && endT > 1.4) { g.fillStyle = "#ffd166"; g.font = "700 20px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("Poprvé 3 hvězdy: +1 krystal", W / 2, 455); }
   g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; fillWrapC(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" && seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580, W - 60, 32);
   if (scene === "win") {
@@ -3124,9 +3294,10 @@ function down(ev) { idleT = 0; hint = null;
   if (tipBox) { tipBox = null; SFX.click(); return; } if (milkAsk) { milkAsk = false; SFX.click(); return; }
   { const z = curZones().find(([x, y, w, h]) => p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h); if (z) { press = { kind: "cur", k: z[4], t0: performance.now(), x: p.x, y: p.y }; return; } }
   if (scene === "menu" || scene === "map" || scene === "heroes" || scene === "credits" || scene === "settings" || scene === "best" || scene === "camps" || scene === "seasons") playMusic("menu");
+  if (bagPick) { const hit = bagBtns.find(([b]) => inside(p, b)); if (hit) hit[1](); return; }
   if (teamPick) { const hit = teamBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } return; }
   if (scene === "map") {
-    if (levelPop) { if (!LPI.first && (save.stars[starKey(levelPop)] || 0) >= 3 && inside(p, LP_FAST)) { if (playMilk(fastWin)) { levelPop = 0; milkPaid = false; } return; } if (inside(p, LP_TEAM)) { teamPick = true; SFX.click(); return; } if (inside(p, LP_GO)) { const st = levelPop; SFX.click(); if (playMilk(() => startGame(st))) levelPop = 0; } else if (inside(p, LP_BACK) || !inside(p, LP_BOX)) { levelPop = 0; SFX.click(); } return; }
+    if (levelPop) { if (!LPI.first && (save.stars[starKey(levelPop)] || 0) >= 3 && inside(p, LP_FAST)) { if (playMilk(fastWin)) { levelPop = 0; milkPaid = false; } return; } if (inside(p, LP_TEAM)) { teamPick = true; SFX.click(); return; } if (inside(p, LP_BAG)) { bagPick = true; bagInfo = null; SFX.click(); return; } if (inside(p, LP_GO)) { const st = levelPop; SFX.click(); if (playMilk(() => startGame(st))) levelPop = 0; } else if (inside(p, LP_BACK) || !inside(p, LP_BOX)) { levelPop = 0; SFX.click(); } return; }
     if (inside(p, MAP_CAMPS)) { scene = "camps"; scrollY = 0; scrollV = 0; SFX.click(); return; }
     const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return;
   }
@@ -3141,7 +3312,7 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); } exitAsk = false; SFX.click(); return; }
   if (scene === "menu") {
     const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; };
-    if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
+    if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.bag)) { SFX.click(); bagPick = true; bagInfo = null; } else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
     else if (Math.hypot(p.x - GEAR.x, p.y - gearY()) < 50) go("settings");
     else if (Math.hypot(p.x - (W - GEAR.x), p.y - gearY()) < 50) { SFX.click(); exitAsk = true; }
     return;
@@ -3186,6 +3357,8 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
   if (scene === "heroes") {
     if (heroCard >= 0) { heroCard = -1; return; }
+    if (exchOpen) { const hit = exBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else exchOpen = false; return; }
+    if (inside(p, EX_BTN) && eqHero < 0) { exchOpen = true; SFX.click(); return; }
     if (eqHero >= 0) { const hit = eqBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else if (p.y < 130 || p.y > 1140) eqHero = -1; return; }
     if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; }
     if (inside(p, { x: 470, y: 170, w: 200, h: 46 })) { const c = comboCost(save.combo); if (save.combo < COMBO_MAX && save.scrolls >= c) { save.scrolls -= c; save.combo++; store(); SFX.star(); } else SFX.bad(); return; }
@@ -3200,6 +3373,8 @@ function down(ev) { idleT = 0; hint = null;
     return; }
   if (heroCard >= 0) { heroCard = -1; return; }
   if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
+  if (scene === "play" && bagOpen) { const j = [0, 1, 2, 3].find(j => inside(p, TRAY(j))); bagOpen = false; if (j !== undefined && bag[j]) useItem(j); else SFX.click(); return; }
+  if (scene === "play" && inside(p, { x: BAG_BTN.x - 4, y: BAG_BTN.y - 8, w: BAG_BTN.w + 8, h: BAG_BTN.h + 16 })) { if (!bag.some(s => s.n > 0)) { toast = { t: 2.6, text: "Batoh je prázdný – předměty vybereš před bojem tlačítkem Batoh" }; SFX.bad(); } else { bagOpen = true; SFX.click(); } return; }
   if (Math.hypot(p.x - PAUSE.x, p.y - PAUSE.y) < 44) { paused = true; SFX.pause(); return; }
   if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed > 1 ? 1 : 2; store(); SFX.click(); return; }
   // hrdina nebo nepřítel: krátké ťuknutí = schopnost / cíl (až při puštění), podržení = karta se stavy
