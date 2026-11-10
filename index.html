@@ -1210,10 +1210,10 @@ let achFly = 0, flashes = [], rings = [], gemPops = [], skillFx = [], bolts = []
 const COLS = 7, ROWS = 6, T = 96, BX = (W - COLS * T) / 2;
 // Rozložení souboje podle výšky displeje (FH): hrací pole u spodního okraje, hrdinové nad ním, nepřátelé větší nahoře.
 let BY = 600, HERO_Y = 420, EN_Y = 200, EN_S = 1, TOP_Y = 0;
-const CARD_W = 130, CARD_H = 150, HERO_AREA = 236;
+const CARD_W = 130, CARD_H = 150, HERO_AREA = 236, BAR_H = 62;
 function layout() {
   const extra = Math.max(0, FH - H);
-  BY = FH - ROWS * T - HERO_AREA; HERO_Y = BY + ROWS * T + 18 + CARD_H / 2; EN_Y = BY - 178;  // karty hrdinů dole pod polem, nepřátelé mají celý horní prostor  // hrdinové těsně nad polem, nepřátelé mají celé horní místo
+  BY = FH - ROWS * T - HERO_AREA; HERO_Y = BY + ROWS * T + 18 + CARD_H / 2; EN_Y = BY - 178 - BAR_H;  // nad polem lišta předmětů (10. 11. 2026), nepřátelé o ni výš  // karty hrdinů dole pod polem, nepřátelé mají celý horní prostor  // hrdinové těsně nad polem, nepřátelé mají celé horní místo
   EN_S = 1 + Math.min(0.55, extra / 480); TOP_Y = Math.min(40, extra * 0.15);
 }
 layoutReady = true; layout();
@@ -2124,7 +2124,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2574,7 +2574,7 @@ const HELP = [
       gl.addColorStop(0, "rgba(255,209,102," + (0.3 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 110, cy - 110, 220, 220); if (ok(img[k])) g.drawImage(img[k], x - 75, cy - 75, 150, 150);
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 55, cy - 55, 16, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 18px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("1", x + 55, cy - 49);
       g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText(["Úkoly", "Odměna", "Truhla"][j], x, cy + 110); }); } },
-  { t: "Předměty a batoh", d: "V Batohu máš 15 kočičích a 15 lidských předmětů – kočičí vybereš jen s kočkou v týmu, lidské jen s člověkem. Před bojem zvol až 4 druhy, z každého půjdou do boje 3 kusy. V boji ťukni nahoře na 🎒 a na předmět, použití nestojí tah. Elixíry zdraví léčí, elixíry many nabíjejí manu, ostatní útočí, zdržují nebo chrání. Padají z výher, truhly, úkolů, titána a Noci bossů.",
+  { t: "Předměty a batoh", d: "V Batohu máš 15 kočičích a 15 lidských předmětů – kočičí vybereš jen s kočkou v týmu, lidské jen s člověkem. Před bojem zvol až 4 druhy, z každého půjdou do boje 3 kusy. V boji jsou předměty v liště nad hracím polem – ťukni a použij, tah to nestojí. Elixíry zdraví léčí, elixíry many nabíjejí manu, ostatní útočí, zdržují nebo chrání. Padají z výher, truhly, úkolů, titána a Noci bossů.",
     draw(y) { const row = (ids, yy) => ids.forEach((id, j) => { const it = ITM[id], x = W / 2 + (j - (ids.length - 1) / 2) * Math.min(104, 600 / ids.length); drawItIcon(it, x, yy, 70); });
       g.textAlign = "center"; g.fillStyle = "#ff8a8a"; g.font = "700 17px 'Exo 2', sans-serif"; g.fillText("elixíry zdraví – malý, střední, velký", W / 2 - 160, y + 20); g.fillStyle = "#d99bff"; g.fillText("elixíry many", W / 2 + 170, y + 20);
       row(["c1", "c2", "c3", "c4", "c5", "c6"], y + 80); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("kočičí (baňky)", W / 2, y + 140);
@@ -3137,19 +3137,13 @@ function drawPause() {
   button(P_CONT, "#3ddc84"); button(P_QUIT, "#e5484d"); button(P_HELP, "glass");
   g.fillStyle = "rgba(255,255,255,.6)"; g.font = "600 22px Baloo, sans-serif"; g.fillText(titanMode ? "Odchodem ukončíš útok – poškození se započítá." : "Při odchodu z boje kořist nezískáš.", W / 2, 930);
 }
-const BAG_BTN = { x: 472, w: 78, h: 44, get y() { return 14 + TOP_Y; } }, TRAY = j => ({ x: 34 + j * 166, y: 78 + TOP_Y, w: 154, h: 150 });
-function drawBagBtn() {
-  const b = BAG_BTN, left = bag.reduce((a, s) => a + s.n, 0); g.fillStyle = bagOpen ? "rgba(255,209,102,.35)" : "rgba(10,6,20,.6)"; rr(b.x, b.y, b.w, b.h, 22); g.fill();
-  g.strokeStyle = bagOpen ? "#ffd166" : "rgba(255,255,255,.18)"; g.lineWidth = 2; rr(b.x, b.y, b.w, b.h, 22); g.stroke();
-  g.save(); g.globalAlpha = left ? 1 : 0.4; g.textAlign = "center"; g.font = "26px sans-serif"; g.fillText("🎒", b.x + 30, b.y + 32); g.restore();
-  if (left) { g.fillStyle = "#ffd166"; g.beginPath(); g.arc(b.x + b.w - 16, b.y + 22, 13, 0, 6.29); g.fill(); g.fillStyle = "#2a1640"; g.textAlign = "center"; g.font = "800 16px 'Exo 2', sans-serif"; g.fillText(left, b.x + b.w - 16, b.y + 28); }
-  if (!bagOpen) return;
-  g.fillStyle = "rgba(12,6,26,.94)"; rr(20, 68 + TOP_Y, 680, 214, 24); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 2; rr(20, 68 + TOP_Y, 680, 214, 24); g.stroke();
-  for (let j = 0; j < BAG_MAX; j++) { const s = bag[j], r = TRAY(j); g.fillStyle = "rgba(255,255,255,.06)"; rr(r.x, r.y, r.w, r.h, 18); g.fill();
-    if (!s) { g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.3)"; g.font = "600 18px 'Exo 2', sans-serif"; g.fillText("–", r.x + r.w / 2, r.y + 80); continue; }
-    const it = ITM[s.id]; drawItIcon(it, r.x + r.w / 2, r.y + 52, 76, s.n ? 1 : 0.3); g.textAlign = "center"; g.fillStyle = "#fff"; fitText(it.n, r.x + r.w / 2, r.y + 112, r.w - 12, "700 15px 'Exo 2', sans-serif");
-    g.fillStyle = s.n ? "#ffd166" : "rgba(255,255,255,.4)"; g.font = "800 20px 'Exo 2', sans-serif"; g.fillText("×" + s.n, r.x + r.w / 2, r.y + 138); }
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.65)"; fitText("Ťukni na předmět · použití nestojí tah · mimo podnos zavřeš", W / 2, 270 + TOP_Y, 640, "500 16px 'Exo 2', sans-serif");
+const ITEMBAR = j => ({ x: W / 2 + (j - (bag.length - 1) / 2) * 152 - 70, y: BY - BAR_H + 4, w: 140, h: BAR_H - 12 });
+function drawItemBar() {  // lišta s předměty těsně nad hrací deskou: ikona + počet, ťuknutí = použití (nestojí tah)
+  if (!bag.length || !board) return;
+  for (let j = 0; j < bag.length; j++) { const s = bag[j], r = ITEMBAR(j), it = ITM[s.id], on = s.n > 0 && !busy;
+    g.fillStyle = "rgba(10,6,20,.66)"; rr(r.x, r.y, r.w, r.h, r.h / 2); g.fill(); g.strokeStyle = s.n ? (it.pot === "e" ? "rgba(255,107,107,.7)" : it.pot === "m" ? "rgba(199,125,255,.7)" : "rgba(255,209,102,.6)") : "rgba(255,255,255,.12)"; g.lineWidth = 2; rr(r.x, r.y, r.w, r.h, r.h / 2); g.stroke();
+    drawItIcon(it, r.x + 30, r.y + r.h / 2, 46, s.n ? (on ? 1 : 0.55) : 0.25); g.textAlign = "left"; g.fillStyle = s.n ? "#ffd166" : "rgba(255,255,255,.35)"; g.font = "800 22px 'Exo 2', sans-serif"; g.fillText("×" + s.n, r.x + 60, r.y + r.h / 2 + 8);
+    g.fillStyle = "rgba(255,255,255,.55)"; fitText(it.n.split(" ").slice(-1)[0], r.x + 96, r.y + r.h / 2 + 6, r.w - 102, "600 13px 'Exo 2', sans-serif"); }
 }
 async function useItem(j) { try { await useItemInner(j); } catch (e) { console.error(e); } finally { busy = false; } }
 async function useItemInner(j) {
@@ -3207,14 +3201,14 @@ function drawHud() {
   drawRohlik(lg.x, lg.y, 36); drawDiamond(lc.x, lc.y, 34, -1);
   g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; g.fillText(lootG, lg.x + 22, lg.y + 8); g.fillText(lootC, lc.x + 22, lc.y + 8);
   // pruh výhod: každý kámen je silný proti kameni napravo od sebe
-  const y0 = lg.y; g.fillStyle = "rgba(10,6,20,.6)"; rr(222, y0 - 24, 240, 48, 24); g.fill();
+  const y0 = lg.y; g.fillStyle = "rgba(10,6,20,.6)"; rr(222, y0 - 24, 300, 48, 24); g.fill();
   if (titanMode) { const low = titanT < 20, pu = low ? 0.5 + 0.5 * Math.sin(perf * 10) : 0, col = low ? "rgba(255," + Math.round(90 + 80 * pu) + ",90,1)" : "#ffd166";  // časomíra útoku na titána
-    g.textAlign = "left"; g.fillStyle = col; g.font = "800 26px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 236, y0 + 9);
-    g.fillStyle = "rgba(0,0,0,.55)"; rr(334, y0 - 5, 114, 10, 5); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(334, y0 - 5, Math.max(10, 114 * titanT / TITAN_TIME), 10, 5); g.fill(); }
+    g.textAlign = "left"; g.fillStyle = col; g.font = "800 26px Baloo, sans-serif"; g.fillText("⏱ " + hms(titanT * 1000), 240, y0 + 9);
+    g.fillStyle = "rgba(0,0,0,.55)"; rr(350, y0 - 5, 154, 10, 5); g.fill(); g.fillStyle = low ? "#ff6b6b" : "#ffd166"; rr(350, y0 - 5, Math.max(10, 154 * titanT / TITAN_TIME), 10, 5); g.fill(); }
   else { const seq = [...ADV_ORDER, ADV_ORDER[0]];
-  seq.forEach((k, j) => { const x = 242 + j * 40; drawSymbol(k, x, y0, 26);
-    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 15, y0 - 5); g.lineTo(x + 24, y0); g.lineTo(x + 15, y0 + 5); g.fill(); } }); }
-  drawBagBtn();
+  seq.forEach((k, j) => { const x = 246 + j * 50; drawSymbol(k, x, y0, 28);
+    if (j < 5) { g.fillStyle = COLORS[k]; g.beginPath(); g.moveTo(x + 21, y0 - 6); g.lineTo(x + 30, y0); g.lineTo(x + 21, y0 + 6); g.fill(); } }); }
+  drawItemBar();
   // létající kořist
   for (const l of lootFly) { if (l.t < 0) continue; const k = Math.min(1, l.t / 0.9), e = k * k * (3 - 2 * k), dst = l.kind === "g" ? lg : lc;
     const x = l.x + (dst.x - l.x) * e, y = l.y + (dst.y - l.y) * e - Math.sin(k * Math.PI) * 120;
@@ -3373,8 +3367,7 @@ function down(ev) { idleT = 0; hint = null;
     return; }
   if (heroCard >= 0) { heroCard = -1; return; }
   if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
-  if (scene === "play" && bagOpen) { const j = [0, 1, 2, 3].find(j => inside(p, TRAY(j))); bagOpen = false; if (j !== undefined && bag[j]) useItem(j); else SFX.click(); return; }
-  if (scene === "play" && inside(p, { x: BAG_BTN.x - 4, y: BAG_BTN.y - 8, w: BAG_BTN.w + 8, h: BAG_BTN.h + 16 })) { if (!bag.some(s => s.n > 0)) { toast = { t: 2.6, text: "Batoh je prázdný – předměty vybereš před bojem tlačítkem Batoh" }; SFX.bad(); } else { bagOpen = true; SFX.click(); } return; }
+  if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { if (bag[j].n > 0) useItem(j); else SFX.bad(); return; } }
   if (Math.hypot(p.x - PAUSE.x, p.y - PAUSE.y) < 44) { paused = true; SFX.pause(); return; }
   if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed > 1 ? 1 : 2; store(); SFX.click(); return; }
   // hrdina nebo nepřítel: krátké ťuknutí = schopnost / cíl (až při puštění), podržení = karta se stavy
