@@ -441,8 +441,9 @@ function drawItIcon(it, x, y, s, a = 1) { if (drawItem("it_" + it.id, x, y, s * 
   g.restore(); }
 // losování předmětů do inventáře (vzácnější = velké lahvičky, oživení, bomby); vrací názvy
 function rollItems(n) { const out = []; save.inv = save.inv || {};
-  for (let q = 0; q < n; q++) { let r = Math.random() * IT_WSUM; const it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.n); }
+  for (let q = 0; q < n; q++) { let r = Math.random() * IT_WSUM; const it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.id); }
   if (n > 0) save.stats.itemsGot = (save.stats.itemsGot || 0) + n; return out; }
+const itNames = ids => ids.map(id => ITM[id].n + (ITM[id].pot ? (ITM[id].cat ? " (kočičí)" : " (lidský)") : ""));
 const kindIn = cat => teamHeroes().some(h => isCat(h) === cat);
 // výbava do boje: nedostupné (došly, nebo nejsou pro tento tým) se nahradí nejsilnějšími dostupnými – vzácnější = silnější (11. 11. 2026, Petr)
 function autoLoad() { const has = id => ITM[id] && (save.inv[id] || 0) > 0 && kindIn(ITM[id].cat), L = (save.load || []).filter(has), was = (save.load || []).length;
@@ -514,7 +515,7 @@ let toast = null;
 function giveRew(r, x = W / 2, y = 600) {
   const gg = Math.round((r.g || 0) * rewScale()); addFood(gg); save.crystals += r.c || 0; save.scrolls += r.s || 0; if (r.h) { save.shards += r.h; save.stats.shardsGot += r.h; } if (r.e) { save.ess[r.ec || 0] += r.e; save.stats.essGot += r.e; } if (r.m) { milkTick(); save.milk.v = Math.min(milkMax(), save.milk.v + r.m); } const itg = r.i ? rollItems(r.i) : []; store(); SFX.star();
   for (let i = 0; i < 26; i++) burst(x + (Math.random() - .5) * 120, y, i % 2 ? "#ffd166" : "#fff");
-  toast = { t: itg.length ? 3.2 : 2.4, text: "+" + rewText({ ...r, g: (r.g || 0), i: 0 }).split(" + ").join("  ·  +") + (itg.length ? "  ·  🎒 " + itg.join(", ") : "") };
+  toast = { t: itg.length ? 3.2 : 2.4, text: "+" + rewText({ ...r, g: (r.g || 0), i: 0 }).split(" + ").join("  ·  +") + (itg.length ? "  ·  🎒 " + itNames(itg).join(", ") : "") };
 }
 const rewText = r => [r.g ? foodText(Math.round(r.g * rewScale())) : "", r.c ? r.c + " " + pl(r.c, "krystal", "krystaly", "krystalů") : "", r.s ? r.s + " " + pl(r.s, "svitek", "svitky", "svitků") : "", r.h ? r.h + " " + pl(r.h, "střípek", "střípky", "střípků") : "", r.e ? essName(r.ec || 0, r.e) : "", r.m ? r.m + " " + pl(r.m, "mlíčko", "mlíčka", "mlíček") : "", r.i ? r.i + " " + pl(r.i, "předmět", "předměty", "předmětů") : ""].filter(Boolean).join(" + ");
 // co je k vyzvednutí (pro svítící ikony v menu)
@@ -1208,7 +1209,7 @@ const SFX = {
 const ADV = { 0: 3, 3: 4, 4: 2, 2: 1, 1: 0 }; // útočník k je silný proti barvě ADV[k]
 const ADV_ORDER = [0, 3, 4, 2, 1];
 function colorMult(k, c) { if (c === undefined || c < 0) return 1; if (c === k) return 0.5; if (ADV[k] === c) return 1.75; if (ADV[c] === k) return 0.75; return 1; }
-let lootG = 0, lootC = 0, lootS = 0, titanMode = false, titanRes = null, lootFly = [], winAnim = 0, slowT = 0, endFx = [], endT = 0;
+let lootE = [0, 0, 0, 0, 0], lootG = 0, lootC = 0, lootS = 0, titanMode = false, titanRes = null, lootFly = [], winAnim = 0, slowT = 0, endFx = [], endT = 0;
 // šťáva: záblesky, rázové vlny, zastavení obrazu, mizející kameny, nástup bosse, efekty schopností, prolínání obrazovek
 let achFly = 0, flashes = [], rings = [], gemPops = [], skillFx = [], bolts = [], eatk = [], hitstop = 0, scrFlash = 0, bossIntro = null, fadeT = 0, lastScene = "menu";
 // ---------- stav ----------
@@ -1232,7 +1233,7 @@ let eventMode = false; const EVENT_REW = { g: 500, c: 2, s: 1 };  // Noc bossů:
 function startGame(st, waves) {
   eventMode = !!waves; seasonMode = null; milkPaid = false;
   slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0;
-  lootG = 0; lootC = 0; lootS = 0; lootFly = []; titanMode = false; titanRes = null;
+  lootG = 0; lootC = 0; lootS = 0; lootE = [0, 0, 0, 0, 0]; lootFly = []; titanMode = false; titanRes = null;
   paused = false;
   heroCard = -1; stage = st || stage; WAVES = waves || stageWaves(stage); levelUps = []; for (const wv of WAVES) for (const e of wv) needAnim(e.k);
   heroes = teamIds().map(id => { const k = HEROES.indexOf(heroById(id)), x = heroStats(HEROES[k]); return { ...x, k, cur: x.hp, ch: 0 }; });
@@ -1501,7 +1502,7 @@ function hitEnemy(i, dmg, col, k, crit) {
     // kořist podle síly nepřítele: granule, bossové i krystaly
     const gg = foeFood(e), cc = e.boss ? bossCr(stage) : 0;
     lootFly.push({ x: p.x, y: p.y, t: 0, kind: "g", v: gg }); if (cc) lootFly.push({ x: p.x, y: p.y - 30, t: -0.15, kind: "c", v: cc });
-    if (!e.titan && e.c >= 0 && (e.boss || Math.random() < 0.35)) { const ne = e.boss ? 2 + rnd(2) : 1; save.ess[e.c] += ne; save.stats.essGot += ne; floats.push({ x: p.x - 40, y: p.y - 90, text: "+" + ne + " " + ESS_N[e.c], col: COLORS[e.c], t: 1.1 }); }
+    if (!e.titan && e.c >= 0 && (e.boss || Math.random() < 0.35)) { const ne = e.boss ? 2 + rnd(2) : 1; save.ess[e.c] += ne; lootE[e.c] += ne; save.stats.essGot += ne; floats.push({ x: p.x - 40, y: p.y - 90, text: "+" + ne + " " + ESS_N[e.c], col: COLORS[e.c], t: 1.1 }); }
     if (!e.titan) { const sh = e.boss ? bossSh(stage) + rnd(2) : Math.random() < 0.2 ? 1 : 0; if (sh) { lootS += sh; SFX.shard(); floats.push({ x: p.x + 40, y: p.y - 60, text: "+" + sh + " ⚙", col: "#5fe3d0", t: 1 }); } }
   }
 }
@@ -1684,7 +1685,7 @@ async function nextWave() {
       addFood(gain); save.crystals += cr; save.scrolls += sc; save.shards += lootS + (first ? 3 : 0); save.stats.shardsGot += lootS; save.stats.seasonW++;
       if (first) { save.season[key] = n; if (n === SEAS_N) { save.crystals += 15; save.scrolls += 3; save.shards += 30; for (let c = 0; c < 5; c++) save.ess[c] += 10; save.stats.seasonAll++; toast = { t: 3, text: "Celý " + S.n + " dohrán! Sezónní truhla: 15 krystalů, 3 svitky, 30 střípků, 10 esencí od každé barvy" }; } }
       winAnim = 0; levelUps = [gain, cr, bonus, sc, first, 0, false, lootS, rollItems(first ? 1 : Math.random() < 0.25 ? 1 : 0)]; store(); startEnd("win"); return; }
-    if (eventMode) { save.stats.eventW++; const r = EVENT_REW, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { save.ess[rnd(5)]++; save.stats.essGot++; }
+    if (eventMode) { save.stats.eventW++; const r = EVENT_REW, gg = Math.round(r.g * rewScale()), sh = 6 + lootS; addFood(gg + Math.round(lootG * 0.5)); save.crystals += r.c; save.scrolls += r.s; save.shards += sh; save.stats.shardsGot += sh; winAnim = 0; for (let q = 0; q < 3; q++) { const c = rnd(5); save.ess[c]++; lootE[c]++; save.stats.essGot++; }
       levelUps = [gg + Math.round(lootG * 0.5), r.c, 0, r.s, true, 0, false, sh, rollItems(2)]; store(); startEnd("win"); return; }
     const hpF = heroes.reduce((a, h) => a + Math.max(0, h.cur), 0) / heroes.reduce((a, h) => a + h.hp, 0), stars = hpF >= 0.6 ? 3 : hpF >= 0.3 ? 2 : 1, sk = starKey(stage), prevS = save.stars[sk] || 0;
     save.stats.starsGot += stars; if (diff === "h") save.stats.winsH++; if (stars > prevS) save.stars[sk] = stars; const s3 = stars === 3 && prevS < 3; if (s3) { save.stats.stars3++; save.crystals += 1; }
@@ -2129,7 +2130,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2364,7 +2365,7 @@ function finishTitan(killed) {
   else { T0.f = left / mx; if (T0.n >= TITAN_TRIES) { fin = "escape"; mult = 0.3 + 0.4 * (1 - T0.f); T0.done = true; T0.lvl = Math.max(1, T0.lvl - 1); } }
   if (fin) { const R = titanRew(lvl); gg += Math.round(R.g * mult * rewScale()); cr += Math.max(1, Math.round(R.c * mult)); sc += killed ? R.s : 0; sh += Math.round(R.h * mult); ne += killed ? 10 : 4; }
   addFood(gg); save.crystals += cr; save.scrolls += sc; save.shards += sh; save.stats.shardsGot += sh;
-  save.ess[T0.c] += ne; save.stats.essGot += ne; toast = { t: 2.6, text: "+" + essName(T0.c, ne) };
+  save.ess[T0.c] += ne; lootE[T0.c] += ne; save.stats.essGot += ne;
   titanRes = { dmg, frac, killed, fin, mult, lvl, n: T0.n, left: T0.f }; levelUps = [gg, cr, 0, sc, true, 0, false, sh, rollItems(killed ? 3 : 1)]; winAnim = 0; store(); startEnd("win");
 }
 const weakHit = (ti, x) => { const e = enemies[ti]; return !!(e && e.titan && Math.abs(x - (enemyPos(ti).x + (e.wx || 0) * enemySize(e))) < T * 0.75); };
@@ -2949,7 +2950,7 @@ const LP_BOX = { x: 26, y: 96, w: 668, h: 1100 }, LP_GO = { x: 506, y: 1090, w: 
 function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(t, x, y); g.letterSpacing = "0px";
   const lg = g.createLinearGradient(x, 0, x + 600, 0); lg.addColorStop(0, "rgba(243,198,110,.5)"); lg.addColorStop(1, "rgba(243,198,110,0)"); g.fillStyle = lg; g.fillRect(x, y + 9, 600, 1.5); }
 const LP_FAST = { x: 58, y: 1004, w: 604, h: 66, t: "⚡ Rychle dohrát (3 hvězdy)" };
-function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(Math.random() < IT_REP[diff] ? 1 : 0); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itg.join(", ") : "") }; }
+function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(Math.random() < IT_REP[diff] ? 1 : 0); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itNames(itg).join(", ") : "") }; }
 function drawLevelPop() {
   const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX;
   g.fillStyle = "rgba(5,3,12,.8)"; g.fillRect(0, -DY, W, FH);
@@ -3257,6 +3258,26 @@ function drawStar(x, y, r, on) {
   if (on) { const gr = g.createLinearGradient(0, -r, 0, r); gr.addColorStop(0, "#fff3b0"); gr.addColorStop(1, "#e89a12"); g.fillStyle = gr; } else g.fillStyle = "rgba(255,255,255,.14)";
   g.fill(); g.strokeStyle = on ? "#7a4a06" : "rgba(255,255,255,.3)"; g.lineWidth = Math.max(1.5, r * 0.08); g.stroke(); g.restore();
 }
+// tabulka kořisti po výhře i prohře (11. 11. 2026, Petr): všechno získané s ikonami, ťuknutí zavře a ukončí boj
+function lootRows() { const win = scene === "win", L = win ? levelUps : [], R = [];
+  if (win) { const [fr, fg] = splitFood(L[0] || 0); if (fr) R.push(["Rohlíky", fr, (x, y) => drawRohlik(x, y, 40)]); if (fg) R.push(["Granule", fg, (x, y) => drawGranule(x, y, 38)]);
+    if (L[1]) R.push(["Krystaly", L[1], (x, y) => gemIcon("d", x, y, 38)]); if (L[3]) R.push(["Svitky", L[3], (x, y) => drawItem("ico_scroll", x, y, 42)]); if (L[7]) R.push(["Střípky", L[7], (x, y) => drawItem("ui_shard", x, y, 44)]); }
+  lootE.forEach((n, c) => { if (n) R.push([ESS_N[c][0].toUpperCase() + ESS_N[c].slice(1), n, (x, y) => drawItem("ess_" + c, x, y, 40)]); });
+  if (win && L[8]) { const cnt = {}; for (const id of L[8]) cnt[id] = (cnt[id] || 0) + 1; for (const id in cnt) R.push([ITM[id].n, cnt[id], (x, y) => drawItIcon(ITM[id], x, y, 44)]); }
+  return R; }
+function drawLootTable() {
+  const win = scene === "win", R = lootRows(), lines = Math.max(1, Math.ceil(R.length / 2)), P = { x: 50, y: 590, w: 620, h: 128 + lines * 58 + 64 }, a = Math.min(1, Math.max(0, (endT - 0.6) * 3));
+  g.save(); g.globalAlpha = a; g.fillStyle = "rgba(18,10,38,.94)"; rr(P.x, P.y, P.w, P.h, 26); g.fill(); g.strokeStyle = win ? "rgba(255,209,102,.7)" : "rgba(255,107,107,.6)"; g.lineWidth = 2.5; rr(P.x, P.y, P.w, P.h, 26); g.stroke();
+  const sub = titanRes ? (titanRes.killed ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " · poražen na " + titanRes.n + ". útok · zítra stupeň " + (titanRes.lvl + 1) : "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " %) · " + (titanRes.fin === "escape" ? "utekl – zítra nový titán" : "titánovi zbývá " + Math.round(titanRes.left * 100) + " %"))
+    : !win ? "Tentokrát to nevyšlo – vylepši hrdiny nebo vezmi silnější předměty" : eventMode ? "Noc bossů přežita" : seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána" : "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena" + (levelUps[6] ? " · poprvé 3 hvězdy" : "");
+  g.textAlign = "center"; g.fillStyle = "#fff"; fitText(sub, W / 2, P.y + 44, P.w - 40, "600 21px 'Exo 2', sans-serif");
+  g.fillStyle = win ? "#f3c66e" : "#ff8a8a"; g.font = "700 18px 'Exo 2', sans-serif"; g.letterSpacing = "3px"; g.fillText(win ? "ZÍSKANÁ KOŘIST" : "CO TI ZŮSTALO", W / 2, P.y + 86); g.letterSpacing = "0px";
+  if (!R.length) { g.fillStyle = "rgba(255,255,255,.7)"; fitText("Nic – kořist z prohraného boje propadá", W / 2, P.y + 140, P.w - 40, "500 20px 'Exo 2', sans-serif"); }
+  R.forEach(([n, v, ic], i) => { const k = Math.min(1, Math.max(0, (endT - 0.9 - i * 0.08) * 4)); if (k <= 0) return; const x = P.x + 24 + (i % 2) * 292, y = P.y + 108 + Math.floor(i / 2) * 58;
+    g.globalAlpha = a * k; g.fillStyle = "rgba(255,255,255,.06)"; rr(x, y, 280, 50, 14); g.fill(); ic(x + 30, y + 25);
+    g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.85)"; fitText(n, x + 58, y + 32, 150, "600 17px 'Exo 2', sans-serif"); g.textAlign = "right"; g.fillStyle = "#ffd166"; g.font = "800 23px 'Exo 2', sans-serif"; g.fillText("+" + v.toLocaleString("cs-CZ"), x + 268, y + 34); });
+  g.globalAlpha = a * (0.55 + 0.45 * Math.sin(perf * 3)); g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "600 19px 'Exo 2', sans-serif"; g.fillText("Ťukni kamkoli a pokračuj", W / 2, P.y + P.h - 26); g.restore();
+}
 function drawEnd() {
   g.fillStyle = "rgba(0,0,0," + Math.min(0.7, endT * 1.2) + ")"; g.fillRect(0, -DY, W, FH);
   drawEndFx(1 / 60);
@@ -3268,7 +3289,7 @@ function drawEnd() {
   g.fillText(TT, W / 2, 520); g.shadowBlur = 0; g.restore();
   if (scene === "win" && !eventMode && !seasonMode && levelUps[5]) for (let j = 0; j < 3; j++) { const t = Math.max(0, Math.min(1, (endT - 0.5 - j * 0.25) * 4)), on = j < levelUps[5], x = W / 2 + (j - 1) * 96, y = 400 - (j === 1 ? 18 : 0);
     if (t <= 0) continue; const sc = t < 1 ? 0.3 + 1.0 * t + 0.3 * Math.sin(t * Math.PI) : 1; drawStar(x, y, 40 * sc, on); }
-  if (scene === "win" && levelUps[8] && levelUps[8].length && endT > 1) { g.textAlign = "center"; g.fillStyle = "#e7c6ff"; fitText("🎒 " + levelUps[8].join(", "), W / 2, 518, W - 80, "700 22px 'Exo 2', sans-serif"); }
+  drawLootTable(); return;
   if (scene === "win" && levelUps[6] && endT > 1.4) { g.fillStyle = "#ffd166"; g.font = "700 20px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText("Poprvé 3 hvězdy: +1 krystal", W / 2, 455); }
   g.fillStyle = "#fff"; g.font = "600 28px Baloo, sans-serif"; fillWrapC(titanRes ? "Poškození " + titanRes.dmg.toLocaleString("cs-CZ") + " (" + Math.round(titanRes.frac * 100) + " % titána). Kořist:" : scene === "win" && eventMode ? "Noc bossů přežita! Kořist:" : scene === "win" && seasonMode ? seasonById(seasonMode.id).n + " – úroveň " + seasonMode.lvl + " dohrána! Kořist:" : scene === "win" ? "Úroveň " + localSt(stage) + " (" + DIFF[diff].n.toLowerCase() + ") dokončena! Kořist:" : "Zkus to znovu – a víc kombíček!", W / 2, 580, W - 60, 32);
   if (scene === "win") {
@@ -3366,10 +3387,8 @@ function down(ev) { idleT = 0; hint = null;
   }
   if (scene === "win" || scene === "lose") {
     const leave = sc => { SFX.click(); playMusic("menu"); if (sc === "map" && seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else if (sc === "map") openMap(actOf(stage)); else { scene = sc; scrollY = 0; scrollV = 0; heroCard = -1; } };
-    if (inside(p, END_GO) && seasonMode) { const SM = seasonMode, n = scene === "win" && SM.lvl < SEAS_N ? SM.lvl + 1 : SM.lvl; SFX.click(); playMilk(() => startSeason(SM.id, n)); return; }
-    if (inside(p, END_GO)) { if (eventMode || titanMode) leave("menu"); else { const st = scene === "win" && localSt(stage) < PER_ACT ? stage + 1 : stage; SFX.click(); playMilk(() => startGame(st)); } }
-    else if (inside(p, END_MAP)) leave("map"); else if (inside(p, END_HER)) leave("heroes"); else if (inside(p, END_MENU)) leave("menu");
-    return; }
+    if (endT < 0.9) return;  // tabulka kořisti: ťuknutí kamkoli ji zavře a ukončí boj
+    leave(eventMode || titanMode ? "menu" : "map"); return; }
   if (heroCard >= 0) { heroCard = -1; return; }
   if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
   if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { if (bag[j].n > 0) useItem(j); else SFX.bad(); return; } }
