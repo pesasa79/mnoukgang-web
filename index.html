@@ -444,6 +444,11 @@ function rollItems(n) { const out = []; save.inv = save.inv || {};
   for (let q = 0; q < n; q++) { let r = Math.random() * IT_WSUM; const it = ITEMS.find(x => (r -= x.w) < 0) || ITEMS[0]; save.inv[it.id] = (save.inv[it.id] || 0) + 1; out.push(it.n); }
   if (n > 0) save.stats.itemsGot = (save.stats.itemsGot || 0) + n; return out; }
 const kindIn = cat => teamHeroes().some(h => isCat(h) === cat);
+// výbava do boje: nedostupné (došly, nebo nejsou pro tento tým) se nahradí nejsilnějšími dostupnými – vzácnější = silnější (11. 11. 2026, Petr)
+function autoLoad() { const has = id => ITM[id] && (save.inv[id] || 0) > 0 && kindIn(ITM[id].cat), L = (save.load || []).filter(has), was = (save.load || []).length;
+  const pool = ITEMS.filter(it => has(it.id) && !L.includes(it.id)).sort((a, b) => a.w - b.w || (b.sz || 0) - (a.sz || 0) || b.v - a.v);
+  while (L.length < BAG_MAX && pool.length) L.push(pool.shift().id);
+  const changed = L.join() !== (save.load || []).join(); save.load = L; if (changed) store(); return changed && was > 0; }
 // krystaly navíc: šance při opakování a výměna jídla, které už není kam dát (10. 11. 2026, Petr: bez krystalů se nedalo pokračovat)
 const CR_REP = { e: 0.35, h: 0.6 }, IT_REP = { e: 0.3, h: 0.5 }, EX_MAX = 10, exPrice = () => Math.round(250 * rewScale() / 10) * 10;
 const exLeft = () => { if (!save.exch || save.exch.d !== dayNum()) save.exch = { d: dayNum(), n: 0 }; return EX_MAX - save.exch.n; };
@@ -1231,7 +1236,7 @@ function startGame(st, waves) {
   paused = false;
   heroCard = -1; stage = st || stage; WAVES = waves || stageWaves(stage); levelUps = []; for (const wv of WAVES) for (const e of wv) needAnim(e.k);
   heroes = teamIds().map(id => { const k = HEROES.indexOf(heroById(id)), x = heroStats(HEROES[k]); return { ...x, k, cur: x.hp, ch: 0 }; });
-  wave = 0; shield = 0; turn = 0; bagOpen = false; bag = (save.load || []).filter(id => ITM[id] && (save.inv[id] || 0) > 0 && kindIn(ITM[id].cat)).slice(0, BAG_MAX).map(id => ({ id, n: Math.min(BAG_PER, save.inv[id]) })); startWave();
+  wave = 0; shield = 0; turn = 0; bagOpen = false; if (autoLoad()) toast = { t: 2.6, text: "🎒 Došlé předměty nahrazeny nejsilnějšími z batohu" }; bag = (save.load || []).filter(id => ITM[id] && (save.inv[id] || 0) > 0 && kindIn(ITM[id].cat)).slice(0, BAG_MAX).map(id => ({ id, n: Math.min(BAG_PER, save.inv[id]) })); startWave();
   board = [];
   for (let c = 0; c < COLS; c++) { board[c] = []; for (let r = 0; r < ROWS; r++) {
     let t; do { t = rnd(5); } while ((r >= 2 && board[c][r - 1].t === t && board[c][r - 2].t === t) || (c >= 2 && board[c - 1][r].t === t && board[c - 2][r].t === t));
@@ -2124,7 +2129,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.3.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
