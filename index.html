@@ -344,7 +344,7 @@ const COMBO_MAX = 10, comboCost = l => [2, 3, 5, 8, 12, 14, 16, 18, 21, 24][l] |
 const dayNum = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
 // Úkoly se losují podle data ze šablon (stejné pro celý den/týden/měsíc), takže se mění samy bez nových verzí.
 // n = [lehký, střední, těžký]; sc = přizpůsobení síle týmu; long = jen týden/měsíc; wm = násobek pro týden (měsíc ×3.5 týdne).
-const HERO_GEN = ["Petrových", "Luciiných", "Hepininých", "Kefírových", "Ňuňiných"], HERO_ACC = ["Petra", "Lucie", "Hepiny", "Kefíra", "Ňuni", "Amči", "Alex", "Lukyho"], COL_N = ["žlutých", "růžových", "fialových", "modrých", "oranžových"];
+const HERO_GEN = ["Petrových", "Luciiných", "Hepininých", "Kefírových", "Ňuňových"], HERO_ACC = ["Petra", "Lucie", "Hepiny", "Kefíra", "Ňuni", "Amči", "Alex", "Lukyho", "Venouše", "Patrika"], COL_N = ["žlutých", "růžových", "fialových", "modrých", "oranžových"];
 const pl = (n, a, b, c) => n === 1 ? a : n > 1 && n < 5 ? b : c;
 const DEF_TEAM = ["petr", "lucie", "hepina", "kefir", "nuna"], heroById = id => HEROES.find(h => h.id === id);
 // vybraná družina (nejvýš 5, aspoň 1); neznámé nebo zatím nedostupné hrdiny vynechá; pořadí podle barvy
@@ -478,11 +478,11 @@ const ITEMS = [
 ].map(([id, cat, n, ic, k, v, w, pot, sz]) => ({ id, cat: !!cat, n, ic, k, v, w, pot, sz }));
 const ITM = Object.fromEntries(ITEMS.map(it => [it.id, it])), IT_WSUM = ITEMS.reduce((a, it) => a + it.w, 0), BAG_MAX = 4, BAG_PER = 3;
 function itDesc(it) { const who = it.cat ? "kočkám" : "lidem", pc = Math.round(it.v * 100) + " %", T = teamHeroes().map(heroStats), A = T.reduce((a, h) => a + h.atk, 0) / Math.max(1, T.length), d = f => " Síla " + String(f).replace(".", ",") + "× průměrný útok týmu (teď asi " + Math.round(A * f).toLocaleString("cs-CZ") + ").";
-  return { heal1: "Komu: nejzraněnější " + (it.cat ? "kočce" : "člověku") + " v týmu. Vrátí " + pc + " energie.", healAll: "Komu: všem " + who + " v týmu. Každé vrátí " + pc + " energie.",
+  return { heal1: "Komu: nejzraněnější " + (it.cat ? "kočce" : "člověku") + " v týmu. Vrátí " + pc + " energie.", healAll: "Komu: všem " + who + " v týmu. " + (it.cat ? "Každé" : "Každému") + " vrátí " + pc + " energie.",
     mana1: "Komu: " + (it.cat ? "kočce" : "člověku") + " s nejméně manou. Přidá polovinu many.", manaAll: "Komu: všem " + who + " v týmu. " + (it.v >= 1 ? "Nabije manu naplno." : "Přidá " + pc + " many."),
     hit: "Komu: vybranému nepříteli. Silný škrábanec." + d(it.v), jump: "Komu: vybranému nepříteli a jeho sousedům (poloviční síla)." + d(it.v), bomb: "Komu: všem nepřátelům. Výbuch." + d(it.v),
     stunAll: "Komu: všem nepřátelům. Zaútočí o 2 kola později.", shield: "Komu: celému týmu. Příští 4 zásahy nepřátel budou poloviční.", weakAll: "Komu: všem nepřátelům. 3 kola dostávají o 30 % víc poškození.",
-    clean: "Komu: všem " + who + ". Smyje jed, hoření i umlčení a 3 kola léčí 5 % energie za kolo.", revive: "Komu: padl" + (it.cat ? "é kočce" : "ému člověku") + ". Oživí ji s polovinou energie; když nikdo nepadl, vyléčí nejzraněnějšího o 30 %.",
+    clean: "Komu: všem " + who + ". Smyje jed, hoření i umlčení a 3 kola léčí 5 % energie za kolo.", revive: "Komu: padl" + (it.cat ? "é kočce" : "ému člověku") + ". Oživí " + (it.cat ? "ji" : "ho") + " s polovinou energie; když nikdo nepadl, vyléčí nejzraněnějšího o 30 %.",
     paint: "Komu: hracímu poli. Přebarví 9 kamenů na barvu kočky z týmu a rozjede kombo.", pan: "Komu: vybranému nepříteli. Rána pánví, nepřítel zaútočí o kolo později." + d(it.v), throw3: "Komu: 3 náhodným nepřátelům. Každá bačkora" + d(it.v).toLowerCase().replace(" síla", ""),
     fireAll: "Komu: všem nepřátelům. Výbuch a hoření na 2 kola." + d(it.v), stun1: "Komu: vybranému nepříteli. 3 kola nezaútočí.", guard: "Komu: všem lidem v týmu. 3 kola dostávají o 40 % méně poškození.",
     charmAll: "Komu: všem nepřátelům. 3 kola útočí o 30 % slaběji.", wand: "Komu: hracímu poli. Vyčaruje diamant v barvě člověka z týmu a dvě bomby." }[it.k]; }
@@ -518,7 +518,7 @@ const exLeft = () => { if (!save.exch || save.exch.d !== dayNum()) save.exch = {
 // obsah truhly (3. 11. 2026: méně krystalů a střípků)
 const chestRoll = () => ({ i: 1 + (Math.random() < 0.5 ? 1 : 0), g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5), m: Math.random() < 0.4 ? 3 : 0 });
 const LOGIN_REW = [{ g: 100 }, { c: 1, i: 1 }, { g: 200, m: 5 }, { c: 2, i: 1 }, { g: 300 }, { s: 1, i: 2 }, { c: 3, g: 500, m: 10 }], CHEST_N = 30, TALENT_MAX = 5, talentCost = t => [35, 50, 60, 75, 90][t] || 99;
-const TALENT_N = ["Mistr kovář", "Laskavé srdce", "Princeznin majestát", "Vrchní inspektor", "Šéfkuchařka", "Královna parketu", "Premiantka", "Pilot rallye"];
+const TALENT_N = ["Mistr kovář", "Laskavé srdce", "Princeznin majestát", "Vrchní inspektor", "Šéfkuchař", "Královna parketu", "Premiantka", "Pilot rallye", "Instruktor roku", "Pán stáda"];
 // Úspěchy: řady se stupni (každý stupeň je samostatný úspěch) + dobytí kampaní. Odměna roste se stupněm.
 const ACH_REW = [{ g: 100 }, { g: 150, c: 1, h: 2 }, { c: 1, h: 4 }, { c: 2, s: 1, h: 6 }, { c: 3, s: 1, h: 10 }];
 const ACH_FAM = [
@@ -950,7 +950,7 @@ function pxFx() {
     sp = PF.get(TX.ring2); sp.blendMode = ADD; sp.tint = hx(COLORS[2]); sp.alpha = 0.35 + 0.15 * pu; sp.position.set(W / 2, HERO_Y + 30); sp.width = W * 1.12; sp.height = 330; }
   for (const f of skillFx) { const k = 1 - f.t / f.d;
     if (f.k === "lucie") { sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = hx(COLORS[1]); sp.alpha = Math.sin(Math.PI * k) * 0.28; sp.position.set(W / 2, HERO_Y - 60); sp.width = W * 1.3; sp.height = 300; }
-    if (f.k === "nuna" && k < 0.27 && enemies[f.ti]) { const hx4 = heroX(f.s), q = enemyPos(f.ti), u = k / 0.27, mx = hx4 + (q.x - hx4) * u * u, my = HERO_Y + (q.y - HERO_Y) * u * u - Math.sin(u * Math.PI) * 140;  // Ňuňin meteor
+    if (f.k === "nuna" && k < 0.27 && enemies[f.ti]) { const hx4 = heroX(f.s), q = enemyPos(f.ti), u = k / 0.27, mx = hx4 + (q.x - hx4) * u * u, my = HERO_Y + (q.y - HERO_Y) * u * u - Math.sin(u * Math.PI) * 140;  // Ňuňův meteor
       for (let j = 0; j < 8; j++) { const uu = Math.max(0, u - j * 0.03); sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = 0xff7a3d; sp.alpha = 0.8 - j * 0.09; sp.position.set(hx4 + (q.x - hx4) * uu * uu, HERO_Y + (q.y - HERO_Y) * uu * uu - Math.sin(uu * Math.PI) * 140); sp.width = sp.height = 110 - j * 9; }
       sp = PF.get(TX.soft); sp.blendMode = ADD; sp.alpha = 1; sp.position.set(mx, my); sp.width = sp.height = 70; } }
   for (const x of explosions) { const k = 1 - x.t / 0.5, R = 30 + 150 * k;
@@ -2211,7 +2211,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.3" + (ED.test ? " · TEST" : ""), W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2407,11 +2407,11 @@ const SEASONS = [
 const SEAS_N = 10, seasonById = id => SEASONS.find(S => S.id === id);
 // hlavní menu v atmosféře právě běžící sezóny (Halloween, Vánoce, Velikonoce); po sezóně zpět základní kuchyň
 function easterDate(y) { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), gg = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - gg + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), n = h + l - 7 * m + 114; return new Date(y, Math.floor(n / 31) - 1, n % 31 + 1); }
-function menuSeason(dt = new Date()) { if (ED.test) return save.testSeason || null;  // test_MG: menu podle naposledy hrané sezóny
+function menuSeason(dt = new Date()) {
   const S = SEASONS.find(s => seasonOpen(s, dt)); return S ? S.id : null; }
 const menuBgImg = () => { const s = menuSeason(); return s && ok(img["menu_" + s]) ? img["menu_" + s] : img.bg; };
 let seasonMode = null, seasonPop = null;  // seasonMode = { id, lvl } během boje
-function seasonOpen(S, d = new Date()) { if (ED.test) return true;  // testovací verze test_MG: všechno odemčené
+function seasonOpen(S, d = new Date()) {
   if (S.easter) { const dd = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - easterDate(d.getFullYear())) / 864e5); return dd >= S.easter[0] && dd <= S.easter[1]; }
   const m = d.getMonth() + 1, dd = d.getDate(), v = m * 100 + dd, a = S.from[0] * 100 + S.from[1], b = S.to[0] * 100 + S.to[1]; return a <= b ? v >= a && v <= b : v >= a || v <= b; }
 const _sdt = {}; function seasonDaysTo(S) { const k = S.id + dayNum(); if (k in _sdt) return _sdt[k]; const d = new Date(); for (let i = 0; i < 400; i++) { if (seasonOpen(S, d)) return _sdt[k] = i; d.setDate(d.getDate() + 1); } return _sdt[k] = 0; }
@@ -2432,7 +2432,7 @@ function seasonWaves(S, n) {  // síla podle týmu: běžná úroveň, kterou t�
   const B = S.bosses[n]; if (B) waves.push(B.map(k => { const e = mk(k, (B.length === 3 ? 0.27 : 0.33) * (1 + 0.02 * n)); if (B.length === 3) e.atk = Math.round(e.atk * 0.6); return e; }));  // tři bossové najednou: slabší rány (Petr 3. 11.)
   return { st, waves };
 }
-function startSeason(id, n) { if (ED.test) save.testSeason = id; const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
+function startSeason(id, n) { const S = seasonById(id), E = seasonWaves(S, n); diff = "e"; startGame(E.st, E.waves); eventMode = false; seasonMode = { id, lvl: n, st: E.st }; }
 const battleBg = () => seasonMode ? seasonById(seasonMode.id).bg : ACTS[actOf(stage) - 1].bg;
 // Titán týdne: jeden obří boss na celý týden, 3 pokusy denně, poškození se sčítá (f = zbývající část energie); po poražení přijde silnější
 const TITAN_TIME = 150, TITAN_TRIES = 3, TITAN_MULT = [1.5, 1.25, 1];
