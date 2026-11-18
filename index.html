@@ -2244,7 +2244,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -3112,38 +3112,68 @@ function secLabel(t, x, y) { g.textAlign = "left"; g.fillStyle = "#f3c66e"; g.fo
   const lg = g.createLinearGradient(x, 0, x + 600, 0); lg.addColorStop(0, "rgba(243,198,110,.5)"); lg.addColorStop(1, "rgba(243,198,110,0)"); g.fillStyle = lg; g.fillRect(x, y + 9, 600, 1.5); }
 const LP_FAST = { x: 58, y: 1004, w: 604, h: 66, t: "⚡ Rychle dohrát (3 hvězdy)" };
 function fastWin() { const I = LPI, sh = Math.random() < 0.3 ? 1 : 0, cr = I.cr || (Math.random() < CR_REP[diff] ? 1 : 0), itg = rollItems(star3Items(), true); addFood(I.gran); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; save.stats.wins++; save.stats.fast++; save.stats.win3++; store(); SFX.win(); toast = { t: 2.4, text: "Rychle dohráno: +" + I.gran + " granulí" + (cr ? "  ·  +" + cr + " " + pl(cr, "krystal", "krystaly", "krystalů") : "") + (sh ? "  ·  +" + sh + " ⚙" : "") + (itg.length ? "  ·  🎒 " + itNames(itg).join(", ") : "") }; }
+let lpT0 = 0;
 function drawLevelPop() {
-  const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX;
-  g.fillStyle = "rgba(5,3,12,.8)"; g.fillRect(0, -DY, W, FH);
-  const bg = g.createLinearGradient(0, b.y, 0, b.y + b.h); bg.addColorStop(0, "#251842"); bg.addColorStop(1, "#110b20");
-  g.fillStyle = "rgba(0,0,0,.5)"; rr(b.x + 4, b.y + 10, b.w, b.h, 30); g.fill(); g.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 30); g.fill();
-  g.strokeStyle = "rgba(242,196,109,.7)"; g.lineWidth = 2; rr(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 29); g.stroke();
-  g.textAlign = "center"; g.fillStyle = "#f3c66e"; g.font = "800 40px 'Exo 2', sans-serif"; g.fillText("Úroveň " + localSt(st), W / 2, b.y + 66);
-  g.fillStyle = DIFF[diff].col; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText(A.n + " · " + DIFF[diff].n.toLowerCase() + (I.first ? "" : " · opakování"), W / 2, b.y + 98);
-  let y = b.y + 140; secLabel("NEPŘÁTELÉ", b.x + 34, y); y += 22;
-  I.waves.forEach((wv, w) => { const boss = wv.some(e => e.boss), sz = boss ? 96 : 78;
-    g.textAlign = "left"; g.fillStyle = boss ? "#ff8a8a" : "rgba(255,255,255,.7)"; g.font = "700 17px 'Exo 2', sans-serif"; g.fillText(boss ? "BOSS" : "KOLO " + (w + 1), b.x + 34, y + sz / 2 + 6);
-    wv.forEach((e, j) => { const st2 = boss ? 170 : 104, x = b.x + 130 + (b.w - 160) / 2 + (j - (wv.length - 1) / 2) * st2 - sz / 2, ei = img["e_" + e.k];  // vycentrovaně (jeden uprostřed)
-      g.fillStyle = boss ? "rgba(120,20,40,.45)" : "rgba(255,255,255,.06)"; rr(x, y, sz, sz, 16); g.fill(); g.strokeStyle = boss ? "rgba(255,93,93,.8)" : "rgba(255,255,255,.14)"; g.lineWidth = 1.5; rr(x, y, sz, sz, 16); g.stroke();
-      if (ok(ei)) g.drawImage(ei, x + 4, y + 4, sz - 8, sz - 8);
-      if (boss) { g.textAlign = "center"; g.fillStyle = "#ffd6a0"; g.font = "700 15px 'Exo 2', sans-serif"; const nm = e.n.length > 18 ? e.n.split(" ")[0] : e.n; g.fillText(nm, x + sz / 2, y + sz + 18); } });
-    y += sz + (boss ? 30 : 12); });
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.5)"; g.font = "500 16px 'Exo 2', sans-serif"; g.fillText("Barvy nepřátel se losují na začátku každého kola.", W / 2, y + 8); y += 44;
-  secLabel("SÍLA", b.x + 34, y); y += 40;
-  const r = I.team / I.rec, vc = r >= 1 ? "#3ddc84" : r >= 0.85 ? "#ffd166" : "#ff5d6c";
-  const row = (lbl, v, col, yy) => { g.textAlign = "left"; g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 21px 'Exo 2', sans-serif"; g.fillText(lbl, b.x + 34, yy);
-    g.textAlign = "right"; g.fillStyle = col; g.font = "700 24px 'Exo 2', sans-serif"; g.fillText(v.toLocaleString("cs-CZ"), b.x + b.w - 34, yy); };
-  row("Energie nepřátel celkem", I.foeHp, "#ff8a8a", y); row("Doporučená energie týmu", I.rec, "#f3c66e", y + 34); row("Tvůj tým", I.team, vc, y + 68);
-  y += 92; const bw = b.w - 68, fx = b.x + 34; g.fillStyle = "rgba(0,0,0,.5)"; rr(fx, y, bw, 14, 7); g.fill();
-  g.fillStyle = vc; rr(fx, y, Math.max(14, bw * Math.min(1, r / 1.3)), 14, 7); g.fill(); g.fillStyle = "#fff"; g.fillRect(fx + bw / 1.3 - 1, y - 5, 2, 24);
-  g.textAlign = "center"; g.fillStyle = vc; g.font = "700 20px 'Exo 2', sans-serif";
-  g.fillText(r >= 1 ? "Tým je připravený" : r >= 0.85 ? "Těsné – bude to chtít štěstí a dobrá komba" : "Nepřátelé jsou silnější – vylepši hrdiny", W / 2, y + 44); y += 78;
-  secLabel(I.first ? "ODMĚNA ZA PRVNÍ VÝHRU" : "ODMĚNA ZA OPAKOVÁNÍ", b.x + 34, y); y += 46;
-  g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "700 26px 'Exo 2', sans-serif";
-  { const [fr, fg] = splitFood(I.gran); gemIcon("r", b.x + 44, y - 9, 36); g.fillText(fr.toLocaleString("cs-CZ"), b.x + 68, y); gemIcon("g", b.x + 186, y - 9, 34); g.fillText(fg.toLocaleString("cs-CZ"), b.x + 208, y); gemIcon("d", b.x + 316, y - 9, 34); g.fillText(I.first ? I.cr : Math.round(CR_REP[diff] * 100) + " %", b.x + 340, y); }
-  drawItem("ico_scroll", b.x + 436, y - 9, 38); g.font = "700 26px 'Exo 2', sans-serif"; g.fillText(I.sc ? "+" + I.sc : I.first ? "–" : "10 %", b.x + 460, y);
-  if (!I.first && (save.stars[starKey(st)] || 0) >= 3) button(LP_FAST, "glass");
+  const I = LPI, st = levelPop, A = ACTS[actOf(st) - 1], b = LP_BOX, fast = !I.first && (save.stars[starKey(st)] || 0) >= 3;
+  if (!lpT0 || perf - lpT0 > 1e5) lpT0 = perf; const ap = easeBack((perf - lpT0) / 0.35);
+  g.fillStyle = "rgba(5,3,12,.82)"; g.fillRect(0, -DY, W, FH);
+  g.save(); g.translate(W / 2, b.y + b.h / 2); g.scale(0.9 + 0.1 * ap, 0.9 + 0.1 * ap); g.translate(-W / 2, -(b.y + b.h / 2)); g.globalAlpha = Math.min(1, (perf - lpT0) / 0.15);
+  // karta + banner s prostředím kampaně
+  g.fillStyle = "rgba(0,0,0,.5)"; rr(b.x + 4, b.y + 12, b.w, b.h, 34); g.fill();
+  const bg = g.createLinearGradient(0, b.y, 0, b.y + b.h); bg.addColorStop(0, "#241a40"); bg.addColorStop(1, "#100a1e"); g.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 34); g.fill();
+  const BH = 150, MB = img[A.bg];
+  g.save(); rr(b.x, b.y, b.w, b.h, 34); g.clip(); g.beginPath(); g.rect(b.x, b.y, b.w, BH + 1); g.clip();
+  if (ok(MB)) { const s2 = Math.max(b.w / MB.naturalWidth, BH * 1.6 / MB.naturalHeight), iw = MB.naturalWidth * s2, ih = MB.naturalHeight * s2; g.drawImage(MB, b.x + (b.w - iw) / 2, b.y - (ih - BH) * 0.45, iw, ih); }
+  const fd = g.createLinearGradient(0, b.y, 0, b.y + BH); fd.addColorStop(0, "rgba(16,10,30,.15)"); fd.addColorStop(0.6, "rgba(20,13,38,.55)"); fd.addColorStop(1, "#241a40"); g.fillStyle = fd; g.fillRect(b.x, b.y, b.w, BH + 1);
+  g.restore();
+  g.strokeStyle = "rgba(242,196,109,.55)"; g.lineWidth = 2; rr(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 33); g.stroke();
+  g.textAlign = "center"; g.lineJoin = "round"; g.font = "800 46px 'Exo 2', sans-serif"; g.strokeStyle = "rgba(10,5,25,.85)"; g.lineWidth = 8; g.strokeText("Úroveň " + localSt(st), W / 2, b.y + 78); g.fillStyle = "#fff"; g.fillText("Úroveň " + localSt(st), W / 2, b.y + 78);
+  { const tags = [[A.n, "rgba(255,255,255,.16)", "#fff"], [DIFF[diff].n, DIFF[diff].col, "#1a0f2e"]]; if (!I.first) tags.push(["opakování", "rgba(255,255,255,.12)", "rgba(255,255,255,.85)"]);
+    g.font = "700 18px 'Exo 2', sans-serif"; const ws = tags.map(x => g.measureText(x[0]).width + 30), tw = ws.reduce((s, v) => s + v, 0) + 10 * (tags.length - 1); let tx = W / 2 - tw / 2;
+    tags.forEach((x, i) => { g.fillStyle = x[1]; rr(tx, b.y + 98, ws[i], 32, 16); g.fill(); g.fillStyle = x[2]; g.fillText(x[0], tx + ws[i] / 2, b.y + 120); tx += ws[i] + 10; }); }
+  // kola a nepřátelé: panely, nepřátelé volně stojí na stínu
+  let y = b.y + BH + 18; secLabel("NEPŘÁTELÉ", b.x + 34, y); y += 16;
+  const nN = I.waves.filter(wv => !wv.some(e => e.boss)).length, nB = I.waves.length - nN, avail = (fast ? 440 : 520) - 10 * (I.waves.length - 1);
+  const bossH = nB ? Math.min(176, avail * 0.4) : 0, rowH = nN ? Math.min(124, (avail - bossH * nB) / nN) : 0, px = b.x + 26, pw = b.w - 52;
+  I.waves.forEach((wv, w) => { const boss = wv.some(e => e.boss), h = boss ? bossH : rowH, ay = y + h;
+    const pg = g.createLinearGradient(px, 0, px + pw, 0);
+    if (boss) { pg.addColorStop(0, "rgba(150,25,50,.55)"); pg.addColorStop(1, "rgba(60,12,30,.35)"); } else { pg.addColorStop(0, "rgba(255,255,255,.07)"); pg.addColorStop(1, "rgba(255,255,255,.03)"); }
+    g.fillStyle = pg; rr(px, y, pw, h, 22); g.fill(); g.strokeStyle = boss ? "rgba(255,93,93,.55)" : "rgba(255,255,255,.08)"; g.lineWidth = 1.5; rr(px, y, pw, h, 22); g.stroke();
+    const stand = (e, cx, sz, j) => { const ei = img["e_" + e.k], bob = Math.sin(perf * 2.1 + j * 1.3 + w) * 3;
+      g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(cx, ay - 12, sz * 0.34, sz * 0.08, 0, 0, 6.29); g.fill();
+      if (ok(ei)) g.drawImage(ei, cx - sz / 2, ay - 8 - sz + bob, sz, sz); };
+    if (boss) { const bs = wv.find(e => e.boss), mins = wv.filter(e => !e.boss), sz = h * 1.02, cx = px + 30 + sz / 2;
+      const gl = g.createRadialGradient(cx, ay - sz * 0.5, 4, cx, ay - sz * 0.5, sz * 0.62); gl.addColorStop(0, "rgba(255,90,90,.35)"); gl.addColorStop(1, "rgba(255,90,90,0)"); g.fillStyle = gl; g.fillRect(cx - sz * 0.7, y, sz * 1.4, h);
+      g.save(); rr(px, y, pw, h, 22); g.clip(); stand(bs, cx, sz * (1 + 0.02 * Math.sin(perf * 1.6)), 0); g.restore();
+      const tx = px + 50 + sz; g.textAlign = "left"; g.fillStyle = "#ffd6a0"; g.font = "800 26px 'Exo 2', sans-serif"; fitText(bs.n, tx, y + h * 0.42, pw - (tx - px) - 20, g.font);
+      g.fillStyle = "rgba(255,255,255,.6)"; g.font = "600 16px 'Exo 2', sans-serif"; g.fillText(mins.length ? "s pomocníky:" : "vládce kampaně " + A.n, tx, y + h * 0.42 + 28);
+      mins.forEach((e, j) => stand(e, tx + 40 + j * 78, 74, j + 1)); }
+    else { const n = wv.length, sz = Math.min(h * 0.95, (pw - 130) / n * 1.05), gap = Math.min(sz * 1.08, (pw - 120) / n); wv.forEach((e, j) => stand(e, px + 120 + (pw - 120) / 2 + (j - (n - 1) / 2) * gap, sz, j)); }
+    g.textAlign = "left"; g.font = "800 15px 'Exo 2', sans-serif"; const lab = boss ? "BOSS" : "KOLO " + (w + 1), lw = g.measureText(lab).width + 22;
+    g.fillStyle = boss ? "#d42f4f" : "rgba(40,28,70,.85)"; rr(px + 14, y + 12, lw, 26, 13); g.fill(); g.fillStyle = "#fff"; g.fillText(lab, px + 25, y + 31);
+    y += h + 10; });
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.45)"; g.font = "500 15px 'Exo 2', sans-serif"; g.fillText("Barvy nepřátel se losují na začátku každého kola.", W / 2, y + 12); y += 34;
+  // síla: tři dlaždice + ukazatel
+  secLabel("SÍLA", b.x + 34, y); y += 14;
+  const r = I.team / I.rec, vc = r >= 1 ? "#3ddc84" : r >= 0.85 ? "#ffd166" : "#ff5d6c", tw3 = (b.w - 52 - 20) / 3;
+  [["Nepřátelé", I.foeHp, "#ff8a8a"], ["Doporučeno", I.rec, "#f3c66e"], ["Tvůj tým", I.team, vc]].forEach(([lb, v, col], i) => { const tx = b.x + 26 + i * (tw3 + 10);
+    g.fillStyle = "rgba(255,255,255,.06)"; rr(tx, y, tw3, 72, 18); g.fill(); if (i === 2) { g.strokeStyle = col; g.lineWidth = 2; rr(tx + 1, y + 1, tw3 - 2, 70, 17); g.stroke(); }
+    g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.6)"; g.font = "600 15px 'Exo 2', sans-serif"; g.fillText(lb + (i === 0 ? " · energie" : ""), tx + tw3 / 2, y + 26);
+    g.fillStyle = col; g.font = "800 26px 'Exo 2', sans-serif"; g.fillText(v.toLocaleString("cs-CZ"), tx + tw3 / 2, y + 58); });
+  y += 86; const bw = b.w - 52, fx = b.x + 26; g.fillStyle = "rgba(0,0,0,.5)"; rr(fx, y, bw, 12, 6); g.fill();
+  g.fillStyle = vc; rr(fx, y, Math.max(12, bw * Math.min(1, r / 1.3)), 12, 6); g.fill(); g.fillStyle = "#fff"; rr(fx + bw / 1.3 - 2, y - 5, 4, 22, 2); g.fill();
+  g.textAlign = "center"; g.fillStyle = vc; g.font = "700 19px 'Exo 2', sans-serif";
+  g.fillText(r >= 1 ? "Tým je připravený" : r >= 0.85 ? "Těsné – bude to chtít štěstí a dobrá komba" : "Nepřátelé jsou silnější – vylepši hrdiny", W / 2, y + 40); y += 64;
+  // odměna: štítky
+  secLabel(I.first ? "ODMĚNA ZA PRVNÍ VÝHRU" : "ODMĚNA ZA OPAKOVÁNÍ", b.x + 34, y); y += 14;
+  { const [fr, fgr] = splitFood(I.gran), chips = [["r", fr.toLocaleString("cs-CZ")], ["g", fgr.toLocaleString("cs-CZ")], ["d", I.first ? String(I.cr) : Math.round(CR_REP[diff] * 100) + " %"], ["s", I.sc ? "+" + I.sc : I.first ? "–" : "10 %"]];
+    const cw = (b.w - 52 - 30) / 4; chips.forEach(([k, v], i) => { const cx = b.x + 26 + i * (cw + 10);
+      g.fillStyle = "rgba(255,209,102,.10)"; rr(cx, y, cw, 54, 27); g.fill(); g.strokeStyle = "rgba(255,209,102,.35)"; g.lineWidth = 1.5; rr(cx, y, cw, 54, 27); g.stroke();
+      if (k === "s") drawItem("ico_scroll", cx + 30, y + 27, 36); else gemIcon(k, cx + 30, y + 27, k === "r" ? 34 : 32);
+      g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px 'Exo 2', sans-serif"; fitText(v, cx + 54, y + 35, cw - 62, g.font); }); }
+  if (fast) button(LP_FAST, "glass");
   button(LP_BACK, "glass"); button(LP_TEAM, "glass"); button(LP_BAG, "glass"); button(LP_GO, "gold");
+  g.restore(); g.globalAlpha = 1;
 }
 let mapAct = 1, campPop = 0;
 const campCard = i => ({ x: 34, y: 148 + (i + 1) * 246 - (scene === "camps" ? scrollY : 0), w: 652, h: 228 });  // slot 0 = Sezónní kampaně  // seznam kampaní se posouvá (přibývají)
@@ -3226,6 +3256,17 @@ function drawCamps() {
     g.beginPath(); g.moveTo(POP_X.x + 20, POP_X.y + 20); g.lineTo(POP_X.x + 44, POP_X.y + 44); g.moveTo(POP_X.x + 44, POP_X.y + 20); g.lineTo(POP_X.x + 20, POP_X.y + 44); g.stroke();
   }
 }
+// erb týmu: tlapka, polštářky v barvách hrdinů z týmu (4 prsty + bříško), zbytek zlatě
+function teamPaw(x, y, R) {
+  const cols = teamIds().map(id => { const h = heroById(id); return h ? COLORS[h.c] : "#ffd166"; });
+  const rg = g.createLinearGradient(0, y - R, 0, y + R); rg.addColorStop(0, "#ffe6a6"); rg.addColorStop(1, "#b07a28"); g.fillStyle = rg; g.beginPath(); g.arc(x, y, R, 0, 6.29); g.fill();
+  const ig = g.createLinearGradient(0, y - R, 0, y + R); ig.addColorStop(0, "#3a2b62"); ig.addColorStop(1, "#160f2a"); g.fillStyle = ig; g.beginPath(); g.arc(x, y, R - 5, 0, 6.29); g.fill();
+  const k = R / 37, pads = [[-15, -7, 6.6], [-5.5, -16, 6.6], [5.5, -16, 6.6], [15, -7, 6.6]];
+  const pad = (px, py, rx, ry, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(x + px * k, y + py * k, rx * k, ry * k, 0, 0, 6.29); g.fill();
+    g.fillStyle = "rgba(255,255,255,.45)"; g.beginPath(); g.ellipse(x + (px - rx * 0.25) * k, y + (py - ry * 0.35) * k, rx * 0.4 * k, ry * 0.3 * k, 0, 0, 6.29); g.fill(); };
+  pads.forEach((p, i) => pad(p[0], p[1], p[2], p[2] * 1.15, cols[i] || "#ffd166"));
+  pad(0, 8, 13.5, 11, cols[4] || "#ffd166");
+}
 function drawMap() {
   scrollMax = MAP_MAX;
   const A = ACTS[mapAct - 1], MB = img[A.bg] || img.bg, off = MAP_MAX - scrollY, done = progOf(mapAct, diff);
@@ -3277,13 +3318,10 @@ function drawMap() {
     if (won) { const sv = save.stars[actOf(st) + diff + (i + 1)] || 0; for (let j = 0; j < 3; j++) drawStar(q.x + (j - 1) * 22, q.y + R + 14 - (j === 1 ? 4 : 0), 10 * (j < sv ? 1 + 0.12 * Math.pow(Math.max(0, Math.sin(perf * 2 + i + j * 1.3)), 8) : 1), j < sv); }
     const ns = scrollsFor(i + 1, diff); if (ns) { g.globalAlpha = won ? 0.45 : 1; drawItem("ico_scroll", q.x - R * 0.8, q.y + R * 0.95 - 10, 38, won ? 0.45 : 1); if (ns > 1) { g.font = "700 16px 'Exo 2', sans-serif"; g.fillStyle = "#ffd166"; g.fillText("×" + ns, q.x - R * 0.8 + 26, q.y + R * 1.05); } g.globalAlpha = 1; }
     g.restore();
-    if (cur) { const hb = Math.abs(Math.sin(perf * 3.2)), ay = q.y - R - 18 - 16 * hb, lid = teamIds()[0], hi = lid && img[lid];
+    if (cur) { const hb = Math.abs(Math.sin(perf * 3.2)), ay = q.y - R - 18 - 16 * hb;
       g.fillStyle = "rgba(0,0,0," + (0.35 - 0.15 * hb) + ")"; g.beginPath(); g.ellipse(q.x, q.y - R - 6, 22 - 6 * hb, 6, 0, 0, 6.29); g.fill();
       g.fillStyle = "#ffd166"; g.beginPath(); g.moveTo(q.x - 11, ay - 6); g.lineTo(q.x + 11, ay - 6); g.lineTo(q.x, ay + 8); g.closePath(); g.fill();
-      const cy = ay - 40, sq = 1 + 0.06 * (1 - hb); g.save(); g.translate(q.x, cy); g.scale(1 / sq, sq);
-      g.fillStyle = "#ffd166"; g.beginPath(); g.arc(0, 0, 37, 0, 6.29); g.fill();
-      if (ok(hi)) { g.beginPath(); g.arc(0, 0, 33, 0, 6.29); g.clip(); const sc = 66 / Math.min(hi.naturalWidth, hi.naturalHeight), dw = hi.naturalWidth * sc, dh = hi.naturalHeight * sc; g.drawImage(hi, -dw / 2, -33 - (dh - 66) * 0.15, dw, dh); }
-      g.restore(); }
+      const cy = ay - 40, sq = 1 + 0.06 * (1 - hb); g.save(); g.translate(q.x, cy); g.scale(1 / sq, sq); teamPaw(0, 0, 37); g.restore(); }
   }
   // hlavička a spodní lišta
   const hg = g.createLinearGradient(0, -DY, 0, 230); hg.addColorStop(0, "rgba(10,6,22,.98)"); hg.addColorStop(0.75, "rgba(10,6,22,.85)"); hg.addColorStop(1, "rgba(10,6,22,0)"); g.fillStyle = hg; g.fillRect(0, -DY, W, 230 + DY);
@@ -3619,7 +3657,7 @@ function up(ev) {
     if (scene === "credits" && scrollDrag.moved < 14 && !scrollDrag.fly) { const l = creditLinks.find(b => inside({ x: scrollDrag.x, y: scrollDrag.y }, b)); if (l && l.y > 150 && l.y + l.h < 1155) { SFX.click(); openLink(l.u); } }
     if (scene === "map" && scrollDrag.moved < 14 && !scrollDrag.fly) { const done = progOf(mapAct, diff);  // ťuknutí na úroveň: okno s nepřáteli a odměnou
       for (let i = 0; i < PER_ACT; i++) { const q = stagePos(i); if (Math.hypot(scrollDrag.x - q.x, scrollDrag.y - q.y) >= 56) continue;
-        if (i + 1 <= done + 1) { mapTaps.push({ i, t: perf, ok: true }); levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); }
+        if (i + 1 <= done + 1) { mapTaps.push({ i, t: perf, ok: true }); lpT0 = perf; levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); }
         else { mapTaps.push({ i, t: perf, ok: false }); buzz(25, 120); toast = { t: 1.8, text: "🔒 Nejdřív dohraj úroveň " + (done + 1) }; }
         if (mapTaps.length > 8) mapTaps.shift(); break; } }
     // krátké ťuknutí (bez posunu a ne do rozjetého seznamu) otevře kartu nepřítele
