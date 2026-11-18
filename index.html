@@ -763,7 +763,9 @@ float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }
 void main() { vec4 c = texture2D(uSampler, vTextureCoord); vec2 px = vTextureCoord * inputSize.xy; float v = n(px / 16.0) * 0.65 + n(px / 5.0) * 0.35, t = uP * 1.1 - 0.05;
   if (v < t) { gl_FragColor = vec4(0.0); return; } float e = 1.0 - smoothstep(t, t + 0.09, v); c.rgb = mix(c.rgb, uE * c.a * 1.6, e * step(0.02, uP)); gl_FragColor = c; }`;
-let shock = null, SHOCKF = null, finisher = null, comboHeat = 0;
+let shock = null, SHOCKF = null, finisher = null, comboHeat = 0, zoomFx = null;
+// zoom kamery: amt = o kolik přiblížit (0,1 = 10 %), out = začíná přiblížené a oddaluje se (vstup do vlny)
+function zoomAt(x, y, amt, d, out) { if (!settings().fx) amt *= 0.4; if (zoomFx && !out && zoomFx.amt > amt && zoomFx.t < zoomFx.d * 0.6) return; zoomFx = { x, y, amt, d, t: 0, out: !!out }; }
 const DISS = [];
 function shockAt(x, y, pw = 1) { if (!settings().fx || typeof PIXI === "undefined") return; shock = { x, y, t: 0, d: 0.55 + 0.15 * pw, pw }; }
 function bake(w, h, fn) { const c = document.createElement("canvas"); c.width = w; c.height = h; fn(c.getContext("2d"), w, h); return PIXI.Texture.from(c); }
@@ -778,6 +780,8 @@ function pxInit() {
   TX.card = bake(260, 300, x => { x.fillStyle = "#fff"; x.beginPath(); x.roundRect(0, 0, 260, 300, 26); x.fill(); });
   TX.beam = bake(64, 256, x => { const lg = x.createLinearGradient(0, 0, 0, 256); lg.addColorStop(0, "#fff"); lg.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = lg; x.fillRect(0, 0, 64, 256);
     x.globalCompositeOperation = "destination-in"; const hg = x.createLinearGradient(0, 0, 64, 0); hg.addColorStop(0, "rgba(0,0,0,0)"); hg.addColorStop(0.5, "#000"); hg.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = hg; x.fillRect(0, 0, 64, 256); });
+  TX.streak = bake(256, 64, x => { const lg = x.createLinearGradient(0, 0, 256, 0); lg.addColorStop(0, "rgba(255,255,255,0)"); lg.addColorStop(0.75, "rgba(255,255,255,.85)"); lg.addColorStop(1, "#fff"); x.fillStyle = lg;
+    x.beginPath(); x.moveTo(0, 32); x.quadraticCurveTo(200, 14, 250, 32); x.quadraticCurveTo(200, 50, 0, 32); x.fill(); const rg = x.createRadialGradient(236, 32, 0, 236, 32, 28); rg.addColorStop(0, "#fff"); rg.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = rg; x.fillRect(200, 0, 56, 64); });
   TX.dash = bake(128, 128, x => { x.strokeStyle = "#fff"; x.lineWidth = 3; x.setLineDash([6, 10]); x.beginPath(); x.arc(64, 64, 44, 0, 6.29); x.stroke(); });
 }
 // jednoduchý zásobník spritů: každý snímek se vezmou postupně, zbytek se schová (žádné vytváření za běhu)
@@ -956,11 +960,18 @@ function pxFx() {
   for (const x of explosions) { const k = 1 - x.t / 0.5, R = 30 + 150 * k;
     sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = hx(x.col); sp.alpha = 1 - k; sp.position.set(x.x, x.y); sp.width = sp.height = R * 2;
     sp = PF.get(TX.soft); sp.blendMode = ADD; sp.alpha = 1 - k; sp.position.set(x.x, x.y); sp.width = sp.height = R * 0.9; }
-  for (const sh of shots) { if (sh.t < 0) continue; const k0 = Math.min(1, sh.t / sh.dur), fade = sh.miss ? 1 - k0 : 1, C = hx(sh.col);
-    for (let j = 0; j <= 10; j++) { const kk = Math.max(0, k0 - 0.22 + 0.22 * j / 10); sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = C; sp.alpha = 0.5 * fade * j / 10;
-      sp.position.set(shotX(sh, kk), sh.y0 + (sh.ty - sh.y0) * (1 - Math.pow(1 - kk, 1.6))); sp.width = sp.height = 30; }
-    sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = C; sp.alpha = fade; sp.position.set(sh.x, sh.y); sp.width = sp.height = 52;
-    sp = PF.get(TX.soft); sp.blendMode = ADD; sp.alpha = fade; sp.position.set(sh.x, sh.y); sp.width = sp.height = 22; }
+  for (const sh of shots) { if (sh.t < 0) continue; const k0 = Math.min(1, sh.t / sh.dur), fade = sh.miss ? 1 - k0 : 1, C = hx(sh.col), pos = kk => [shotX(sh, kk), sh.y0 + (sh.ty - sh.y0) * (1 - Math.pow(1 - kk, 1.6))];
+    for (let j = 0; j <= 12; j++) { const kk = Math.max(0, k0 - 0.3 + 0.3 * j / 12), [x, y] = pos(kk); sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = C; sp.alpha = 0.45 * fade * j / 12; sp.position.set(x, y); sp.width = sp.height = 14 + 22 * j / 12; }
+    const [bx, by] = pos(Math.max(0, k0 - 0.06)), ang = Math.atan2(sh.y - by, sh.x - bx), len = 90 + 120 * k0;  // hlava komety natočená po směru letu
+    sp = PF.get(TX.streak); sp.blendMode = ADD; sp.tint = C; sp.alpha = fade; sp.anchor.set(0.93, 0.5); sp.position.set(sh.x, sh.y); sp.rotation = ang; sp.width = len; sp.height = 40;
+    sp = PF.get(TX.streak); sp.blendMode = ADD; sp.alpha = fade * 0.9; sp.anchor.set(0.93, 0.5); sp.position.set(sh.x, sh.y); sp.rotation = ang; sp.width = len * 0.6; sp.height = 16;
+    sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = C; sp.alpha = fade; sp.position.set(sh.x, sh.y); sp.width = sp.height = 70;
+    sp = PF.get(TX.soft); sp.blendMode = ADD; sp.alpha = fade; sp.position.set(sh.x, sh.y); sp.width = sp.height = 26; }
+  for (const s of sparks) { const k = s.t / s.d, v = Math.hypot(s.vx, s.vy); sp = PF.get(TX.streak); sp.blendMode = ADD; sp.tint = hx(s.col); sp.alpha = Math.min(1, (1 - k) * 1.6); sp.anchor.set(0.93, 0.5);
+    sp.position.set(s.x, s.y); sp.rotation = Math.atan2(s.vy, s.vx); sp.width = 14 + v * 0.07; sp.height = s.w * (1 - 0.5 * k) * 2.2; }
+  for (const q of pillars) { const k = 1 - q.t / q.d, a = k < 0.15 ? k / 0.15 : (1 - k) / 0.85; sp = PF.get(TX.beam); sp.blendMode = ADD; sp.tint = hx(q.col); sp.alpha = a * 0.85; sp.anchor.set(0.5, 1);
+    sp.position.set(q.x, q.y + 30); sp.rotation = Math.PI; sp.scale.set(1); sp.width = q.w * (1 - 0.3 * k); sp.height = 520 + 260 * k; sp.anchor.set(0.5, 0);
+    sp = PF.get(TX.soft); sp.blendMode = ADD; sp.tint = hx(q.col); sp.alpha = a; sp.position.set(q.x, q.y); sp.width = q.w * 2.2; sp.height = q.w * 1.3; }
   for (const p of particles) { sp = PF.get(TX.disc); sp.blendMode = ADD; sp.tint = hx(p.col); sp.alpha = Math.min(1, p.t * 2); sp.position.set(p.x, p.y); sp.width = sp.height = 2 * (4 + 6 * p.t); }
 }
 const MOTES2 = Array.from({ length: 8 }, () => ({ x: Math.random() * 720, y: Math.random() * 1400, vx: (Math.random() - .5) * 14, vy: -22 - Math.random() * 20, ph: Math.random() * 6.3, s: 50 + Math.random() * 60 }));
@@ -987,8 +998,11 @@ function pxRender(shx, shy) {
     const d = new PIXI.Sprite(TX.soft), rt = PIXI.RenderTexture.create({ width: 8, height: 8 }); d.filters = [SHOCKF]; PXR.render(d, { renderTexture: rt });
     d.filters = [DISS[0] || (DISS[0] = new PIXI.Filter(undefined, DISS_FS, { uP: 0.5, uE: [1, 1, 1] }))]; PXR.render(d, { renderTexture: rt }); d.filters = null; rt.destroy(true); d.destroy(); } catch (e) {} }
   // přiblížení na poslední úder
-  const fz = finisher ? 1 + 0.13 * Math.sin(Math.PI * Math.min(1, (1.3 - finisher.t) / 1.3)) : 1; PXS.scale.set(scale * fz);
-  PXS.position.set(finisher ? (1 - fz) * finisher.x * scale : 0, finisher ? (1 - fz) * finisher.y * scale : 0);
+  let fz = 1, zx = W / 2, zy = FH / 2;
+  if (finisher) { fz = 1 + 0.24 * Math.sin(Math.PI * Math.min(1, (1.3 - finisher.t) / 1.3)); zx = finisher.x; zy = finisher.y; }
+  else if (zoomFx) { zoomFx.t += rdtG; const k = Math.min(1, zoomFx.t / zoomFx.d); if (k >= 1) zoomFx = null; else {
+    fz = 1 + zoomFx.amt * (zoomFx.out ? Math.pow(1 - k, 3) : (k < 0.18 ? k / 0.18 : Math.pow(1 - (k - 0.18) / 0.82, 2))); zx = zoomFx.x; zy = zoomFx.y; } }
+  PXS.scale.set(scale * fz); PXS.position.set((1 - fz) * zx * scale, (1 - fz) * zy * scale);
   if (shock && settings().fx) { if (!SHOCKF) { SHOCKF = new PIXI.Filter(undefined, SHOCK_FS, { uC: [0, 0], uR: 0, uA: 0, uW: 60 }); SHOCKF.resolution = Math.min(DPR, 2); SHOCKF.padding = 0; }
     shock.t += frameDt; const k = shock.t / shock.d; if (k >= 1) { shock = null; PXS.filters = null; } else {
       const u = SHOCKF.uniforms; u.uC = [(shock.x * fz + (finisher ? (1 - fz) * finisher.x : 0)) * scale, (shock.y * fz + (finisher ? (1 - fz) * finisher.y : 0)) * scale]; u.uR = (30 + 520 * k * shock.pw) * scale; u.uW = (55 + 40 * shock.pw) * scale; u.uA = 26 * shock.pw * (1 - k) * scale; PXS.filters = [SHOCKF]; } }
@@ -1277,7 +1291,7 @@ const ADV_ORDER = [0, 3, 4, 2, 1];
 function colorMult(k, c) { if (c === undefined || c < 0) return 1; if (c === k) return 0.5; if (ADV[k] === c) return 1.75; if (ADV[c] === k) return 0.75; return 1; }
 let lootE = [0, 0, 0, 0, 0], lootG = 0, lootC = 0, lootS = 0, titanMode = false, titanRes = null, lootFly = [], winAnim = 0, slowT = 0, endFx = [], endT = 0;
 // šťáva: záblesky, rázové vlny, zastavení obrazu, mizející kameny, nástup bosse, efekty schopností, prolínání obrazovek
-let achFly = 0, flashes = [], rings = [], gemPops = [], skillFx = [], bolts = [], eatk = [], hitstop = 0, scrFlash = 0, bossIntro = null, fadeT = 0, lastScene = "menu";
+let rdtG = 0.016, achFly = 0, flashes = [], rings = [], gemPops = [], skillFx = [], bolts = [], eatk = [], hitstop = 0, scrFlash = 0, bossIntro = null, fadeT = 0, lastScene = "menu";
 // ---------- stav ----------
 const COLS = 7, ROWS = 6, T = 96, BX = (W - COLS * T) / 2;
 // Rozložení souboje podle výšky displeje (FH): hrací pole u spodního okraje, hrdinové nad ním, nepřátelé větší nahoře.
@@ -1290,7 +1304,7 @@ function layout() {
 }
 layoutReady = true; layout();
 const playLike = () => scene === "play" || scene === "win" || scene === "lose";
-let board, heroes, enemies, wave, target, shield, busy, scene = "menu", particles = [], floats = [], beams = [], explosions = [], shots = [], slashes = [], claws = [], comboB = null, shake = 0, turn = 0, combo = 0, msg = null;
+let board, heroes, enemies, wave, target, shield, busy, scene = "menu", particles = [], floats = [], beams = [], explosions = [], shots = [], slashes = [], claws = [], comboB = null, shake = 0, turn = 0, combo = 0, msg = null, sparks = [], pillars = [];
 
 function rnd(n) { return Math.floor(Math.random() * n); }
 function newTile(t) { return { t: t === undefined ? rnd(5) : t, y: 0, vy: 0, pop: 0, alive: true }; }
@@ -1315,6 +1329,7 @@ function startWave() {
   setTimeout(() => { if (scene !== "play") return; if (enemies.some(e => e.boss)) SFX.bossIn(); else SFX.wave(); }, 250);
   setTimeout(() => playMusic(WAVES[wave] && WAVES[wave].some(e => e.boss) ? "boss" : "boj"), 0);
   enemies = WAVES[wave].map(e => ({ ...e, cur: e.hp, left: 3, hit: 0, c: rnd(5), mana: e.boss ? rnd(30) : 0 }));
+  zoomAt(W / 2, EN_Y - 60, enemies.some(e => e.boss) ? 0.32 : 0.22, enemies.some(e => e.boss) ? 1.6 : 1.1, true);
   target = -1; const bs = enemies.filter(e => e.boss);
   if (bs.length) { bossIntro = { t: 0, names: bs.map(e => e.n) }; msg = null; scrFlash = 0.35; setTimeout(() => { if (scene === "play") noise(1.6, 0.32, "lowpass", 380, 40, 0, 0.7); }, 120); }
   else msg = { text: (seasonMode ? seasonById(seasonMode.id).n + " " + seasonMode.lvl : "Úroveň " + localSt(stage)) + " · vlna " + (wave + 1), t: 1.6 };
@@ -1426,7 +1441,7 @@ async function tapDiamondInner(c, r) {
   busy = true; const dcol = board[c][r].dc; await diamondBlast([c, r], dcol >= 0 ? dcol : mostCommon()); await afterTurn();
 }
 async function diamondBlast([dc, dr], color) {
-  combo = 0; shake = 0.6; SFX.diamond(); buzz(70, 220); shockAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 1);
+  combo = 0; shake = 0.6; SFX.diamond(); buzz(70, 220); shockAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 1); zoomAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 0.13, 0.55);
   const forced = [[dc, dr]];
   for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (board[c][r].t === color) forced.push([c, r]);
   const d = { x: BX + dc * T + T / 2, y: BY + dr * T + T / 2 };
@@ -1468,7 +1483,7 @@ async function resolve(forced, swapCells) {
         SFX.diamond(); buzz(70, 220); shockAt(d.x, d.y, 1); shake = 0.6; floats.push({ x: W / 2, y: BY - 30, text: "Diamant!", col: COLORS[col], t: 1.2, big: true });
         for (let c2 = 0; c2 < COLS; c2++) for (let r2 = 0; r2 < ROWS; r2++) if (board[c2][r2].t === col && !clear.has(c2 + "," + r2)) { add(c2, r2); queue.push([c2, r2]); beams.push({ x1: d.x, y1: d.y, x2: BX + c2 * T + T / 2, y2: BY + r2 * T + T / 2, col: COLORS[col], t: 0.45 }); } }
       if (board[c][r].sp === "bomb") {
-        explosions.push({ x: BX + c * T + T / 2, y: BY + r * T + T / 2, t: 0.5, col: COLORS[board[c][r].t] }); shake = 0.4; if (!boomed) { SFX.boom(); buzz(45, 200); shockAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.8); boomed = true; }
+        explosions.push({ x: BX + c * T + T / 2, y: BY + r * T + T / 2, t: 0.5, col: COLORS[board[c][r].t] }); shake = 0.4; zoomAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.09, 0.45); if (!boomed) { SFX.boom(); buzz(45, 200); shockAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.8); boomed = true; }
         for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) { const c2 = c + dc, r2 = r + dr; if (c2 >= 0 && c2 < COLS && r2 >= 0 && r2 < ROWS && !clear.has(c2 + "," + r2)) { add(c2, r2); queue.push([c2, r2]); } }
       }
     }
@@ -1476,6 +1491,7 @@ async function resolve(forced, swapCells) {
     const from = [[], [], [], [], []];
     for (const [c, r] of clear.values()) { const tl = board[c][r]; if (tl.t >= 0) { count[tl.t]++; from[tl.t].push([BX + c * T + T / 2, BY + r * T + T / 2]); } tl.alive = false; gemPops.push({ x: BX + c * T + T / 2, y: BY + r * T + T / 2, t: 0.24, ty: tl.sp === "diamond" ? (tl.dc >= 0 && ok(img["dia" + tl.dc]) ? "dia" + tl.dc : "d") : tl.sp === "bomb" && ok(img["bomb" + tl.t]) ? "bomb" + tl.t : tl.t }); burst(BX + c * T + T / 2, BY + r * T + T / 2, tl.t >= 0 ? COLORS[tl.t] : "#fff"); }
     for (const sp of spawn) { save.stats[sp.sp === "diamond" ? "dias" : "bombs"]++; const [c, r] = sp.at; board[c][r] = { ...newTile(sp.t), sp: sp.sp, dc: sp.t }; burst(BX + c * T + T / 2, BY + r * T + T / 2, "#fff");
+      pillarAt(BX + c * T + T / 2, BY + r * T + T / 2, COLORS[sp.t] || "#fff", 0.8, 110); sparkBurst(BX + c * T + T / 2, BY + r * T + T / 2, COLORS[sp.t] || "#fff", 24, 0.8);
       floats.push({ x: BX + c * T + T / 2, y: BY + r * T, text: sp.sp === "diamond" ? "Diamant!" : "Bomba!", col: "#fff", t: 0.9 }); }
     forced = null; swapCells = null;
     // zásah: každý kámen barvy hrdiny = útok toho hrdiny
@@ -1495,7 +1511,7 @@ async function resolve(forced, swapCells) {
       });
     }
     save.stats.gems += count.reduce((a, b) => a + b, 0); count.forEach((n, k) => save.stats["g" + k] += n); if (combo === 4) save.stats.combo4++; save.stats.combo = Math.max(save.stats.combo, combo); for (const P of qPeriods()) P.combo = Math.max(P.combo || 0, combo);
-    if (combo > 1) { comboB = { n: combo, t: 1.3 }; comboHeat = Math.min(1, Math.max(comboHeat, (combo - 1) / 4)); if (combo >= 4) buzz(20 + combo * 6, Math.min(255, 90 + combo * 20)); }
+    if (combo > 1) { comboB = { n: combo, t: 1.3 }; sparkBurst(W / 2, BY + 130, combo >= 4 ? "#ff9a3c" : "#ffd166", 18 + combo * 8, 1 + combo * 0.1); if (combo >= 3) pillarAt(W / 2, BY + 140, "#ffd166", 0.7, 260); comboHeat = Math.min(1, Math.max(comboHeat, (combo - 1) / 4)); if (combo >= 4) buzz(20 + combo * 6, Math.min(255, 90 + combo * 20)); }
     await sleep(260);
     // doplnění zespodu: zbylé kameny vyjedou nahoru, nové přijedou zdola
     for (let c = 0; c < COLS; c++) {
@@ -1526,8 +1542,8 @@ function fireMiss(points, k) {
 function impact(x, y, col, big) {
   flashes.push({ x, y, t: 0.26, d: 0.26, col, R: big ? 260 : 160 }); if (big) rings.push({ x, y, t: 0.42, d: 0.42, col, R: 170 });
   if (big) slashes.push({ x, y, t: 0.38, a: Math.random() * Math.PI, col });
-  explosions.push({ x, y, t: 0.5, col }); for (let i = 0; i < (big ? 3 : 1); i++) burst(x, y, col);
-  if (big) shake = Math.max(shake, 0.18);
+  explosions.push({ x, y, t: 0.5, col }); for (let i = 0; i < (big ? 3 : 1); i++) burst(x, y, col); sparkBurst(x, y, col, big ? 46 : 22, big ? 1.25 : 1);
+  if (big) { shake = Math.max(shake, 0.18); pillarAt(x, y, col, 0.6, 150); }
 }
 // Jen nepřítel, který opravdu stojí nad sloupcem (v šíři své postavy); jinak nikdo (-1) – rána jde do prázdna.
 // skutečná šířka těla z neprůhledných pixelů obrázku (zlomek velikosti a posun středu), spočítá se jednou
@@ -1551,7 +1567,7 @@ function pickTarget() { if (enemies[target] && enemies[target].cur > 0) return t
 function hitEnemy(i, dmg, col, k, crit) {
   const e = enemies[i]; if (!e || e.cur <= 0) return;
   if (hasSt(e, "weak")) dmg = Math.round(dmg * 1.3); if (hasSt(e, "guard")) dmg = Math.round(dmg * 0.6);
-  const ep = enemyPos(i); explosions.push({ x: ep.x, y: ep.y, t: 0.35, col });
+  const ep = enemyPos(i); explosions.push({ x: ep.x, y: ep.y, t: 0.35, col }); sparkBurst(ep.x, ep.y - 20, col, crit ? 40 : 18, crit ? 1.3 : 0.9); flashes.push({ x: ep.x, y: ep.y, t: 0.18, d: 0.18, col, R: crit ? 300 : 190 });
   save.stats.dmg += Math.min(dmg, e.cur); e.cur = Math.max(0, e.cur - dmg); e.hit = 0.3; if (e.cur <= 0) e.die = 1.0; if (e.boss && e.cur > 0) e.mana = Math.min(100, (e.mana || 0) + (e.titan ? 6 : 12));
   const p = enemyPos(i), m = k === undefined ? 1 : colorMult(k, e.c);
   if (crit) { SFX.crit(); save.stats.crits++; floats.push({ x: p.x, y: p.y - 50, text: "-" + dmg, col: "#ffe066", t: 1.2, big: true, crit: true }); floats.push({ x: p.x, y: p.y - 120, text: "KRITICKÝ ZÁSAH!", col: "#ffd166", t: 1 });
@@ -1561,10 +1577,10 @@ function hitEnemy(i, dmg, col, k, crit) {
   if (m === 0.5) floats.push({ x: p.x, y: p.y - 90, text: "Stejná barva", col: "#b8b0c8", t: 0.9 });
   if (e.cur <= 0) {
     save.stats.kills++; if (e.boss) save.stats.boss++; save.kinds[e.k] = 1; if (TRAIT[e.k]) save.stats.traitKills++; if (e.c >= 0) save.stats["kc" + e.c]++; save.chest.n = Math.min(CHEST_N, save.chest.n + 1);
-    for (let q = 0; q < 3; q++) burst(p.x, p.y, "#fff"); panX(p.x); SFX.foeDie(e.k, e.boss);
+    for (let q = 0; q < 3; q++) burst(p.x, p.y, "#fff"); sparkBurst(p.x, p.y, col, e.boss ? 90 : 50, e.boss ? 1.6 : 1.2); pillarAt(p.x, p.y, col, e.boss ? 1 : 0.7, e.boss ? 220 : 140); panX(p.x); SFX.foeDie(e.k, e.boss);
     if (e.boss) { buzz(90, 255); shockAt(p.x, p.y, 1.3); }
     enemies.forEach((o, j) => { if (o.cur > 0 && TRAIT[o.k] === "rage") { addSt(o, "rage", 3); o.left = Math.max(1, o.left - 1); const q = enemyPos(j); floats.push({ x: q.x, y: q.y - 110, text: "💢 Zuřivost!", col: STS.rage.col, t: 1.1 }); } });
-    if (WAVES && wave === WAVES.length - 1 && enemies.every(o => o.cur <= 0)) { finisher = { t: 1.3, x: p.x, y: p.y }; SFX.finisher(); scrFlash = Math.max(scrFlash, 0.3); }
+    if (WAVES && wave === WAVES.length - 1 && enemies.every(o => o.cur <= 0)) { finisher = { t: 1.3, x: p.x, y: p.y }; SFX.finisher(); scrFlash = Math.max(scrFlash, 0.3); hitstop = Math.max(hitstop, 0.5); sparkBurst(p.x, p.y, "#ffd166", 80, 1.6); }
     // kořist podle síly nepřítele: granule, bossové i krystaly
     const gg = foeFood(e), cc = e.boss ? bossCr(stage) : 0;
     lootFly.push({ x: p.x, y: p.y, t: 0, kind: "g", v: gg }); if (cc) lootFly.push({ x: p.x, y: p.y - 30, t: -0.15, kind: "c", v: cc });
@@ -1828,6 +1844,10 @@ async function useSkillInner(k) {
 }
 
 // ---------- efekty ----------
+// jiskry: protáhlé světelné čárky letící do stran, padají a zpomalují (dynamičtější než kulaté částice)
+function sparkBurst(x, y, col, n, sp = 1) { if (!settings().fx) n = Math.ceil(n / 3); n = Math.min(n, 340 - sparks.length);
+  for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = (260 + Math.random() * 620) * sp; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120 * sp, t: 0, d: 0.35 + Math.random() * 0.4, col: Math.random() < 0.35 ? "#ffffff" : col, w: 3 + Math.random() * 4 }); } }
+function pillarAt(x, y, col, d = 0.7, w = 120) { if (settings().fx) pillars.push({ x, y, col, t: d, d, w }); }
 function burst(x, y, col) { for (let i = 0; i < 9; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 6; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2, t: 0.7, col }); } }
 
 // ---------- kreslení ----------
@@ -1987,7 +2007,7 @@ function drawBoard() {
 }
 let perf = 0, last = performance.now(), lastLand = 0, frameDt = 1 / 60;
 function frame(now) {
-  let dt = Math.min(0.05, (now - last) / 1000); const rdt = dt; last = now; if (hitstop > 0) { hitstop -= dt; dt *= 0.12; }
+  let dt = Math.min(0.05, (now - last) / 1000); const rdt = dt; rdtG = dt; last = now; if (hitstop > 0) { hitstop -= dt; dt *= 0.12; }
   if (finisher) { finisher.t -= rdt; if (finisher.t <= 0) finisher = null; else if (finisher.t > 0.4) dt *= 0.25; }  // poslední úder: zpomalení
   dt *= spd(); perf += dt; frameDt = dt;
   scrollStep(dt);
@@ -2006,9 +2026,12 @@ function frame(now) {
     if (tl.y < 0) { tl.vy += 3600 * dt; tl.y = Math.min(0, tl.y + tl.vy * dt); if (tl.y === 0) { tl.vy = 0; tl.land = 0.2; tl.up = false; if (perf - lastLand > 0.07) { lastLand = perf; SFX.land(); } } }
     else if (tl.y > 0) { tl.vy = Math.min(0, tl.vy || 0) - 3600 * dt; tl.y = Math.max(0, tl.y + tl.vy * dt); if (tl.y === 0) { tl.vy = 0; tl.land = 0.2; tl.up = true; if (perf - lastLand > 0.07) { lastLand = perf; SFX.land(); } } } }
   const f60 = dt * 60; particles = particles.filter(p => (p.t -= dt) > 0); for (const p of particles) { p.x += p.vx * f60; p.y += p.vy * f60; p.vy += (p.fl ? -0.01 : 0.3) * f60; }
-  floats = floats.filter(f => (f.t -= dt) > 0); for (const f of floats) f.y -= 40 * dt;
+  floats = floats.filter(f => (f.t -= dt) > 0); for (const f of floats) { f.age = (f.age || 0) + dt; f.y -= (f.age < 0.12 ? 260 : 40) * dt; }
+  sparks = sparks.filter(s => (s.t += dt) < s.d); for (const s of sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= Math.pow(0.04, dt); s.vy = s.vy * Math.pow(0.04, dt) + 900 * dt; }
+  pillars = pillars.filter(q => (q.t -= dt) > 0);
   for (const sh of shots) { sh.t += dt; const k = Math.max(0, Math.min(1, sh.t / sh.dur));
     sh.x = shotX(sh, k); sh.y = sh.y0 + (sh.ty - sh.y0) * (1 - Math.pow(1 - k, 1.6));
+    if (!sh.miss && sh.t > 0 && Math.random() < dt * 40 && sparks.length < 300) sparks.push({ x: sh.x, y: sh.y, vx: (Math.random() - .5) * 220, vy: (Math.random() - .5) * 220, t: 0, d: 0.25, col: sh.col, w: 2.5 });
     if (k >= 1 && !sh.done) { sh.done = true; sh.hit(); } }
   shots = shots.filter(sh => !sh.done);
   for (const l of lootFly) l.t += dt;
@@ -2063,7 +2086,7 @@ function frame(now) {
     g.fillStyle = "rgba(10,6,20,.6)"; g.beginPath(); g.arc(PAUSE.x, PAUSE.y, 32, 0, 6.29); g.fill(); g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = 3; g.stroke();
     g.fillStyle = "#fff"; rr(PAUSE.x - 11, PAUSE.y - 13, 8, 26, 3); g.fill(); rr(PAUSE.x + 3, PAUSE.y - 13, 8, 26, 3); g.fill();
     { const on = settings().speed > 1, b = SPD_BTN; g.fillStyle = on ? "rgba(255,209,102,.9)" : "rgba(10,6,20,.6)"; rr(b.x, b.y, b.w, b.h, 22); g.fill(); g.strokeStyle = on ? "#fff3d6" : "rgba(255,255,255,.7)"; g.lineWidth = 2.5; rr(b.x, b.y, b.w, b.h, 22); g.stroke();
-      g.textAlign = "center"; g.fillStyle = on ? "#2a1640" : "#fff"; g.font = "800 21px 'Exo 2', sans-serif"; g.fillText(on ? "×2" : "×1", b.x + b.w / 2, b.y + 30); }
+      g.textAlign = "center"; g.fillStyle = on ? "#2a1640" : "#fff"; g.font = "800 21px 'Exo 2', sans-serif"; g.fillText("×" + settings().speed, b.x + b.w / 2, b.y + 30); }
     enemies.forEach(drawEnemy); heroes.forEach(drawHero);
     if (press && press.kind !== "cur" && !press.shown && performance.now() - press.t0 > 420) { press.shown = true; buzz(12, 70); }
     if (press && press.shown && scene === "play" && press.kind !== "cur") drawInfo(press);
@@ -2110,7 +2133,8 @@ function frame(now) {
     g.restore(); g.globalCompositeOperation = "lighter"; }
   if (!playLike()) for (const p of particles) { g.globalAlpha = Math.min(1, p.t * 2); g.fillStyle = p.col; g.beginPath(); g.arc(p.x, p.y, 4 + 6 * p.t, 0, 6.29); g.fill(); } g.globalCompositeOperation = "source-over";
   g.globalAlpha = 1;
-  for (const f of floats) { g.globalAlpha = Math.min(1, f.t * 2); g.fillStyle = f.col; g.font = (f.crit ? "800 " + Math.round(64 + 30 * Math.max(0, f.t - 1) * 5) + "px" : f.big ? "800 50px" : "800 36px") + " Baloo, sans-serif"; g.textAlign = "center"; g.strokeStyle = "rgba(0,0,0,.6)"; g.lineWidth = 6; g.strokeText(f.text, f.x, f.y); g.fillText(f.text, f.x, f.y); }
+  for (const f of floats) { const ag = f.age || 0, pop = ag < 0.1 ? 0.5 + ag / 0.1 * 1.0 : ag < 0.22 ? 1.5 - (ag - 0.1) / 0.12 * 0.5 : 1; g.globalAlpha = Math.min(1, f.t * 2); g.fillStyle = f.col;
+    g.font = (f.crit ? "800 " + Math.round((64 + 30 * Math.max(0, f.t - 1) * 5) * pop) + "px" : f.big ? "800 " + Math.round(50 * pop) + "px" : "800 " + Math.round(36 * pop) + "px") + " Baloo, sans-serif"; g.textAlign = "center"; g.strokeStyle = "rgba(0,0,0,.6)"; g.lineWidth = 6; g.strokeText(f.text, f.x, f.y); g.fillText(f.text, f.x, f.y); }
   g.globalAlpha = 1;
   if (bolts.length) { g.globalCompositeOperation = "lighter"; g.lineCap = "round"; g.lineJoin = "round";  // Petrovy blesky z nebe
     for (const b of bolts) { const sx = b.x0 !== undefined ? b.x0 : b.x + (Math.random() - .5) * 60, sy = b.y0 !== undefined ? b.y0 : TOP_Y - 20, pts = [[sx, sy]];
@@ -2211,7 +2235,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.4.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -2902,7 +2926,7 @@ function drawCredits() {
 // ---------- Nastavení ----------
 // řádky nastavení: [klíč, název, popis] nebo jen [nadpis skupiny]
 const SET_ROWS = [["Zvuk"], ["music", "Hudba", "hudba v menu a v boji"], ["sfx", "Zvuky", "efekty, údery a hlasy"],
-  ["Hra"], ["vib", "Vibrace", "bomby, kritické zásahy a údery bossů"], ["speed", "Rychlý boj ×2", "animace v boji dvakrát rychleji"], ["hint", "Nápověda tahu", "po 8 s váhání ukáže nejsilnější tah"],
+  ["Hra"], ["vib", "Vibrace", "bomby, kritické zásahy a údery bossů"], ["speed", "Rychlý boj", "×1 → ×2 → ×3, rychlost animací v boji"], ["hint", "Nápověda tahu", "po 8 s váhání ukáže nejsilnější tah"],
   ["Grafika"], ["fx", "Plné efekty", "záře, rázové vlny, paprsky světla (vypnutí šetří baterii)"], ["Kameny"], ["theme", "", ""]];
 function setRowsY() { let y = 118; return SET_ROWS.map(r => { const o = { r, y, h: r.length === 1 ? 46 : r[0] === "theme" ? 112 : 98 }; y += o.h + (r.length === 1 ? 0 : 8); return o; }); }
 function toggle(y, label, on, desc) {
@@ -2919,7 +2943,7 @@ function drawSettings() {
         g.fillStyle = on ? "rgba(255,209,102,.16)" : "rgba(20,12,40,.85)"; rr(x, o.y, 112, o.h, 18); g.fill(); g.strokeStyle = on ? "#ffd166" : "rgba(255,255,255,.12)"; g.lineWidth = on ? 3 : 1.5; rr(x, o.y, 112, o.h, 18); g.stroke();
         [[0, 30, 34], [1, 82, 34], [3, 56, 62]].forEach(([k, dx, dy]) => { const im = img["gem_" + t + k]; if (ok(im)) g.drawImage(im, x + dx - 24, o.y + dy - 24, 48, 48); });
         g.textAlign = "center"; g.fillStyle = on ? "#ffd166" : "rgba(255,255,255,.8)"; g.font = "700 16px 'Exo 2', sans-serif"; g.fillText(n, x + 56, o.y + o.h - 10); }); continue; }
-    const v = settings()[o.r[0]]; toggle(o.y, o.r[1], o.r[0] === "speed" ? v > 1 : !!v, o.r[2]); }
+    const v = settings()[o.r[0]]; toggle(o.y, o.r[0] === "speed" ? o.r[1] + " ×" + v : o.r[1], o.r[0] === "speed" ? v > 1 : !!v, o.r[2]); }
   if (canUpd()) button(UPD_BTN, "#2e7d74");
   g.globalAlpha = 0.85; button(canUpd() ? { ...RESET_BTN, x: 372, w: 308, t: "Začít od nuly" } : RESET_BTN, "#7a2233"); g.globalAlpha = 1;
   backBtn();
@@ -3490,7 +3514,7 @@ function down(ev) { idleT = 0; hint = null;
     const o = setRowsY().find(o => o.r.length > 1 && p.y >= o.y && p.y <= o.y + o.h && p.x > 60 && p.x < 660); if (!o) return;
     const S = settings(), key = o.r[0];
     if (key === "theme") { const j = Math.max(0, Math.min(THEMES.length - 1, Math.floor((p.x - 60) / 121))); S.theme = THEMES[j][0]; applyTheme(); store(); SFX.click(); return; }
-    if (key === "speed") S.speed = S.speed > 1 ? 1 : 2; else S[key] = !S[key]; store(); SFX.click();
+    if (key === "speed") S.speed = S.speed >= 3 ? 1 : S.speed + 1; else S[key] = !S[key]; store(); SFX.click();
     if (key === "music") { if (S.music) playMusic("menu", true); else if (music) { music.pause(); music = null; } }
     if (key === "vib" && S.vib) buzz(40, 160);
     return;
@@ -3515,7 +3539,7 @@ function down(ev) { idleT = 0; hint = null;
   if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
   if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { press = { kind: "it", i: j, t0: performance.now(), x: p.x, y: p.y }; return; } }
   if (Math.hypot(p.x - PAUSE.x, p.y - PAUSE.y) < 44) { paused = true; SFX.pause(); return; }
-  if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed > 1 ? 1 : 2; store(); SFX.click(); return; }
+  if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed >= 3 ? 1 : settings().speed + 1; store(); SFX.click(); return; }
   // hrdina nebo nepřítel: krátké ťuknutí = schopnost / cíl (až při puštění), podržení = karta se stavy
   for (let k = 0; k < 5; k++) if (Math.abs(p.x - heroX(k)) < CARD_W / 2 + 4 && Math.abs(p.y - HERO_Y) < CARD_H / 2 + 20) { press = { kind: "h", i: k, t0: performance.now(), x: p.x, y: p.y }; return; }
   for (let i = 0; i < enemies.length; i++) { const e = enemyPos(i); if (enemies[i].cur > 0 && Math.abs(p.x - e.x) < enemySize(enemies[i]) * 0.45 && p.y > e.y + 80 - enemySize(enemies[i]) && p.y < e.y + 130) { press = { kind: "e", i, t0: performance.now(), x: p.x, y: p.y }; return; } }
