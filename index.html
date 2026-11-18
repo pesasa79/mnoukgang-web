@@ -2244,7 +2244,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
@@ -3091,7 +3091,13 @@ function drawHeroCard(k) {
 // mapa kampaně: 30 úrovní na klikaté cestě zdola nahoru, posouvá se prstem (scrollY: MAP_MAX = začátek dole)
 const MAP_GAP = 150, MAP_BOT = 1030, MAP_MAX = (PER_ACT - 1) * MAP_GAP - 720, MAP_CAMPS = { x: 220, y: 1168, w: 280, h: 68, t: "Kampaně" };
 function stagePos(i) { return { x: W / 2 + Math.sin(i * 0.82 + 0.4) * 205, y: MAP_BOT - i * MAP_GAP + (MAP_MAX - scrollY) }; }
-function openMap(act) { mapAct = act; scene = "map"; levelPop = 0; scrollMax = MAP_MAX; scrollV = 0; heroCard = -1;
+let mapT0 = 0, mapTaps = [], mapMotes = null, MAPSPR = null;
+function mapSprites() { const mk = (w, h, f) => { const c = document.createElement("canvas"); c.width = w; c.height = h; f(c.getContext("2d")); return c; };
+  MAPSPR = { glow: mk(64, 64, x => { const rg = x.createRadialGradient(32, 32, 0, 32, 32, 32); rg.addColorStop(0, "rgba(255,240,190,1)"); rg.addColorStop(0.35, "rgba(255,210,120,.55)"); rg.addColorStop(1, "rgba(255,200,100,0)"); x.fillStyle = rg; x.fillRect(0, 0, 64, 64); }),
+    fog: mk(512, 256, x => { const rg = x.createRadialGradient(256, 128, 10, 256, 128, 250); rg.addColorStop(0, "rgba(210,200,255,.55)"); rg.addColorStop(1, "rgba(210,200,255,0)"); x.fillStyle = rg; x.scale(1, 0.5); x.beginPath(); x.arc(256, 256, 250, 0, 6.29); x.fill(); }) };
+  mapMotes = Array.from({ length: 30 }, () => ({ x: Math.random() * W, y: Math.random() * (MAP_MAX + FH), z: 0.55 + Math.random() * 0.7, ph: Math.random() * 6.3, s: 10 + Math.random() * 16, vx: (Math.random() - 0.5) * 14 })); }
+const easeBack = k => { k = Math.max(0, Math.min(1, k)); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+function openMap(act) { mapAct = act; scene = "map"; levelPop = 0; scrollMax = MAP_MAX; scrollV = 0; heroCard = -1; mapT0 = perf; mapTaps = [];
   const done = Math.min(progOf(act, diff), PER_ACT - 1); scrollY = MAP_MAX - Math.max(0, Math.min(MAP_MAX, done * MAP_GAP - 380)); }
 let levelPop = 0, LPI = null;
 // co čeká v úrovni: nepřátelé (pevně daní), odměna (stejný výpočet jako po výhře), energie nepřátel, týmu a doporučená
@@ -3224,9 +3230,16 @@ function drawMap() {
   scrollMax = MAP_MAX;
   const A = ACTS[mapAct - 1], MB = img[A.bg] || img.bg, off = MAP_MAX - scrollY, done = progOf(mapAct, diff);
   // prostředí přes celou obrazovku s jemnou paralaxou, ztmavené okraje
-  if (ok(MB)) { const iw = W * 1.15, ih = iw * MB.naturalHeight / MB.naturalWidth, py = -DY + (FH - ih) + Math.min(ih - FH, off * 0.08); g.globalAlpha = 0.85; g.drawImage(MB, (W - iw) / 2, py, iw, ih); g.globalAlpha = 1; }
+  if (ok(MB)) { const iw = W * 1.15, ih = iw * MB.naturalHeight / MB.naturalWidth, py = -DY + (FH - ih) + Math.min(ih - FH, off * 0.14); g.globalAlpha = 0.85; g.drawImage(MB, (W - iw) / 2 + Math.sin(perf * 0.17) * 10, py, iw, ih); g.globalAlpha = 1; }
   const vg = g.createLinearGradient(0, -DY, 0, H + DY); vg.addColorStop(0, "rgba(8,5,18,.9)"); vg.addColorStop(0.2, "rgba(8,5,18,.35)"); vg.addColorStop(0.8, "rgba(8,5,18,.35)"); vg.addColorStop(1, "rgba(8,5,18,.92)");
   g.fillStyle = vg; g.fillRect(0, -DY, W, FH);
+  if (!MAPSPR) mapSprites();
+  if (settings().fx) { for (let k = 0; k < 3; k++) { const fy = ((k * 520 + off * (0.35 + k * 0.12)) % (FH + 400)) - DY - 200, fx = ((perf * (12 + k * 7) + k * 300) % (W + 700)) - 600;
+      g.globalAlpha = 0.10 + 0.04 * k; g.drawImage(MAPSPR.fog, fx, fy, 900, 380); }
+    for (const m of mapMotes) { m.x += m.vx * 0.016; if (m.x < -20) m.x = W + 20; if (m.x > W + 20) m.x = -20;
+      const y = ((m.y - scrollY * m.z) % (MAP_MAX + FH) + MAP_MAX + FH) % (MAP_MAX + FH) - DY - 100 + Math.sin(perf * 0.9 + m.ph) * 14;
+      if (y < -DY - 40 || y > H + DY + 40) continue; g.globalAlpha = (0.25 + 0.55 * Math.pow(Math.sin(perf * 1.7 + m.ph) * 0.5 + 0.5, 2)) * m.z * 0.9; const s = m.s * m.z; g.drawImage(MAPSPR.glow, m.x - s, y - s, s * 2, s * 2); }
+    g.globalAlpha = 1; }
   // cesta: tmavý okraj, světlá stezka, zlaté šlápoty; prošlá část svítí
   const vis = i => { const y = stagePos(i).y; return y > -DY - 200 && y < H + DY + 200; };
   const path = (from, to) => { g.beginPath(); let q0 = stagePos(from); g.moveTo(q0.x, q0.y); for (let i = from + 1; i <= to; i++) { const q = stagePos(i), m = { x: (q0.x + q.x) / 2, y: (q0.y + q.y) / 2 }; g.quadraticCurveTo(q0.x, q0.y, m.x, m.y); q0 = q; } g.lineTo(q0.x, q0.y); };
@@ -3234,10 +3247,20 @@ function drawMap() {
   g.lineCap = "round"; g.lineJoin = "round";
   path(i0, i1); g.strokeStyle = "rgba(15,8,4,.55)"; g.lineWidth = 34; g.stroke(); g.strokeStyle = "rgba(205,165,110,.32)"; g.lineWidth = 22; g.stroke();
   g.setLineDash([3, 17]); g.strokeStyle = "rgba(255,240,210,.45)"; g.lineWidth = 6; g.stroke();
-  if (done > i0) { path(i0, Math.min(done, i1)); g.strokeStyle = "rgba(243,198,110,.95)"; g.lineWidth = 7; g.stroke(); }
+  if (done > i0) { path(i0, Math.min(done, i1)); g.lineDashOffset = -perf * 28; g.strokeStyle = "rgba(243,198,110,.95)"; g.lineWidth = 7; g.stroke(); g.lineDashOffset = 0; }
   g.setLineDash([]);
+  if (done > 0 && settings().fx) for (let k = 0; k < 4; k++) { const f = ((perf * 0.55 + k / 4) % 1) * Math.min(done, PER_ACT - 1), a = Math.floor(f), b = Math.min(a + 1, PER_ACT - 1), u = f - a, p0 = stagePos(a), p1 = stagePos(b);
+    const sx = p0.x + (p1.x - p0.x) * u, sy = p0.y + (p1.y - p0.y) * u; if (sy < -DY - 30 || sy > H + DY + 30) continue; g.globalAlpha = 0.9; g.drawImage(MAPSPR.glow, sx - 22, sy - 22, 44, 44); }
+  g.globalAlpha = 1;
   for (let i = i0; i <= i1; i++) {
     const q = stagePos(i), st = PER_ACT * (mapAct - 1) + i + 1, open = i + 1 <= done + 1, won = i + 1 <= done, big = (i + 1) % 5 === 0, cur = i + 1 === done + 1, R = big ? 50 : 38;
+    let nz = easeBack((perf - mapT0 - 0.05 * Math.abs(i - done)) / 0.4); if (nz <= 0.01) continue;
+    if (open) nz *= 1 + 0.035 * Math.sin(perf * 2.2 + i * 0.9);
+    let shx = 0; for (const tp of mapTaps) { if (tp.i !== i) continue; const k = (perf - tp.t) / 0.45; if (k < 0 || k > 1) continue;
+      if (tp.ok) nz *= 1 + 0.28 * Math.sin(Math.PI * k) * (1 - k * 0.5); else shx = Math.sin(k * 38) * 10 * (1 - k);
+      if (tp.ok) { g.globalAlpha = 1 - k; g.strokeStyle = "#ffd166"; g.lineWidth = 6 * (1 - k); g.beginPath(); g.arc(q.x, q.y, R + 10 + 70 * k, 0, 6.29); g.stroke(); g.globalAlpha = 1; } }
+    if (cur) for (let k = 0; k < 2; k++) { const w = ((perf * 0.65 + k * 0.5) % 1); g.globalAlpha = 0.5 * (1 - w); g.strokeStyle = DIFF[diff].col; g.lineWidth = 4; g.beginPath(); g.arc(q.x, q.y, R + 8 + 46 * w, 0, 6.29); g.stroke(); g.globalAlpha = 1; }
+    g.save(); g.translate(q.x + shx, q.y); g.scale(nz, nz); g.translate(-q.x, -q.y);
     g.fillStyle = "rgba(0,0,0,.45)"; g.beginPath(); g.ellipse(q.x + 3, q.y + R * 0.75, R * 0.95, R * 0.32, 0, 0, 6.29); g.fill();
     if (cur) { const pu = 0.5 + 0.5 * Math.sin(perf * 4); g.strokeStyle = "rgba(255,209,102," + (0.25 + 0.35 * pu) + ")"; g.lineWidth = 10; g.beginPath(); g.arc(q.x, q.y, R + 10 + 4 * pu, 0, 6.29); g.stroke(); }
     const ng = g.createLinearGradient(0, q.y - R, 0, q.y + R);
@@ -3250,9 +3273,17 @@ function drawMap() {
     if (big) { g.fillStyle = open ? "#d42f4f" : "#3a3350"; rr(q.x - 24, q.y + R - 14, 48, 26, 13); g.fill(); g.fillStyle = "#fff"; g.font = "700 18px 'Exo 2', sans-serif"; g.fillText(i + 1, q.x, q.y + R + 6); }
     else { g.fillStyle = !open ? "rgba(255,255,255,.4)" : won ? "#3a2306" : "#fff"; g.font = "700 " + (open ? 28 : 22) + "px 'Exo 2', sans-serif"; g.fillText(open ? i + 1 : "🔒", q.x, q.y + 10); }
     if (won) { g.fillStyle = "#3ddc84"; g.beginPath(); g.arc(q.x + R * 0.72, q.y - R * 0.72, 12, 0, 6.29); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 3; g.beginPath(); g.moveTo(q.x + R * 0.72 - 6, q.y - R * 0.72); g.lineTo(q.x + R * 0.72 - 1, q.y - R * 0.72 + 5); g.lineTo(q.x + R * 0.72 + 7, q.y - R * 0.72 - 5); g.stroke(); }
-    if (won) { const sv = save.stars[actOf(st) + diff + (i + 1)] || 0; for (let j = 0; j < 3; j++) drawStar(q.x + (j - 1) * 22, q.y + R + 14 - (j === 1 ? 4 : 0), 10, j < sv); }
+    if (won) { const gl = Math.pow(Math.max(0, Math.sin(perf * 1.3 - i * 0.7)), 18); if (gl > 0.02) { g.globalAlpha = gl * 0.85; g.drawImage(MAPSPR.glow, q.x - R * 0.9, q.y - R * 0.95, R * 1.1, R * 1.1); g.globalAlpha = 1; } }
+    if (won) { const sv = save.stars[actOf(st) + diff + (i + 1)] || 0; for (let j = 0; j < 3; j++) drawStar(q.x + (j - 1) * 22, q.y + R + 14 - (j === 1 ? 4 : 0), 10 * (j < sv ? 1 + 0.12 * Math.pow(Math.max(0, Math.sin(perf * 2 + i + j * 1.3)), 8) : 1), j < sv); }
     const ns = scrollsFor(i + 1, diff); if (ns) { g.globalAlpha = won ? 0.45 : 1; drawItem("ico_scroll", q.x - R * 0.8, q.y + R * 0.95 - 10, 38, won ? 0.45 : 1); if (ns > 1) { g.font = "700 16px 'Exo 2', sans-serif"; g.fillStyle = "#ffd166"; g.fillText("×" + ns, q.x - R * 0.8 + 26, q.y + R * 1.05); } g.globalAlpha = 1; }
-    if (cur) { const ay = q.y - R - 22 - 8 * Math.sin(perf * 5); g.fillStyle = "#ffd166"; g.beginPath(); g.moveTo(q.x - 14, ay - 16); g.lineTo(q.x + 14, ay - 16); g.lineTo(q.x, ay); g.closePath(); g.fill(); }
+    g.restore();
+    if (cur) { const hb = Math.abs(Math.sin(perf * 3.2)), ay = q.y - R - 18 - 16 * hb, lid = teamIds()[0], hi = lid && img[lid];
+      g.fillStyle = "rgba(0,0,0," + (0.35 - 0.15 * hb) + ")"; g.beginPath(); g.ellipse(q.x, q.y - R - 6, 22 - 6 * hb, 6, 0, 0, 6.29); g.fill();
+      g.fillStyle = "#ffd166"; g.beginPath(); g.moveTo(q.x - 11, ay - 6); g.lineTo(q.x + 11, ay - 6); g.lineTo(q.x, ay + 8); g.closePath(); g.fill();
+      const cy = ay - 40, sq = 1 + 0.06 * (1 - hb); g.save(); g.translate(q.x, cy); g.scale(1 / sq, sq);
+      g.fillStyle = "#ffd166"; g.beginPath(); g.arc(0, 0, 37, 0, 6.29); g.fill();
+      if (ok(hi)) { g.beginPath(); g.arc(0, 0, 33, 0, 6.29); g.clip(); const sc = 66 / Math.min(hi.naturalWidth, hi.naturalHeight), dw = hi.naturalWidth * sc, dh = hi.naturalHeight * sc; g.drawImage(hi, -dw / 2, -33 - (dh - 66) * 0.15, dw, dh); }
+      g.restore(); }
   }
   // hlavička a spodní lišta
   const hg = g.createLinearGradient(0, -DY, 0, 230); hg.addColorStop(0, "rgba(10,6,22,.98)"); hg.addColorStop(0.75, "rgba(10,6,22,.85)"); hg.addColorStop(1, "rgba(10,6,22,0)"); g.fillStyle = hg; g.fillRect(0, -DY, W, 230 + DY);
@@ -3587,7 +3618,10 @@ function up(ev) {
       for (let k = 0; k < HEROES.length; k++) { if (inside(p, eqBtn(k)) && !heroFull(HEROES[k])) { SFX.click(); eqHero = k; break; } if (inside(p, heroBtn(k))) { if (!upgrade(k)) SFX.click(); break; } if (p.y > heroRowY(k) && p.y < heroRowY(k) + 102) { heroCard = k; SFX.hero(k); break; } } }
     if (scene === "credits" && scrollDrag.moved < 14 && !scrollDrag.fly) { const l = creditLinks.find(b => inside({ x: scrollDrag.x, y: scrollDrag.y }, b)); if (l && l.y > 150 && l.y + l.h < 1155) { SFX.click(); openLink(l.u); } }
     if (scene === "map" && scrollDrag.moved < 14 && !scrollDrag.fly) { const done = progOf(mapAct, diff);  // ťuknutí na úroveň: okno s nepřáteli a odměnou
-      for (let i = 0; i < PER_ACT; i++) { const q = stagePos(i); if (i + 1 <= done + 1 && Math.hypot(scrollDrag.x - q.x, scrollDrag.y - q.y) < 56) { levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); break; } } }
+      for (let i = 0; i < PER_ACT; i++) { const q = stagePos(i); if (Math.hypot(scrollDrag.x - q.x, scrollDrag.y - q.y) >= 56) continue;
+        if (i + 1 <= done + 1) { mapTaps.push({ i, t: perf, ok: true }); levelPop = PER_ACT * (mapAct - 1) + i + 1; LPI = levelInfo(levelPop); scrollV = 0; SFX.click(); }
+        else { mapTaps.push({ i, t: perf, ok: false }); buzz(25, 120); toast = { t: 1.8, text: "🔒 Nejdřív dohraj úroveň " + (done + 1) }; }
+        if (mapTaps.length > 8) mapTaps.shift(); break; } }
     // krátké ťuknutí (bez posunu a ne do rozjetého seznamu) otevře kartu nepřítele
     if (scene === "best" && scrollDrag.moved < 14 && !scrollDrag.fly && performance.now() - q[0][0] < 500) { const r = bestRows.find(r => scrollDrag.y >= r[1] && scrollDrag.y <= r[2] && scrollDrag.y > 150 && scrollDrag.y < 1155 && (r[3] === undefined || (scrollDrag.x >= r[3] && scrollDrag.x <= r[4])));
       if (r && String(r[0]).startsWith("cat")) { SFX.click(); bestScroll = scrollY; bestCat = +r[0].slice(3); scrollY = 0; scrollV = 0; } else if (r) { scrollV = 0; foeCard = r[0]; SFX.foe(r[0], FOES[r[0]].boss, "attack"); } } }
