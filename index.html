@@ -763,7 +763,12 @@ float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }
 void main() { vec4 c = texture2D(uSampler, vTextureCoord); vec2 px = vTextureCoord * inputSize.xy; float v = n(px / 16.0) * 0.65 + n(px / 5.0) * 0.35, t = uP * 1.1 - 0.05;
   if (v < t) { gl_FragColor = vec4(0.0); return; } float e = 1.0 - smoothstep(t, t + 0.09, v); c.rgb = mix(c.rgb, uE * c.a * 1.6, e * step(0.02, uP)); gl_FragColor = c; }`;
-let shock = null, SHOCKF = null, finisher = null, comboHeat = 0, zoomFx = null;
+let shock = null, SHOCKF = null, finisher = null, comboHeat = 0, zoomFx = null, bulges = [], bulgeWave = false;
+// „kopeček“: kostky kolem (x, y) se zvednou a zvětší a zase dosednou; A = síla, rad = dosah v px, d = doba v s
+function bulgeAt(x, y, A, rad, d) { if (!settings().fx) A *= 0.5; if (bulges.length > 6) bulges.shift(); bulges.push({ x, y, A, rad, d, t: 0 }); }
+function bulgeOff(x, y) { let h = 0, ox = 0, oy = 0; for (const b of bulges) { const k = b.t / b.d; if (k >= 1) continue; const dx = x - b.x, dy = y - b.y, dd = Math.hypot(dx, dy) || 1;
+    const env = Math.sin(Math.PI * k) * (1 - 0.35 * k), mound = Math.exp(-((dd / b.rad) ** 2)), ring = Math.exp(-(((dd - b.rad * 1.7 * k) / (b.rad * 0.45)) ** 2)) * (1 - k) * 0.45;
+    const v = b.A * (env * mound + ring); h += v; ox += dx / dd * 9 * v; oy += dy / dd * 9 * v; } return [h, ox, oy]; }
 // zoom kamery: amt = o kolik přiblížit (0,1 = 10 %), out = začíná přiblížené a oddaluje se (vstup do vlny)
 function zoomAt(x, y, amt, d, out) { if (!settings().fx) amt *= 0.4; if (zoomFx && !out && zoomFx.amt > amt && zoomFx.t < zoomFx.d * 0.6) return; zoomFx = { x, y, amt, d, t: 0, out: !!out }; }
 const DISS = [];
@@ -913,6 +918,7 @@ function hintOff(c, r) {
   return [0, 0, 0];
 }
 function pxBoard() {
+  if (bulges.length) { for (const b of bulges) b.t += rdtG; bulges = bulges.filter(b => b.t < b.d); }
   for (const gp of gemPops) { const k = gp.t / 0.24, tx = gp.ty === "d" ? stTex("diamond") : typeof gp.ty === "string" ? stTex(gp.ty) : stTex("gem" + gp.ty); if (!tx) continue;  // spojené kameny se zmenší a bliknou
     let sp = PG.get(tx); sp.position.set(gp.x, gp.y); sp.width = sp.height = 85 * (0.35 + 0.75 * k); sp.alpha = k;
     sp = PG.get(tx); sp.blendMode = ADD; sp.position.set(gp.x, gp.y); sp.width = sp.height = 85 * (0.35 + 0.75 * k); sp.alpha = k;
@@ -924,8 +930,10 @@ function pxBoard() {
       if (c === c2 && r === r2) { x += (c1 - c2) * T * e; y += (r1 - r2) * T * e; } }
     if (!tl.alive) continue;
     const hn = hintOff(c, r); x += hn[0]; y += hn[1];
+    const bo = bulges.length ? bulgeOff(x, y) : null; if (bo) { x += bo[1]; y += bo[2]; }
     if (hn[2] && pass === 1) { const sp = PG.get(TX.soft); sp.blendMode = ADD; sp.tint = hx(tl.t >= 0 ? COLORS[tl.t] : "#ffffff"); sp.alpha = 0.35 + 0.45 * hn[2]; sp.position.set(x, y); sp.width = sp.height = 130; }
-    const sel = drag && drag.c === c && drag.r === r, s = (sel ? 84 : 76) * (1 + 0.08 * hn[2]);
+    const sel = drag && drag.c === c && drag.r === r, s = (sel ? 84 : 76) * (1 + 0.08 * hn[2]) * (bo ? 1 + 0.3 * bo[0] : 1);
+    if (bo && pass === 1) y -= 26 * bo[0];  // kostka se nadzvedne, stín zůstane na zemi
     if (pass === 0) { pxGemShadow(tl.sp === "diamond" ? (tl.dc >= 0 && ok(img["dia" + tl.dc]) ? "dia" + tl.dc : "d") : tl.sp === "bomb" && ok(img["bomb" + tl.t]) ? "bomb" + tl.t : tl.t, x, y, s * (sel ? 1.08 : 1)); continue; }  // nejdřív všechny stíny, pak kameny
     if (tl.sp === "diamond") { pxDiamond(x, y, s, tl.dc); continue; }
     if (tl.sp === "bomb") { const pr = 0.5 + 0.5 * Math.sin(perf * 7 + c + r), bt = stTex("bomb" + tl.t); let sp = PG.get(TX.soft); sp.blendMode = ADD; sp.tint = hx(COLORS[tl.t]); sp.alpha = 0.45 + 0.35 * pr; sp.position.set(x, y); sp.width = sp.height = 118;
@@ -999,7 +1007,7 @@ function pxRender(shx, shy) {
     d.filters = [DISS[0] || (DISS[0] = new PIXI.Filter(undefined, DISS_FS, { uP: 0.5, uE: [1, 1, 1] }))]; PXR.render(d, { renderTexture: rt }); d.filters = null; rt.destroy(true); d.destroy(); } catch (e) {} }
   // přiblížení na poslední úder
   let fz = 1, zx = W / 2, zy = FH / 2;
-  if (finisher) { fz = 1 + 0.24 * Math.sin(Math.PI * Math.min(1, (1.3 - finisher.t) / 1.3)); zx = finisher.x; zy = finisher.y; }
+  if (finisher) { fz = 1 + 0.13 * Math.sin(Math.PI * Math.min(1, (1.3 - finisher.t) / 1.3)); zx = finisher.x; zy = finisher.y; }
   else if (zoomFx) { zoomFx.t += rdtG; const k = Math.min(1, zoomFx.t / zoomFx.d); if (k >= 1) zoomFx = null; else {
     fz = 1 + zoomFx.amt * (zoomFx.out ? Math.pow(1 - k, 3) : (k < 0.18 ? k / 0.18 : Math.pow(1 - (k - 0.18) / 0.82, 2))); zx = zoomFx.x; zy = zoomFx.y; } }
   PXS.scale.set(scale * fz); PXS.position.set((1 - fz) * zx * scale, (1 - fz) * zy * scale);
@@ -1312,7 +1320,7 @@ let bag = [], bagOpen = false;
 let eventMode = false; const EVENT_REW = { g: 500, c: 2, s: 1 };  // Noc bossů: odměna za přežití (+6 střípků, 3 esence, polovina kořisti)
 function startGame(st, waves) {
   eventMode = !!waves; seasonMode = null; milkPaid = false;
-  slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0;
+  slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0; bulges = []; zoomFx = null;
   lootG = 0; lootC = 0; lootS = 0; lootE = [0, 0, 0, 0, 0]; lootFly = []; titanMode = false; titanRes = null;
   paused = false;
   heroCard = -1; stage = st || stage; WAVES = waves || stageWaves(stage); levelUps = []; for (const wv of WAVES) for (const e of wv) needAnim(e.k);
@@ -1329,7 +1337,7 @@ function startWave() {
   setTimeout(() => { if (scene !== "play") return; if (enemies.some(e => e.boss)) SFX.bossIn(); else SFX.wave(); }, 250);
   setTimeout(() => playMusic(WAVES[wave] && WAVES[wave].some(e => e.boss) ? "boss" : "boj"), 0);
   enemies = WAVES[wave].map(e => ({ ...e, cur: e.hp, left: 3, hit: 0, c: rnd(5), mana: e.boss ? rnd(30) : 0 }));
-  zoomAt(W / 2, EN_Y - 60, enemies.some(e => e.boss) ? 0.32 : 0.22, enemies.some(e => e.boss) ? 1.6 : 1.1, true);
+  bulgeWave = enemies.some(e => e.boss) ? 2 : 1;
   target = -1; const bs = enemies.filter(e => e.boss);
   if (bs.length) { bossIntro = { t: 0, names: bs.map(e => e.n) }; msg = null; scrFlash = 0.35; setTimeout(() => { if (scene === "play") noise(1.6, 0.32, "lowpass", 380, 40, 0, 0.7); }, 120); }
   else msg = { text: (seasonMode ? seasonById(seasonMode.id).n + " " + seasonMode.lvl : "Úroveň " + localSt(stage)) + " · vlna " + (wave + 1), t: 1.6 };
@@ -1441,7 +1449,7 @@ async function tapDiamondInner(c, r) {
   busy = true; const dcol = board[c][r].dc; await diamondBlast([c, r], dcol >= 0 ? dcol : mostCommon()); await afterTurn();
 }
 async function diamondBlast([dc, dr], color) {
-  combo = 0; shake = 0.6; SFX.diamond(); buzz(70, 220); shockAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 1); zoomAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 0.13, 0.55);
+  combo = 0; shake = 0.6; SFX.diamond(); buzz(70, 220); shockAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 1); bulgeAt(BX + dc * T + T / 2, BY + dr * T + T / 2, 1.3, T * 2.8, 0.7);
   const forced = [[dc, dr]];
   for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (board[c][r].t === color) forced.push([c, r]);
   const d = { x: BX + dc * T + T / 2, y: BY + dr * T + T / 2 };
@@ -1483,7 +1491,7 @@ async function resolve(forced, swapCells) {
         SFX.diamond(); buzz(70, 220); shockAt(d.x, d.y, 1); shake = 0.6; floats.push({ x: W / 2, y: BY - 30, text: "Diamant!", col: COLORS[col], t: 1.2, big: true });
         for (let c2 = 0; c2 < COLS; c2++) for (let r2 = 0; r2 < ROWS; r2++) if (board[c2][r2].t === col && !clear.has(c2 + "," + r2)) { add(c2, r2); queue.push([c2, r2]); beams.push({ x1: d.x, y1: d.y, x2: BX + c2 * T + T / 2, y2: BY + r2 * T + T / 2, col: COLORS[col], t: 0.45 }); } }
       if (board[c][r].sp === "bomb") {
-        explosions.push({ x: BX + c * T + T / 2, y: BY + r * T + T / 2, t: 0.5, col: COLORS[board[c][r].t] }); shake = 0.4; zoomAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.09, 0.45); if (!boomed) { SFX.boom(); buzz(45, 200); shockAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.8); boomed = true; }
+        explosions.push({ x: BX + c * T + T / 2, y: BY + r * T + T / 2, t: 0.5, col: COLORS[board[c][r].t] }); shake = 0.4; bulgeAt(BX + c * T + T / 2, BY + r * T + T / 2, 1, T * 1.7, 0.5); if (!boomed) { SFX.boom(); buzz(45, 200); shockAt(BX + c * T + T / 2, BY + r * T + T / 2, 0.8); boomed = true; }
         for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) { const c2 = c + dc, r2 = r + dr; if (c2 >= 0 && c2 < COLS && r2 >= 0 && r2 < ROWS && !clear.has(c2 + "," + r2)) { add(c2, r2); queue.push([c2, r2]); } }
       }
     }
@@ -1580,7 +1588,7 @@ function hitEnemy(i, dmg, col, k, crit) {
     for (let q = 0; q < 3; q++) burst(p.x, p.y, "#fff"); sparkBurst(p.x, p.y, col, e.boss ? 90 : 50, e.boss ? 1.6 : 1.2); pillarAt(p.x, p.y, col, e.boss ? 1 : 0.7, e.boss ? 220 : 140); panX(p.x); SFX.foeDie(e.k, e.boss);
     if (e.boss) { buzz(90, 255); shockAt(p.x, p.y, 1.3); }
     enemies.forEach((o, j) => { if (o.cur > 0 && TRAIT[o.k] === "rage") { addSt(o, "rage", 3); o.left = Math.max(1, o.left - 1); const q = enemyPos(j); floats.push({ x: q.x, y: q.y - 110, text: "💢 Zuřivost!", col: STS.rage.col, t: 1.1 }); } });
-    if (WAVES && wave === WAVES.length - 1 && enemies.every(o => o.cur <= 0)) { finisher = { t: 1.3, x: p.x, y: p.y }; SFX.finisher(); scrFlash = Math.max(scrFlash, 0.3); hitstop = Math.max(hitstop, 0.5); sparkBurst(p.x, p.y, "#ffd166", 80, 1.6); }
+    if (WAVES && wave === WAVES.length - 1 && enemies.every(o => o.cur <= 0)) { finisher = { t: 1.3, x: p.x, y: p.y }; SFX.finisher(); scrFlash = Math.max(scrFlash, 0.3); sparkBurst(p.x, p.y, "#ffd166", 80, 1.6); bulgeAt(BX + COLS * T / 2, BY + ROWS * T / 2, 0.9, T * 3, 0.8); }
     // kořist podle síly nepřítele: granule, bossové i krystaly
     const gg = foeFood(e), cc = e.boss ? bossCr(stage) : 0;
     lootFly.push({ x: p.x, y: p.y, t: 0, kind: "g", v: gg }); if (cc) lootFly.push({ x: p.x, y: p.y - 30, t: -0.15, kind: "c", v: cc });
@@ -2022,6 +2030,7 @@ function frame(now) {
   // první nasunutí: kameny počkají, až se nahrají animace nepřátel, pozadí a shadery a snímky běží plynule (jinak by se trhalo)
   if (dropHold) { const el = performance.now() - dropHold, ready = WAVES.every(wv => wv.every(e => !ANIM[e.k] || animReady[e.k]));
     dropSmooth = ready && rdt < 0.025 ? dropSmooth + 1 : 0; if ((dropSmooth >= 6 && el > 300) || el > 1800) dropHold = 0; }
+  if (bulgeWave && board && !dropHold && board.every(col => col.every(tl => !tl.y))) { bulgeAt(BX + COLS * T / 2, BY + ROWS * T / 2, bulgeWave > 1 ? 1.1 : 0.75, T * 2.6, bulgeWave > 1 ? 0.8 : 0.6); bulgeWave = false; }
   if (board && !dropHold) for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const tl = board[c][r]; if (tl.land > 0) tl.land -= dt;
     if (tl.y < 0) { tl.vy += 3600 * dt; tl.y = Math.min(0, tl.y + tl.vy * dt); if (tl.y === 0) { tl.vy = 0; tl.land = 0.2; tl.up = false; if (perf - lastLand > 0.07) { lastLand = perf; SFX.land(); } } }
     else if (tl.y > 0) { tl.vy = Math.min(0, tl.vy || 0) - 3600 * dt; tl.y = Math.max(0, tl.y + tl.vy * dt); if (tl.y === 0) { tl.vy = 0; tl.land = 0.2; tl.up = true; if (perf - lastLand > 0.07) { lastLand = perf; SFX.land(); } } } }
@@ -2235,7 +2244,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
