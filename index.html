@@ -728,7 +728,8 @@ function drawAnim(key, cx, footY, h, phase = 0) {
 for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; load(h.id, "img/" + h.id + ".jpg"); load("gem_stit" + k, "img/gem_" + h.id + ".png"); for (const [t] of THEMES.slice(1)) load("gem_" + t + k, "img/gem_" + t + "_" + h.id + ".png"); load("dia_stit" + k, "img/dia_" + h.id + ".png"); load("bomb_stit" + k, "img/bomb_" + h.id + ".png"); for (const [t] of THEMES.slice(1)) { load("dia_" + t + k, "img/dia_" + t + "_" + h.id + ".png"); load("bomb_" + t + k, "img/bomb_" + t + "_" + h.id + ".png"); } }
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
-for (const k of ["ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
+load("vez_bg", "img/vez_bg.webp"); load("hled_bg", "img/hled_bg.webp");
+for (const k of ["ui_minihry", "ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
 load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("bgX", "img/bg_vanoce.jpg"); for (const s of ["halloween", "vanoce", "velikonoce", "masopust", "leto", "houby"]) load("menu_" + s, "img/bg_menu_" + s + ".jpg"); load("bgM", "img/bg_masopust.jpg"); load("bgE", "img/bg_velikonoce.jpg"); load("bgL", "img/bg_leto.jpg"); load("bgO", "img/bg_houby.jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
@@ -1319,7 +1320,7 @@ function newTile(t) { return { t: t === undefined ? rnd(5) : t, y: 0, vy: 0, pop
 let bag = [], bagOpen = false;
 let eventMode = false; const EVENT_REW = { g: 500, c: 2, s: 1 };  // Noc bossů: odměna za přežití (+6 střípků, 3 esence, polovina kořisti)
 function startGame(st, waves) {
-  eventMode = !!waves; seasonMode = null; milkPaid = false;
+  eventMode = !!waves; seasonMode = null; milkPaid = false; towerMode = towerArm; towerArm = false;
   slowT = 0; endFx = []; endT = 0; flashes = []; rings = []; gemPops = []; skillFx = []; bolts = []; eatk = []; bossIntro = null; hitstop = 0; bulges = []; zoomFx = null;
   lootG = 0; lootC = 0; lootS = 0; lootE = [0, 0, 0, 0, 0]; lootFly = []; titanMode = false; titanRes = null;
   paused = false;
@@ -1336,13 +1337,312 @@ function startGame(st, waves) {
 function startWave() {
   setTimeout(() => { if (scene !== "play") return; if (enemies.some(e => e.boss)) SFX.bossIn(); else SFX.wave(); }, 250);
   setTimeout(() => playMusic(WAVES[wave] && WAVES[wave].some(e => e.boss) ? "boss" : "boj"), 0);
-  enemies = WAVES[wave].map(e => ({ ...e, cur: e.hp, left: 3, hit: 0, c: rnd(5), mana: e.boss ? rnd(30) : 0 }));
+  enemies = WAVES[wave].map(e => ({ ...e, cur: e.hp, left: 3, hit: 0, c: rnd(5), mana: e.boss ? rnd(30) : 0 })); towerWaveFx();
   bulgeWave = enemies.some(e => e.boss) ? 2 : 1;
   target = -1; const bs = enemies.filter(e => e.boss);
   if (bs.length) { bossIntro = { t: 0, names: bs.map(e => e.n) }; msg = null; scrFlash = 0.35; setTimeout(() => { if (scene === "play") noise(1.6, 0.32, "lowpass", 380, 40, 0, 0.7); }, 120); }
-  else msg = { text: (seasonMode ? seasonById(seasonMode.id).n + " " + seasonMode.lvl : "Úroveň " + localSt(stage)) + " · vlna " + (wave + 1), t: 1.6 };
+  else msg = { text: (towerMode ? "Věž · patro " + towerRun.floor : seasonMode ? seasonById(seasonMode.id).n + " " + seasonMode.lvl : "Úroveň " + localSt(stage)) + " · vlna " + (wave + 1), t: 1.6 };
 }
 
+// ---------- MINIHRY (19. 11. 2026): Kočičí věž (nekonečná) + Hledačka (hledání v obrázku) ----------
+let towerMode = false, towerArm = false, towerRun = null, mgBtns = [], mgT0 = 0;
+const MG_SCENES = new Set(["minihry", "tower", "towerpick", "towerend", "hled"]);
+const mgBtn = (b, style, fn) => { button(b, style); mgBtns.push([b, fn]); };
+const weekNo = () => Math.floor((dayNum() + 3) / 7);
+// bonusy věže: r = vzácnost (0 běžný, 1 vzácný, 2 epický), max = kolikrát se dá vzít
+const TB_DEF = [
+  { id: "atk", ic: "🗡️", n: "Ostré drápy", d: "+15 % útoku celého týmu", r: 0, max: 5 },
+  { id: "fury", ic: "😾", n: "Kočičí zuřivost", d: "+30 % útoku, −10 % energie", r: 1, max: 3 },
+  { id: "crit", ic: "🎯", n: "Kritické oko", d: "+8 % šance na kritický zásah", r: 0, max: 5 },
+  { id: "critm", ic: "💥", n: "Smrtící kousnutí", d: "kritický zásah o 40 % silnější", r: 1, max: 4 },
+  { id: "boss", ic: "👑", n: "Lovec bossů", d: "+35 % poškození bossům", r: 0, max: 4 },
+  { id: "exec", ic: "🪓", n: "Popravčí", d: "+50 % poškození nepřátelům pod 30 % energie", r: 1, max: 3 },
+  { id: "color", ic: "🌈", n: "Barevná harmonie", d: "silný zásah barvou ještě o 25 % silnější", r: 0, max: 4 },
+  { id: "boom", ic: "🧨", n: "Výbušný konec", d: "poražený nepřítel zraní ostatní za 8 % jejich energie", r: 1, max: 3 },
+  { id: "first", ic: "⚡", n: "První rána", d: "první zásah v každém patře je trojnásobný", r: 1, max: 1 },
+  { id: "combo", ic: "🔥", n: "Mistr komba", d: "každé kombo přidá +5 % poškození", r: 1, max: 3 },
+  { id: "fur", ic: "🧶", n: "Tlustý kožich", d: "+20 % energie celého týmu", r: 0, max: 5 },
+  { id: "bed", ic: "🛏️", n: "Pelíšek", d: "každé patro začíná se 2 štíty", r: 0, max: 3 },
+  { id: "thorn", ic: "🌵", n: "Ostny", d: "útočníkovi se vrátí 25 % poškození", r: 1, max: 3 },
+  { id: "dodge", ic: "💨", n: "Kočičí mrštnost", d: "12 % šance úplně uhnout útoku", r: 1, max: 3 },
+  { id: "armor", ic: "🛡️", n: "Pevná tlapka", d: "o 15 % menší přijaté poškození", r: 0, max: 3 },
+  { id: "nine", ic: "😇", n: "Devět životů", d: "jednou za běh vstane padlý hrdina s 30 % energie", r: 2, max: 1 },
+  { id: "snack", ic: "🐟", n: "Mlsání", d: "poražený nepřítel vyléčí tým o 4 % energie", r: 0, max: 4 },
+  { id: "vamp", ic: "🦇", n: "Upíří kousnutí", d: "6 % poškození se vrací jako léčení", r: 1, max: 3 },
+  { id: "rest", ic: "😴", n: "Šlofík", d: "po každém patře se tým vyléčí o dalších 20 %", r: 0, max: 3 },
+  { id: "regen", ic: "💚", n: "Regenerace", d: "každé kolo +3 % energie", r: 1, max: 3 },
+  { id: "milk", ic: "🥛", n: "Kočičí mlíčko", d: "hned vyléčí celý tým a oživí padlé", r: 1, max: 99, once: true },
+  { id: "mana", ic: "✨", n: "Rychlá mana", d: "o 25 % rychlejší nabíjení many", r: 0, max: 4 },
+  { id: "bowl", ic: "🥣", n: "Plná miska", d: "každé patro začíná s 50 % many", r: 1, max: 1 },
+  { id: "manak", ic: "🔮", n: "Mana z kořisti", d: "poražený nepřítel dá všem +10 % many", r: 0, max: 3 },
+  { id: "gold", ic: "🪙", n: "Zlatá rybka", d: "+40 % granulí z věže", r: 0, max: 5 },
+  { id: "cryst", ic: "💎", n: "Lovec krystalů", d: "+1 krystal za každé 5. patro", r: 1, max: 3 },
+  { id: "magnet", ic: "🧲", n: "Střípkový magnet", d: "+2 střípky za každé patro", r: 0, max: 3 },
+  { id: "hazard", ic: "🎲", n: "Hazard", d: "+50 % poškození, ale nepřátelé mají +25 % energie", r: 2, max: 2 },
+  { id: "hiss", ic: "🐍", n: "Syčení", d: "nepřátelé útočí o 15 % slaběji", r: 0, max: 3 },
+  { id: "lazy", ic: "🦥", n: "Lenošení", d: "nepřátelé zaútočí o kolo později", r: 1, max: 2 },
+  { id: "scare", ic: "🎃", n: "Strašák", d: "bossové nabíjejí schopnost o 30 % pomaleji", r: 0, max: 2 },
+  { id: "shock", ic: "🌩️", n: "Zmatek", d: "na začátku patra dostanou nepřátelé Šok", r: 1, max: 1 },
+  { id: "burn", ic: "🔥", n: "Ohnivé klubko", d: "na začátku patra nepřátelé hoří", r: 1, max: 3 },
+  { id: "lucky", ic: "🍀", n: "Kočičí štěstí", d: "o jednu kartu víc na výběr", r: 2, max: 1 },
+];
+const TB_RC = ["#9fb3c8", "#4cc9f0", "#c77dff"], TB_RN = ["Běžný", "Vzácný", "Epický"];
+const tbDef = id => TB_DEF.find(b => b.id === id);
+const tb = id => towerMode && towerRun ? (towerRun.b[id] || 0) : 0;
+function ensureTower() { const T = save.tower = save.tower || { best: 0, wk: -1, wkBest: 0, runs: 0, floors: 0, ms: 0 }; if (T.wk !== weekNo()) { T.wk = weekNo(); T.wkBest = 0; } return T; }
+function towerWaves(fl) {
+  const d0 = diff; diff = "e"; let st = 1; const want = 0.85 * hpScale(); for (let x = 1; x <= STAGES; x++) if (stageF(x) <= want) st = x;
+  const grow = 0.78 + 0.045 * (fl - 1) + 0.0015 * (fl - 1) * (fl - 1), F = stageF(st) * grow * (1 + 0.25 * (towerRun.b.hazard || 0)), A = F <= 1 ? F : 1 + (F - 1) * balA(st); diff = d0;
+  let seed = (fl * 7919 + weekNo() * 131 + towerRun.seed) % 2147483647 || 7; const R = k => { seed = (seed * 16807) % 2147483647; return seed % k; };
+  const okF = k => !FOES[k].season && !FOES[k].titan && (FOES[k].act || 1) <= ACTS.length;
+  const pool = Object.keys(FOES).filter(k => okF(k) && !FOES[k].boss), bpool = Object.keys(FOES).filter(k => okF(k) && FOES[k].boss);
+  const mk = (k, m) => { const f = FOES[k], nh = NORM(f, "hp"), na = NORM(f, "atk"); return { ...f, k, hp: Math.round(f.hp * nh * F * m), atk: Math.round(f.atk * na * A * (f.boss ? 0.85 : 0.75)) }; };
+  const nf = Math.min(5, 3 + Math.floor(fl / 4)), w1 = []; for (let i = 0; i < nf; i++) w1.push(mk(pool[R(pool.length)], 0.5));
+  const waves = [w1];
+  if (fl % 5 === 0) { const nb = fl >= 30 ? 3 : fl >= 15 ? 2 : 1, bw = []; for (let i = 0; i < nb; i++) bw.push(mk(bpool[R(bpool.length)], (nb === 1 ? 0.42 : nb === 2 ? 0.34 : 0.28)));
+    waves.push(bw); }
+  return waves;
+}
+function towerNew() { ensureTower(); towerRun = { floor: 1, b: {}, hp: {}, seed: rnd(1e6), loot: { f: 0, c: 0, s: 0, sc: 0, e: [0, 0, 0, 0, 0] }, nine: false, reroll: 1, first: false, picks: null, t0: Date.now(), stage0: stage };
+  save.tower.runs++; store(); towerFloor(); }
+function towerFloor() {
+  const fl = towerRun.floor; diff = "e"; towerArm = true; towerRun.first = false;
+  startGame(PER_ACT * ((fl - 1) % ACTS.length) + Math.min(PER_ACT, 1 + Math.floor(fl / 2)), towerWaves(fl));
+  heroes.forEach(h => { const f = towerRun.hp[h.id];
+    h.atk = Math.round(h.atk * (1 + 0.15 * tb("atk") + 0.3 * tb("fury"))); h.hp = Math.round(h.hp * Math.max(0.5, 1 + 0.2 * tb("fur") - 0.1 * tb("fury")));
+    h.crit = (h.crit || 0.05) + 0.08 * tb("crit"); h.critM = (h.critM || 1.8) + 0.4 * tb("critm"); h.manaM = (h.manaM || 1) * (1 + 0.25 * tb("mana"));
+    h.cur = f === undefined ? h.hp : Math.round(h.hp * f); if (tb("bowl")) h.ch = Math.max(h.ch || 0, CHARGE * 0.5); });
+  shield += 2 * tb("bed"); msg = { text: "Kočičí věž · patro " + fl, t: 1.8 };
+}
+function towerWaveFx() {  // volá startWave (nepřátelé nové vlny)
+  if (!towerMode) return;
+  enemies.forEach(e => { e.left += tb("lazy"); if (tb("shock")) addSt(e, "weak", 2); if (tb("burn")) addSt(e, "burn", 3, Math.round(e.hp * 0.04 * tb("burn"))); });
+}
+function towerDmg(e, dmg, k) {
+  let m = 1 + 0.5 * tb("hazard") + 0.05 * tb("combo") * (combo || 0);
+  if (e.boss) m += 0.35 * tb("boss"); if (e.cur < e.hp * 0.3) m += 0.5 * tb("exec"); if (k !== undefined && colorMult(k, e.c) > 1) m += 0.25 * tb("color");
+  if (tb("first") && !towerRun.first) { towerRun.first = true; m *= 3; const p = enemyPos(enemies.indexOf(e)); floats.push({ x: p.x, y: p.y - 150, text: "⚡ První rána ×3", col: "#ffd166", t: 1.1 }); }
+  return Math.round(dmg * m);
+}
+function towerAfterHit(e, dmg) { if (tb("vamp")) { const al = heroes.filter(h => h.cur > 0); if (al.length) { const h = al.reduce((a, b) => b.cur / b.hp < a.cur / a.hp ? b : a); h.cur = Math.min(h.hp, h.cur + Math.round(dmg * 0.06 * tb("vamp"))); } } }
+function towerKill(e) {
+  if (!towerMode) return;
+  if (tb("snack")) heroes.forEach(h => { if (h.cur > 0) h.cur = Math.min(h.hp, h.cur + Math.round(h.hp * 0.04 * tb("snack"))); });
+  if (tb("manak")) heroes.forEach(h => { if (h.cur > 0) h.ch = Math.min(CHARGE, (h.ch || 0) + CHARGE * 0.1 * tb("manak")); });
+  if (tb("boom") && !towerRun.booming) { towerRun.booming = true; enemies.forEach((o, j) => { if (o !== e && o.cur > 0) hitEnemy(j, Math.max(1, Math.round(o.hp * 0.08 * tb("boom"))), "#ff9f1c"); }); towerRun.booming = false; }
+}
+function towerHeroHit(e, i, h, dmg) {  // vrací null = uhnul, jinak upravené poškození
+  if (!towerMode) return dmg;
+  if (tb("dodge") && Math.random() < Math.min(0.45, 0.12 * tb("dodge"))) { floats.push({ x: heroX(heroes.indexOf(h)), y: HERO_Y - 90, text: "💨 Uhnul!", col: "#9ec8ff", t: 1 }); return null; }
+  dmg = Math.round(dmg * Math.max(0.4, 1 - 0.15 * tb("armor")) * Math.max(0.4, 1 - 0.15 * tb("hiss")));
+  if (tb("thorn") && e.cur > 0) setTimeout(() => { if (towerMode && e.cur > 0) hitEnemy(i, Math.max(1, Math.round(dmg * 0.25 * tb("thorn"))), "#7ee05a"); }, 250);
+  return dmg;
+}
+function towerNine(h) { if (towerMode && tb("nine") && !towerRun.nine && h.cur <= 0) { towerRun.nine = true; h.cur = Math.round(h.hp * 0.3); floats.push({ x: heroX(heroes.indexOf(h)), y: HERO_Y - 110, text: "😇 Devět životů!", col: "#ffd166", t: 1.4 }); } }
+function towerTurn() { if (tb("regen")) heroes.forEach(h => { if (h.cur > 0) h.cur = Math.min(h.hp, h.cur + Math.round(h.hp * 0.03 * tb("regen"))); }); }
+function towerFloorWon() {
+  const fl = towerRun.floor, L = towerRun.loot, T = ensureTower();
+  L.f += Math.round(lootG * (1 + 0.4 * tb("gold"))) + Math.round((25 + 12 * fl) * (1 + 0.4 * tb("gold"))); L.s += lootS + 1 + 2 * tb("magnet"); for (let c = 0; c < 5; c++) L.e[c] += lootE[c];
+  if (fl % 5 === 0) L.c += 1 + tb("cryst") + Math.floor(fl / 20); if (fl % 10 === 0) L.sc += 1;
+  T.floors++; save.stats.towerFl = (save.stats.towerFl || 0) + 1; if (fl > T.best) T.best = fl; if (fl > T.wkBest) T.wkBest = fl;
+  heroes.forEach(h => { const heal = h.cur > 0 ? h.hp * (0.2 + 0.2 * tb("rest")) : 0; towerRun.hp[h.id] = Math.min(1, (h.cur + heal) / h.hp); });
+  towerRun.floor++; towerRun.picks = towerRoll(fl % 5 === 0); store();
+  towerMode = false; scene = "towerpick"; mgT0 = perf; playMusic("menu"); SFX.star();
+}
+function towerRoll(boss) {
+  const n = 3 + (towerRun.b.lucky ? 1 : 0), out = [], av = TB_DEF.filter(b => (towerRun.b[b.id] || 0) < b.max);
+  for (let q = 0; q < n && av.length; q++) {
+    const want = boss && q === 0 ? 2 : Math.random() < 0.1 ? 2 : Math.random() < 0.33 ? 1 : 0;
+    let cand = av.filter(b => b.r === want && !out.includes(b)); if (!cand.length) cand = av.filter(b => !out.includes(b)); if (!cand.length) break;
+    out.push(cand[rnd(cand.length)]);
+  }
+  return out;
+}
+function towerPick(b) {
+  towerRun.b[b.id] = (towerRun.b[b.id] || 0) + 1;
+  if (b.id === "milk") { for (const id in towerRun.hp) towerRun.hp[id] = 1; teamIds().forEach(id => towerRun.hp[id] = 1); }
+  towerRun.picks = null; store(); towerFloor();
+}
+function towerEnd(quit) {  // konec běhu: vyplatí se vše nasbírané
+  const L = towerRun.loot, T = ensureTower(), fl = towerRun.floor - 1;
+  addFood(L.f); save.crystals += L.c; save.scrolls += L.sc; save.shards += L.s; save.stats.shardsGot += L.s; for (let c = 0; c < 5; c++) save.ess[c] += L.e[c];
+  const ms = [10, 20, 30, 40, 50, 75, 100].filter(m => fl >= m && m > (T.ms || 0)); let msTxt = "";
+  for (const m of ms) { save.crystals += m / 5; save.scrolls += Math.ceil(m / 20); save.shards += m; T.ms = m; msTxt = "Nový milník – patro " + m + ": +" + m / 5 + " krystalů, +" + Math.ceil(m / 20) + " svitky, +" + m + " střípků"; }
+  towerRun.res = { fl, quit, msTxt }; towerMode = false; if (towerRun.stage0) stage = towerRun.stage0; store(); scene = "towerend"; mgT0 = perf; playMusic("menu");
+}
+
+// ---------- vykreslení: rozcestník miniher, věž, výběr bonusu, konec běhu ----------
+function mgCard(b, title, sub, col, imgK, extra) {
+  g.save(); g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = 24; const bg = g.createLinearGradient(0, b.y, 0, b.y + b.h); bg.addColorStop(0, col[0]); bg.addColorStop(1, col[1]); g.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 28); g.fill(); g.restore();
+  if (imgK && ok(img[imgK])) { g.save(); rr(b.x, b.y, b.w, b.h, 28); g.clip(); g.globalAlpha = 0.55; coverImg(img[imgK], b.x, b.y, b.w, b.h); g.globalAlpha = 1; const sh = g.createLinearGradient(0, b.y, 0, b.y + b.h); sh.addColorStop(0, "rgba(10,5,25,.05)"); sh.addColorStop(1, "rgba(10,5,25,.9)"); g.fillStyle = sh; g.fillRect(b.x, b.y, b.w, b.h); g.restore(); }
+  g.strokeStyle = "#ffd166"; g.lineWidth = 3; rr(b.x, b.y, b.w, b.h, 28); g.stroke();
+  g.textAlign = "left"; g.lineJoin = "round"; g.strokeStyle = "#1a0b33"; g.lineWidth = 8; g.font = "800 44px Baloo, sans-serif"; g.strokeText(title, b.x + 28, b.y + b.h - 70); g.fillStyle = "#fff"; g.fillText(title, b.x + 28, b.y + b.h - 70);
+  g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 21px Baloo, sans-serif"; g.fillText(sub, b.x + 28, b.y + b.h - 36);
+  if (extra) { g.textAlign = "right"; g.fillStyle = "#ffd166"; g.font = "800 22px Baloo, sans-serif"; g.fillText(extra, b.x + b.w - 26, b.y + 46); }
+}
+function drawMinihry() {
+  menuBg(); mgBtns = []; header("Minihry");
+  const T = ensureTower(), Hh = ensureHled();
+  const b1 = { x: 34, y: 170, w: 652, h: 300 }, b2 = { x: 34, y: 500, w: 652, h: 300 };
+  mgCard(b1, "Kočičí věž", "Nekonečná věž · po každém patře 1 ze 3 bonusů", ["#3a1d6e", "#140a2a"], "vez_bg", "Rekord " + T.best + " · týden " + T.wkBest);
+  mgCard(b2, "Hledačka", "Najdi schované věci v obrázku dřív, než dojde čas", ["#5a3a14", "#1e1208"], "hled_bg", "Vyhráno " + Hh.won + "× · dnes " + Hh.today + "/" + HLED_FULL);
+  mgBtns.push([b1, () => { scene = "tower"; mgT0 = perf; }], [b2, () => { scene = "hled"; hledNew(); }]);
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.55)"; g.font = "600 20px Baloo, sans-serif"; g.fillText("Další minihry přibudou – Vykopávky, Kočičí kuchyně…", W / 2, 860);
+  backBtn(); mgBtns.push([BACK, () => { scene = "menu"; }]);
+}
+function drawTower() {
+  menuBg(); mgBtns = []; const T = ensureTower(); header("Kočičí věž");
+  if (ok(img.vez_bg)) { g.save(); rr(34, 150, 652, 420, 28); g.clip(); coverImg(img.vez_bg, 34, 150, 652, 420); g.restore(); g.strokeStyle = "#ffd166"; g.lineWidth = 3; rr(34, 150, 652, 420, 28); g.stroke(); }
+  let y = 620; g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "800 34px Baloo, sans-serif"; g.fillText("Jak vysoko vylezeš?", W / 2, y);
+  g.font = "600 21px Baloo, sans-serif"; g.fillStyle = "rgba(255,255,255,.8)"; y = wrap("Patro za patrem silnější nepřátelé, každé 5. patro boss. Po každém patře si vybereš 1 ze 3 bonusů – jsou jen pro tento běh. Energie se mezi patry přenáší (po patře +20 %). Prohra běh ukončí, ale všechnu kořist si necháš.", W / 2, y + 40, 600, 28) + 20;
+  const box = (x, lbl, v) => { g.fillStyle = "rgba(0,0,0,.4)"; rr(x, y, 196, 96, 18); g.fill(); g.fillStyle = "#ffd166"; g.font = "800 38px Baloo, sans-serif"; g.fillText(v, x + 98, y + 50); g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px Baloo, sans-serif"; g.fillText(lbl, x + 98, y + 80); };
+  box(46, "rekord", T.best); box(262, "tento týden", T.wkBest); box(478, "prošlých pater", T.floors); y += 130;
+  const nm = [10, 20, 30, 40, 50, 75, 100].find(m => m > (T.ms || 0)); if (nm) { g.fillStyle = "#f3c66e"; g.font = "700 20px Baloo, sans-serif"; g.fillText("Další milník: patro " + nm + " → +" + nm / 5 + " krystalů, +" + Math.ceil(nm / 20) + " svitky, +" + nm + " střípků", W / 2, y); }
+  mgBtn({ x: 70, y: 1000, w: 250, h: 86, t: "Tým" }, "glass", () => { teamPick = true; });
+  mgBtn({ x: 340, y: 1000, w: 310, h: 86, t: towerRun && towerRun.picks ? "Pokračovat" : "Začít běh" }, "gold", () => { if (towerRun && towerRun.picks) scene = "towerpick"; else towerNew(); });
+  backBtn(); mgBtns.push([BACK, () => { scene = "minihry"; }]);
+}
+function drawTowerPick() {
+  menuBg(); mgBtns = []; const P = towerRun.picks || [], fl = towerRun.floor - 1, a = Math.min(1, (perf - mgT0) / 0.5);
+  header("Patro " + fl + " zdoláno!");
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.8)"; g.font = "600 22px Baloo, sans-serif"; g.fillText("Vyber si bonus na další patra", W / 2, 200);
+  const L = towerRun.loot; g.fillStyle = "#ffd166"; g.font = "700 20px Baloo, sans-serif"; g.fillText("Kořist běhu: " + foodText(L.f) + " · 💎 " + L.c + " · ⚙ " + L.s + (L.sc ? " · 📜 " + L.sc : ""), W / 2, 236);
+  const ch = P.length > 3 ? 190 : 230;
+  P.forEach((b, j) => { const cy = 270 + j * (ch + 22), t = Math.max(0, Math.min(1, a * 3 - j * 0.4)), x = 46 + (1 - t) * 400, bx = { x, y: cy, w: 628, h: ch }, n = towerRun.b[b.id] || 0;
+    g.globalAlpha = t; g.save(); g.shadowColor = TB_RC[b.r]; g.shadowBlur = 20 + (b.r === 2 ? 10 * Math.sin(perf * 4) : 0); g.fillStyle = "#1d1236"; rr(bx.x, bx.y, bx.w, bx.h, 26); g.fill(); g.restore();
+    g.strokeStyle = TB_RC[b.r]; g.lineWidth = 4; rr(bx.x, bx.y, bx.w, bx.h, 26); g.stroke();
+    g.font = "64px sans-serif"; g.textAlign = "center"; g.fillText(b.ic, bx.x + 80, bx.y + ch / 2 + 22);
+    g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 32px Baloo, sans-serif"; g.fillText(b.n + (n ? "  " + "★".repeat(n + 1) : ""), bx.x + 150, bx.y + 58);
+    g.fillStyle = TB_RC[b.r]; g.font = "700 17px Baloo, sans-serif"; g.fillText(TB_RN[b.r].toUpperCase() + (b.max < 99 ? " · " + (n + 1) + "/" + b.max : ""), bx.x + 150, bx.y + 86);
+    g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 22px Baloo, sans-serif"; wrap(b.d, bx.x + 150, bx.y + 122, 450, 27); g.globalAlpha = 1;
+    mgBtns.push([bx, () => { if (perf - mgT0 > 0.6) towerPick(b); }]); });
+  const own = Object.keys(towerRun.b); if (own.length) { g.textAlign = "center"; g.font = "30px sans-serif"; g.fillText(own.map(id => tbDef(id).ic).join(" "), W / 2, 1000); }
+  if (towerRun.reroll > 0) mgBtn({ x: 70, y: 1030, w: 280, h: 76, t: "Přehodit (1×)" }, "glass", () => { towerRun.reroll--; towerRun.picks = towerRoll(false); mgT0 = perf; });
+  mgBtn({ x: 370, y: 1030, w: 280, h: 76, t: "Ukončit běh" }, "#7a2f3a", () => towerEnd(true));
+}
+function drawTowerEnd() {
+  menuBg(); mgBtns = []; const R = towerRun.res, L = towerRun.loot, T = ensureTower(); header(R.quit ? "Běh ukončen" : "Konec běhu");
+  g.textAlign = "center"; g.fillStyle = "#ffd166"; g.font = "800 90px Baloo, sans-serif"; g.fillText(R.fl, W / 2, 330); g.fillStyle = "#fff"; g.font = "700 28px Baloo, sans-serif"; g.fillText(R.fl === 1 ? "patro" : R.fl < 5 && R.fl > 1 ? "patra" : "pater", W / 2, 375);
+  if (R.fl >= T.best && R.fl > 0) { g.fillStyle = "#3ddc84"; g.font = "800 30px Baloo, sans-serif"; g.fillText("Nový rekord!", W / 2, 430); }
+  g.fillStyle = "rgba(255,255,255,.85)"; g.font = "600 24px Baloo, sans-serif"; let y = 500;
+  [["Granule/rohlíky", foodText(L.f)], ["Krystaly", "💎 " + L.c], ["Střípky", "⚙ " + L.s], ["Svitky", "📜 " + L.sc], ["Esence", L.e.reduce((a, b) => a + b, 0)]].forEach(([a, b]) => { g.textAlign = "left"; g.fillText(a, 140, y); g.textAlign = "right"; g.fillText(b, 580, y); y += 44; });
+  if (R.msTxt) { g.textAlign = "center"; g.fillStyle = "#f3c66e"; g.font = "700 21px Baloo, sans-serif"; wrap(R.msTxt, W / 2, y + 20, 600, 26); y += 60; }
+  const own = Object.keys(towerRun.b); g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 20px Baloo, sans-serif"; g.fillText("Bonusy běhu: " + (own.length ? "" : "žádné"), W / 2, y + 40); g.font = "30px sans-serif"; g.fillText(own.map(id => tbDef(id).ic).join(" "), W / 2, y + 84);
+  mgBtn({ x: 70, y: 1000, w: 280, h: 86, t: "Věž" }, "glass", () => { towerRun = null; scene = "tower"; });
+  mgBtn({ x: 370, y: 1000, w: 280, h: 86, t: "Znovu" }, "gold", () => { towerNew(); });
+}
+
+// ---------- Hledačka ----------
+const HLED_SC = ["kuchyne", "obyvak", "loznice", "detsky", "zahrada", "puda", "koupelna", "dilna", "knihovna", "spiz", "predsin", "terasa", "vanoce", "jidelna", "pracovna"].flatMap(k => [k + "_1", k + "_2"]);
+const HLED_IT = { mys: "myška", klubko: "klubíčko", rybicka: "rybička", miska: "miska", zvonek: "zvoneček", pericko: "peříčko", obojek: "obojek", bryle: "brýle", klice: "klíče",
+  hrnek: "hrnek", rohlik: "rohlík", ponozka: "ponožka", medvidek: "medvídek", sluchatka: "sluchátka", ovladac: "ovladač", kachnicka: "kachnička", jablko: "jablko", hodinky: "hodinky",
+  pastelka: "pastelka", kniha: "knížka", destnik: "deštník", capka: "čepice", lizatko: "lízátko", darek: "dárek", svicka: "svíčka", kytka: "kaktus", mleko: "mléko", krabice: "krabice",
+  tenisak: "tenisák", hreben: "hřeben", tlapka_pamlsek: "pamlsek", lupa: "lupa", srdicko: "polštářek", kostka: "kostka", petrova_kladivo: "kladívko", lucie_rtenka: "rtěnka" };
+const HLED_FULL = 5, HLED_TIME = 150, HA = { x: 0, y: 120, w: 720, h: 870 };  // plná odměna 5× za den; hrací plocha obrázku
+const hledImg = {}; function hledLoad(k, p) { if (!hledImg[k]) { const i = new Image(); i.src = p; hledImg[k] = i; } return hledImg[k]; }
+let hled = null;
+function ensureHled() { const S = save.hled = save.hled || { won: 0, lvl: 0, day: -1, today: 0, best: 0 }; if (S.day !== dayNum()) { S.day = dayNum(); S.today = 0; } return S; }
+function hledNew() {
+  const S = ensureHled(), lv = S.lvl, sc = HLED_SC[rnd(HLED_SC.length)], keys = Object.keys(HLED_IT).sort(() => Math.random() - 0.5);
+  const nFind = Math.min(10, 6 + Math.floor(lv / 4)), nDecoy = Math.min(26, 10 + lv), sMin = Math.max(28, 42 - lv * 0.8), sMax = Math.max(48, 70 - lv * 1.1);
+  const items = [], tries = 400;
+  for (let j = 0; j < nFind + nDecoy && j < keys.length; j++) {
+    const s = sMin + Math.random() * (sMax - sMin); let x, y, okp = false;
+    for (let q = 0; q < tries && !okp; q++) { x = HA.x + 30 + Math.random() * (HA.w - 60); y = HA.y + 30 + Math.random() * (HA.h - 60); okp = items.every(o => Math.hypot(o.x - x, o.y - y) > (o.s + s) * 0.55); }
+    items.push({ k: keys[j], x, y, s, rot: (Math.random() - 0.5) * (0.6 + Math.min(2.4, lv * 0.12)) * Math.PI, flip: Math.random() < 0.5, tint: 0.18 + Math.min(0.32, lv * 0.02) + Math.random() * 0.1, a: 0.82 + Math.random() * 0.18, find: j < nFind, got: 0, cover: Math.random() < 0.35 + Math.min(0.25, lv * 0.02) ? { ang: Math.random() * 6.283, f: 0.3 + Math.random() * 0.2 } : null });
+    hledLoad("i_" + keys[j], "hled/i_" + keys[j] + ".webp");
+  }
+  hledLoad("s_" + sc, "hled/s_" + sc + ".webp");
+  hled = { sc, items, t: HLED_TIME, start: perf, miss: [], hints: 2, hint: null, done: 0, fly: [], zoom: 1, lv };
+}
+function hledTint(it) {  // předmět se „obarví“ okolím (vezme průměrnou barvu místa ve scéně), aby nesvítil
+  if (it.cv) return it.cv; const im = hledImg["i_" + it.k], bg = hledImg["s_" + hled.sc]; if (!ok(im) || !ok(bg)) return null;
+  const c = document.createElement("canvas"); c.width = c.height = 160; const x = c.getContext("2d"); x.drawImage(im, 0, 0, 160, 160);
+  const sc = Math.max(HA.w / bg.naturalWidth, HA.h / bg.naturalHeight), sx = (it.x - HA.x - (HA.w - bg.naturalWidth * sc) / 2) / sc, sy = (it.y - HA.y - (HA.h - bg.naturalHeight * sc) / 2) / sc;
+  const t = document.createElement("canvas"); t.width = t.height = 1; const tx = t.getContext("2d"); tx.drawImage(bg, Math.max(0, sx - 20), Math.max(0, sy - 20), 40, 40, 0, 0, 1, 1); const d = tx.getImageData(0, 0, 1, 1).data;
+  x.globalCompositeOperation = "source-atop"; x.globalAlpha = it.tint; x.fillStyle = "rgb(" + d[0] + "," + d[1] + "," + d[2] + ")"; x.fillRect(0, 0, 160, 160);
+  return it.cv = c;
+}
+function hledCover(it) {  // „zastrčení“: přes část předmětu se jemně překreslí pozadí, jako by byl schovaný za něčím
+  if (it.cc !== undefined) return it.cc; const bg = hledImg["s_" + hled.sc]; if (!ok(bg)) return null; const S = Math.ceil(it.s * 1.2), c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d");
+  const s2 = Math.max(HA.w / bg.naturalWidth, HA.h / bg.naturalHeight), ox = HA.x + (HA.w - bg.naturalWidth * s2) / 2, oy = HA.y + (HA.h - bg.naturalHeight * s2) / 2;
+  x.drawImage(bg, (it.x - S / 2 - ox) / s2, (it.y - S / 2 - oy) / s2, S / s2, S / s2, 0, 0, S, S);
+  const dx = Math.cos(it.cover.ang), dy = Math.sin(it.cover.ang), r = S / 2, gr = x.createLinearGradient(r + dx * r, r + dy * r, r - dx * r, r - dy * r), f = it.cover.f;
+  gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(f, "rgba(0,0,0,.95)"); gr.addColorStop(Math.min(1, f + 0.15), "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+  x.globalCompositeOperation = "destination-in"; x.fillStyle = gr; x.fillRect(0, 0, S, S); return it.cc = c;
+}
+function drawHled() {
+  mgBtns = []; if (!hled) hledNew(); const H0 = hled, bg = hledImg["s_" + H0.sc];
+  g.fillStyle = "#120a1e"; g.fillRect(0, -DY, W, FH);
+  if (ok(bg)) { g.save(); g.beginPath(); g.rect(HA.x, HA.y, HA.w, HA.h); g.clip(); { const v = hv(); g.translate(HA.x + v.ox, HA.y + v.oy); g.scale(v.z, v.z); g.translate(-HA.x, -HA.y); } { const s2 = Math.max(HA.w / bg.naturalWidth, HA.h / bg.naturalHeight), iw = bg.naturalWidth * s2, ih = bg.naturalHeight * s2; g.drawImage(bg, HA.x + (HA.w - iw) / 2, HA.y + (HA.h - ih) / 2, iw, ih); }
+    for (const it of H0.items) { if (it.got === 2) continue; const cv = hledTint(it); if (!cv) continue; g.save(); g.translate(it.x, it.y); g.rotate(it.rot); if (it.flip) g.scale(-1, 1);
+      const pop = it.got === 1 ? Math.max(0, 1 - (perf - it.gt) / 0.5) : 1, z = it.got === 1 ? 1 + (1 - pop) * 0.6 : 1; g.globalAlpha = it.a * pop; g.drawImage(cv, -it.s * z / 2, -it.s * z / 2, it.s * z, it.s * z); g.restore(); if (!it.got && it.cover) { const cc = hledCover(it); if (cc) g.drawImage(cc, it.x - cc.width / 2, it.y - cc.width / 2); } if (it.got === 1 && pop <= 0) it.got = 2; }
+    g.globalAlpha = 1;
+    for (const m of H0.miss) { const a = Math.max(0, 1 - (perf - m.t) / 0.6); if (a <= 0) continue; if (m.ok) { g.strokeStyle = "rgba(255,209,102," + a + ")"; g.lineWidth = 5; g.beginPath(); g.arc(m.x, m.y, 30 + (1 - a) * 60, 0, 6.29); g.stroke(); continue; } g.fillStyle = "rgba(255,107,107," + a + ")"; g.font = "800 26px Baloo, sans-serif"; g.textAlign = "center"; g.fillText("−5 s", m.x, m.y - 34 - (1 - a) * 30); g.strokeStyle = "rgba(255,80,80," + a + ")"; g.lineWidth = 6; g.beginPath(); g.moveTo(m.x - 18, m.y - 18); g.lineTo(m.x + 18, m.y + 18); g.moveTo(m.x + 18, m.y - 18); g.lineTo(m.x - 18, m.y + 18); g.stroke(); }
+    if (H0.hint) { const a = Math.max(0, 1 - (perf - H0.hint.t) / 2.5), r = 70 + 30 * Math.sin(perf * 8); g.strokeStyle = "rgba(255,209,102," + a + ")"; g.lineWidth = 5; g.beginPath(); g.arc(H0.hint.x, H0.hint.y, r, 0, 6.29); g.stroke(); }
+    g.restore(); } else { g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "600 26px Baloo, sans-serif"; g.fillText("Načítám obrázek…", W / 2, 560); }
+  // horní lišta: čas, nápovědy
+  g.fillStyle = "rgba(10,5,25,.85)"; g.fillRect(0, -DY, W, 120 + DY);
+  const left = Math.max(0, H0.done ? H0.left : H0.t - (perf - H0.start)), low = left < 20;
+  g.textAlign = "center"; g.fillStyle = low ? "#ff6b6b" : "#ffd166"; g.font = "800 44px Baloo, sans-serif"; g.fillText(Math.floor(left / 60) + ":" + String(Math.floor(left % 60)).padStart(2, "0"), W / 2, 78);
+  g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 18px Baloo, sans-serif"; g.fillText("Hledačka · úroveň " + (H0.lv + 1), W / 2, 104);
+  mgBtn({ x: 20, y: 30, w: 150, h: 66, t: "Zpět" }, "glass", () => { scene = "minihry"; hled = null; });
+  mgBtn({ x: 550, y: 30, w: 150, h: 66, t: "🔍 " + H0.hints }, H0.hints > 0 ? "gold" : "#5a5370", () => { if (H0.hints <= 0 || H0.done) return; const it = H0.items.find(o => o.find && !o.got); if (it) { H0.hints--; H0.hint = { x: it.x, y: it.y, t: perf }; const v = hv(); if (v.z > 1) { v.ox = HA.w / 2 - (it.x - HA.x) * v.z; v.oy = HA.h / 2 - (it.y - HA.y) * v.z; hvClamp(); } } });
+  // spodní lišta: co hledat
+  const F = H0.items.filter(o => o.find), cols = Math.ceil(F.length / 2), cw = 700 / cols;
+  g.fillStyle = "rgba(10,5,25,.92)"; g.fillRect(0, HA.y + HA.h, W, FH);
+  F.forEach((it, j) => { const cx = 10 + cw * (j % cols) + cw / 2, cy = HA.y + HA.h + 70 + Math.floor(j / cols) * 120, im = hledImg["i_" + it.k];
+    g.globalAlpha = it.got ? 0.35 : 1; if (ok(im)) g.drawImage(im, cx - 34, cy - 50, 68, 68); g.fillStyle = "#fff"; g.font = "700 17px Baloo, sans-serif"; g.textAlign = "center"; g.fillText(HLED_IT[it.k], cx, cy + 36);
+    if (it.got) { g.globalAlpha = 1; g.strokeStyle = "#3ddc84"; g.lineWidth = 5; g.beginPath(); g.moveTo(cx - 20, cy - 16); g.lineTo(cx - 4, cy); g.lineTo(cx + 24, cy - 34); g.stroke(); } g.globalAlpha = 1; });
+  if (!H0.done && left <= 0) { H0.done = -1; H0.left = 0; SFX.bad(); }
+  if (H0.done) { g.fillStyle = "rgba(5,3,12,.78)"; g.fillRect(0, -DY, W, FH); g.textAlign = "center";
+    if (H0.done > 0) { g.fillStyle = "#ffd166"; g.font = "800 52px Baloo, sans-serif"; g.fillText("Všechno nalezeno!", W / 2, 420); g.font = "60px sans-serif"; g.fillText("⭐".repeat(H0.stars) + "☆".repeat(3 - H0.stars), W / 2, 510);
+      g.fillStyle = "#fff"; g.font = "600 26px Baloo, sans-serif"; g.fillText("Odměna: " + H0.rewT, W / 2, 580); if (H0.lvUp) { g.fillStyle = "#3ddc84"; g.fillText("Další úroveň bude těžší!", W / 2, 630); } }
+    else { g.fillStyle = "#ff6b6b"; g.font = "800 52px Baloo, sans-serif"; g.fillText("Čas vypršel", W / 2, 440); g.fillStyle = "#fff"; g.font = "600 26px Baloo, sans-serif"; g.fillText("Zkus nový obrázek – předměty budou jinde.", W / 2, 510); }
+    mgBtn({ x: 70, y: 760, w: 280, h: 86, t: "Minihry" }, "glass", () => { scene = "minihry"; hled = null; });
+    mgBtn({ x: 370, y: 760, w: 280, h: 86, t: "Další obrázek" }, "gold", () => hledNew()); }
+}
+function hledTap(p) {
+  const H0 = hled; if (!H0 || H0.done || p.y < HA.y || p.y > HA.y + HA.h) return;
+  const it = H0.items.filter(o => o.find && !o.got).find(o => Math.hypot(o.x - p.x, o.y - p.y) < Math.max(26, o.s * 0.55));
+  if (it) { it.got = 1; it.gt = perf; SFX.star(); H0.miss.push({ x: p.x, y: p.y, t: perf, ok: true }); buzz(20, 120);
+    if (H0.items.every(o => !o.find || o.got)) { const S = ensureHled(), left = H0.t - (perf - H0.start); H0.done = 1; H0.left = left; H0.stars = left > H0.t * 0.5 ? 3 : left > H0.t * 0.2 ? 2 : 1;
+      const full = S.today < HLED_FULL, k = (full ? 1 : 0.2) * (0.6 + 0.2 * H0.stars), f = Math.round((80 + 25 * H0.lv) * k * rewScale()), cr = full && H0.stars === 3 ? 1 : 0, sh = full ? 2 + H0.stars : 1;
+      addFood(f); save.crystals += cr; save.shards += sh; save.stats.shardsGot += sh; S.won++; S.today++; H0.lvUp = H0.stars >= 2; if (H0.lvUp) S.lvl++; S.best = Math.max(S.best, H0.stars); save.stats.hledW = (save.stats.hledW || 0) + 1; store();
+      H0.rewT = foodText(f) + (cr ? " · 💎 1" : "") + " · ⚙ " + sh + (full ? "" : " (dnes už jen 20 %)"); setTimeout(() => SFX.star(), 200); } }
+  else { H0.miss.push({ x: p.x, y: p.y, t: perf }); H0.start -= 5; SFX.bad(); buzz(40, 200); }
+}
+function mgDown(p) { const hit = mgBtns.slice().reverse().find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](p); return; } if (scene === "hled") hledTap(p); }
+function drawMg() { if (scene === "minihry") drawMinihry(); else if (scene === "tower") drawTower(); else if (scene === "towerpick") drawTowerPick(); else if (scene === "towerend") drawTowerEnd(); else if (scene === "hled") drawHled(); }
+
+// zoom a posun v hledačce: dva prsty = přiblížení (1–3×), jeden prst = posun, krátké ťuknutí = hledat
+let hg = null, hgLastPinch = 0;
+const hv = () => hled.view || (hled.view = { z: 1, ox: 0, oy: 0 });
+function hvClamp() { const v = hv(); v.z = Math.max(1, Math.min(3, v.z)); v.ox = Math.max(HA.w - HA.w * v.z, Math.min(0, v.ox)); v.oy = Math.max(HA.h - HA.h * v.z, Math.min(0, v.oy)); }
+const toWorld = p => { const v = hv(); return { x: HA.x + (p.x - HA.x - v.ox) / v.z, y: HA.y + (p.y - HA.y - v.oy) / v.z }; };
+function tPos(t) { const r = cv.getBoundingClientRect(); return { x: (t.clientX - r.left) / scale, y: (t.clientY - r.top) / scale - DY }; }
+function hvZoomAt(sx, sy, nz) { const v = hv(), w = toWorld({ x: sx, y: sy }); v.z = Math.max(1, Math.min(3, nz)); v.ox = sx - HA.x - (w.x - HA.x) * v.z; v.oy = sy - HA.y - (w.y - HA.y) * v.z; hvClamp(); }
+function hledStart(ev, p) {
+  if (!hled || hled.done) return false; const T = ev.touches;
+  if (T && T.length >= 2) { const a = tPos(T[0]), b = tPos(T[1]); hg = { pinch: true, d0: Math.hypot(a.x - b.x, a.y - b.y), z0: hv().z, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, ox0: hv().ox, oy0: hv().oy }; return true; }
+  if (p.y < HA.y || p.y > HA.y + HA.h) return false;
+  hg = { x: p.x, y: p.y, ox0: hv().ox, oy0: hv().oy, moved: false }; return true;
+}
+function hledMove(ev) {
+  ev.preventDefault && ev.preventDefault(); const T = ev.touches, v = hv();
+  if (T && T.length >= 2) { const a = tPos(T[0]), b = tPos(T[1]), d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    if (!hg || !hg.pinch) hg = { pinch: true, d0: d, z0: v.z, mx, my, ox0: v.ox, oy0: v.oy };
+    const w = { x: HA.x + (hg.mx - HA.x - hg.ox0) / hg.z0, y: HA.y + (hg.my - HA.y - hg.oy0) / hg.z0 }; v.z = Math.max(1, Math.min(3, hg.z0 * d / Math.max(1, hg.d0)));
+    v.ox = mx - HA.x - (w.x - HA.x) * v.z; v.oy = my - HA.y - (w.y - HA.y) * v.z; hvClamp(); hgLastPinch = performance.now(); return; }
+  if (!hg || hg.pinch) return; const p = pos(ev); if (Math.hypot(p.x - hg.x, p.y - hg.y) > 14) hg.moved = true;
+  if (hg.moved) { v.ox = hg.ox0 + (p.x - hg.x); v.oy = hg.oy0 + (p.y - hg.y); hvClamp(); }
+}
+function hledEnd(ev) {
+  const g0 = hg; if (ev.touches && ev.touches.length) { if (g0 && g0.pinch && ev.touches.length === 1) { const p = tPos(ev.touches[0]); hg = { x: p.x, y: p.y, ox0: hv().ox, oy0: hv().oy, moved: true }; } return; }
+  hg = null; if (!g0 || g0.pinch || g0.moved || performance.now() - hgLastPinch < 250) return;
+  hledTap(toWorld({ x: g0.x, y: g0.y }));
+}
+cv.addEventListener("wheel", e => { if (scene !== "hled" || !hled || hled.done) return; e.preventDefault(); const p = tPos(e); hvZoomAt(p.x, p.y, hv().z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
 // ---------- hledání shod ----------
 // Řady 3+ stejné barvy. Diamant (t = -1) nemá barvu a s ničím se nespojuje.
 function findRuns() {
@@ -1574,9 +1874,9 @@ function enemyAt(x) {
 function pickTarget() { if (enemies[target] && enemies[target].cur > 0) return target; const al = enemies.map((e, j) => e.cur > 0 ? j : -1).filter(j => j >= 0); return al.length ? al[rnd(al.length)] : -1; }
 function hitEnemy(i, dmg, col, k, crit) {
   const e = enemies[i]; if (!e || e.cur <= 0) return;
-  if (hasSt(e, "weak")) dmg = Math.round(dmg * 1.3); if (hasSt(e, "guard")) dmg = Math.round(dmg * 0.6);
+  if (hasSt(e, "weak")) dmg = Math.round(dmg * 1.3); if (hasSt(e, "guard")) dmg = Math.round(dmg * 0.6); if (towerMode) dmg = towerDmg(e, dmg, k);
   const ep = enemyPos(i); explosions.push({ x: ep.x, y: ep.y, t: 0.35, col }); sparkBurst(ep.x, ep.y - 20, col, crit ? 40 : 18, crit ? 1.3 : 0.9); flashes.push({ x: ep.x, y: ep.y, t: 0.18, d: 0.18, col, R: crit ? 300 : 190 });
-  save.stats.dmg += Math.min(dmg, e.cur); e.cur = Math.max(0, e.cur - dmg); e.hit = 0.3; if (e.cur <= 0) e.die = 1.0; if (e.boss && e.cur > 0) e.mana = Math.min(100, (e.mana || 0) + (e.titan ? 6 : 12));
+  save.stats.dmg += Math.min(dmg, e.cur); e.cur = Math.max(0, e.cur - dmg); e.hit = 0.3; if (e.cur <= 0) e.die = 1.0; if (e.boss && e.cur > 0) e.mana = Math.min(100, (e.mana || 0) + (e.titan ? 6 : 12) * (towerMode ? Math.max(0.3, 1 - 0.3 * tb("scare")) : 1)); if (towerMode) towerAfterHit(e, dmg);
   const p = enemyPos(i), m = k === undefined ? 1 : colorMult(k, e.c);
   if (crit) { SFX.crit(); save.stats.crits++; floats.push({ x: p.x, y: p.y - 50, text: "-" + dmg, col: "#ffe066", t: 1.2, big: true, crit: true }); floats.push({ x: p.x, y: p.y - 120, text: "KRITICKÝ ZÁSAH!", col: "#ffd166", t: 1 });
     shake = Math.max(shake, 0.35); hitstop = Math.max(hitstop, 0.06); buzz(30, 170); rings.push({ x: p.x, y: p.y, t: 0.45, d: 0.45, col: "#ffe066", R: 200 }); }
@@ -1584,7 +1884,7 @@ function hitEnemy(i, dmg, col, k, crit) {
   if (m > 1) floats.push({ x: p.x, y: p.y - 90, text: "Silný zásah!", col: "#fff", t: 0.9 });
   if (m === 0.5) floats.push({ x: p.x, y: p.y - 90, text: "Stejná barva", col: "#b8b0c8", t: 0.9 });
   if (e.cur <= 0) {
-    save.stats.kills++; if (e.boss) save.stats.boss++; save.kinds[e.k] = 1; if (TRAIT[e.k]) save.stats.traitKills++; if (e.c >= 0) save.stats["kc" + e.c]++; save.chest.n = Math.min(CHEST_N, save.chest.n + 1);
+    towerKill(e); save.stats.kills++; if (e.boss) save.stats.boss++; save.kinds[e.k] = 1; if (TRAIT[e.k]) save.stats.traitKills++; if (e.c >= 0) save.stats["kc" + e.c]++; save.chest.n = Math.min(CHEST_N, save.chest.n + 1);
     for (let q = 0; q < 3; q++) burst(p.x, p.y, "#fff"); sparkBurst(p.x, p.y, col, e.boss ? 90 : 50, e.boss ? 1.6 : 1.2); pillarAt(p.x, p.y, col, e.boss ? 1 : 0.7, e.boss ? 220 : 140); panX(p.x); SFX.foeDie(e.k, e.boss);
     if (e.boss) { buzz(90, 255); shockAt(p.x, p.y, 1.3); }
     enemies.forEach((o, j) => { if (o.cur > 0 && TRAIT[o.k] === "rage") { addSt(o, "rage", 3); o.left = Math.max(1, o.left - 1); const q = enemyPos(j); floats.push({ x: q.x, y: q.y - 110, text: "💢 Zuřivost!", col: STS.rage.col, t: 1.1 }); } });
@@ -1717,6 +2017,7 @@ function atkImpact(st, x, y, col, boss) {
   else if (st === "sting") { burst(x, y, col); flashes.push({ x, y, t: 0.15, d: 0.15, col, R: 90 }); }
 }
 async function heroHit(e, i, h, dmg) {
+  if (towerMode) { dmg = towerHeroHit(e, i, h, dmg); if (dmg === null) return; }
   let blocked = false; if (shield > 0) { dmg = Math.round(dmg / 2); shield--; blocked = true; }
   const ep2 = enemyPos(i), hk = heroes.indexOf(h), st = ATK_ST[e.k] || "claw", col = ATK_COLK[e.k] || ATK_COL[st], x2 = heroX(hk), y2 = HERO_Y;
   if (st === "claw") claws.push({ x1: ep2.x, y1: ep2.y, x2, y2, t: 0.55, col });
@@ -1725,7 +2026,7 @@ async function heroHit(e, i, h, dmg) {
   else if (st !== "slam") eatk.push({ st, x1: ep2.x, y1: ep2.y - 30, x2, y2, t: 0.22, d: 0.22, col, boss: e.boss });
   await sleep(200); panX(x2); atkImpact(st, x2, y2, col, e.boss);
   if (hasSt(h, "wool")) dmg = Math.round(dmg * 0.5); else if (hasSt(h, "guard")) dmg = Math.round(dmg * 0.6);
-  h.cur = Math.max(0, h.cur - dmg); h.hurt = 0.4; shake = Math.max(shake, 0.3); if (blocked) SFX.block(); SFX.heroHurt(hk, h.k); if (e.boss) buzz(30, 140);
+  h.cur = Math.max(0, h.cur - dmg); towerNine(h); h.hurt = 0.4; shake = Math.max(shake, 0.3); if (blocked) SFX.block(); SFX.heroHurt(hk, h.k); if (e.boss) buzz(30, 140);
   if (h.id === "amca" && h.cur > 0) { addSt(h, "sulk", 2); floats.push({ x: heroX(hk), y: HERO_Y - 100, text: "😤 Uražená!", col: STS.sulk.col, t: 1.1 }); }
   floats.push({ x: heroX(hk), y: HERO_Y - 10, text: "-" + dmg, col: "#ff4b4b", t: 1 });
 }
@@ -1760,7 +2061,7 @@ let bossBanner = null;
 async function enemyTurn() {
   if (slowT > 0) slowT--;
   if (titanMode && enemies[0]) enemies[0].wx = (Math.random() - 0.5) * 0.56;  // slabé místo titána se přesune
-  turn++;
+  turn++; towerTurn();
   for (let i = 0; i < enemies.length; i++) {
     const e = enemies[i]; if (e.cur <= 0) continue;
     if (!heroes.some(h => h.cur > 0)) break;
@@ -1784,6 +2085,7 @@ async function nextWave() {
   if (wave + 1 >= WAVES.length) {
     while (lootFly.length) await sleep(40);
     if (titanMode) { finishTitan(true); return; }
+    if (towerMode) { towerFloorWon(); return; }
     save.stats.wins++; if (heroes.every(h => h.cur > 0)) save.stats.flawless++;
     if (seasonMode) { const S = seasonById(seasonMode.id), n = seasonMode.lvl, key = seasonKey(S); save.season = save.season || {}; const first = n > (save.season[key] || 0);
       const R = first ? 2.5 : 0.2, bonus = Math.round((20 + 10 * seasonMode.st) * R), gain = Math.round(lootG * R) + bonus, cr = first ? 2 + Math.floor(n / 3) : 0, sc = first && (n === 5 || n === 10) ? 2 : 0;
@@ -2085,10 +2387,12 @@ function frame(now) {
   else if (scene === "help") drawHelp();
   else if (scene === "camps") drawCamps();
   else if (scene === "seasons") drawSeasons();
+  else if (MG_SCENES.has(scene)) drawMg();
   else {
     drawHud();
     g.fillStyle = "rgba(255,255,255,.8)"; g.font = "800 20px Baloo, sans-serif"; g.textAlign = "center"; if (titanMode) { const low = titanT < 20, pu = low ? 0.5 + 0.5 * Math.sin(perf * 10) : 0; g.fillText("Titán · stupeň " + ensureTitan().lvl + " · útok " + ensureTitan().n + "/" + TITAN_TRIES, 372, 90 + TOP_Y);
     }
+    else if (towerMode) g.fillText("Kočičí věž · patro " + towerRun.floor + " · vlna " + (wave + 1) + "/" + WAVES.length, 372, 90 + TOP_Y);
     else g.fillText((actOf(stage) > 1 ? "Akt " + actOf(stage) + " · " : "") + "Úroveň " + localSt(stage) + " · vlna " + (wave + 1) + "/" + WAVES.length, 372, 90 + TOP_Y);
     if (shield) { g.textAlign = "right"; g.fillStyle = COLORS[2]; g.fillText("Štít ×" + shield, W - 110, 44); }
     // tlačítko pauzy
@@ -2244,11 +2548,11 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.5.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.6.0", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
-  { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }];
-const iconPos = j => ({ x: 70 + j * 116, y: Math.max(1200, H + DY - 150) });
+  { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
+const iconPos = j => ({ x: 62 + j * (596 / (ICONS.length - 1)), y: Math.max(1200, H + DY - 150) });
 let menuPanel = null, panelBtns = [], chestOpen = 0, chestRew = null, questTab = "d", achScroll = 0, achMax = 0, achBox = null, achDrag = null;
 function drawIconBar() {  // ikony dole v menu: co je k vyzvednutí, svítí a má odznak
   ICONS.forEach((ic, j) => { const { x, y } = iconPos(j), on = ic.can(), pu = 0.5 + 0.5 * Math.sin(perf * 4 + j);
@@ -3343,6 +3647,7 @@ const EX_YES = { x: 110, y: 640, w: 240, h: 84, t: "Odejít" }, EX_NO = { x: 370
 window.goBack = function () {
   audioInit(); SFX.click();
   if (teamPick) { teamPick = false; if (levelPop) LPI = levelInfo(levelPop); return "ok"; }
+  if (MG_SCENES.has(scene)) { if (scene === "towerpick") return "ok"; if (scene === "towerend") { towerRun = null; scene = "tower"; } else { hled = null; scene = scene === "minihry" ? "menu" : "minihry"; } return "ok"; }
   if (scene === "menu") { if (menuPanel) { menuPanel = null; return "ok"; } if (exitAsk) return "exit"; exitAsk = true; return "ok"; }
   if (levelPop) { levelPop = 0; return "ok"; } if (foeCard) { foeCard = null; return "ok"; } if (scene === "best" && bestCat !== null) { bestCat = null; scrollY = bestScroll; return "ok"; } if (heroCard >= 0) { heroCard = -1; return "ok"; } if (eqHero >= 0) { eqHero = -1; return "ok"; }
   if (campPop) { campPop = 0; return "ok"; } if (resetStep) { resetStep = 0; return "ok"; }
@@ -3447,6 +3752,7 @@ function drawHud() {
 }
 function startEnd(kind) {
   if (titanMode && !titanRes) { finishTitan(kind === "win"); return; }
+  if (towerMode) { if (kind === "win") { towerFloorWon(); return; } SFX.loseBoom(); SFX.lose(); shake = 1.2; buzz(220, 255); busy = true; setTimeout(() => { busy = false; towerEnd(false); }, 1500); return; }
   scene = kind; endT = 0; endFx = []; store();
   if (kind === "win") { SFX.win(); SFX.fireworks(); buzz(120, 120); } else { SFX.loseBoom(); SFX.lose(); shake = 1.2; buzz(220, 255); }
 }
@@ -3540,6 +3846,7 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "menu" || scene === "map" || scene === "heroes" || scene === "credits" || scene === "settings" || scene === "best" || scene === "camps" || scene === "seasons") playMusic("menu");
   if (bagPick) { const hit = bagBtns.find(([b]) => inside(p, b)); if (hit) hit[1](); return; }
   if (teamPick) { const hit = teamBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } return; }
+  if (MG_SCENES.has(scene)) { if (scene === "hled" && hledStart(ev, p)) return; mgDown(p); return; }
   if (scene === "map") {
     if (levelPop) { if (!LPI.first && (save.stars[starKey(levelPop)] || 0) >= 3 && inside(p, LP_FAST)) { if (playMilk(fastWin)) { levelPop = 0; milkPaid = false; } return; } if (inside(p, LP_TEAM)) { teamPick = true; SFX.click(); return; } if (inside(p, LP_BAG)) { bagPick = true; bagInfo = null; SFX.click(); return; } if (inside(p, LP_GO)) { const st = levelPop; SFX.click(); if (playMilk(() => startGame(st))) levelPop = 0; } else if (inside(p, LP_BACK) || !inside(p, LP_BOX)) { levelPop = 0; SFX.click(); } return; }
     if (inside(p, MAP_CAMPS)) { scene = "camps"; scrollY = 0; scrollV = 0; SFX.click(); return; }
@@ -3552,7 +3859,7 @@ function down(ev) { idleT = 0; hint = null;
   }
   if (scene === "menu" && menuPanel) { const hit = panelBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); return; }
     if ((menuPanel === "ach" || (menuPanel === "quest" && questTab === "c")) && achBox && inside(p, achBox)) achDrag = { y: p.y, s: achScroll, v: 0, t: performance.now() }; return; }
-  if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 56); if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
+  if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 48); if (j >= 0 && ICONS[j].id === "minihry") { SFX.click(); scene = "minihry"; return; } if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
   if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); } exitAsk = false; SFX.click(); return; }
   if (scene === "menu") {
     const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; bestCat = null; };
@@ -3614,7 +3921,7 @@ function down(ev) { idleT = 0; hint = null;
     if (endT < 0.9) return;  // tabulka kořisti: ťuknutí kamkoli ji zavře a ukončí boj
     leave(eventMode || titanMode ? "menu" : "map"); return; }
   if (heroCard >= 0) { heroCard = -1; return; }
-  if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
+  if (paused) { if (inside(p, P_CONT)) { paused = false; quitAsk = false; SFX.click(); } else if (inside(p, P_QUIT)) { paused = false; quitAsk = false; SFX.click(); if (titanMode && !busy) { finishTitan(false); return; } if (towerMode) { towerEnd(true); return; } if (wave === 0 && !titanMode) milkRefund(); milkPaid = false; if (seasonMode) { seasonPop = seasonMode.id; scene = "seasons"; scrollY = 0; } else openMap(actOf(stage)); playMusic("menu"); } else if (inside(p, P_HELP)) { SFX.click(); helpFrom = "play"; helpPg = 0; scene = "help"; } return; }
   if (scene === "play" && board) { const j = bag.findIndex((_, j) => inside(p, ITEMBAR(j))); if (j >= 0) { press = { kind: "it", i: j, t0: performance.now(), x: p.x, y: p.y }; return; } }
   if (Math.hypot(p.x - PAUSE.x, p.y - PAUSE.y) < 44) { paused = true; SFX.pause(); return; }
   if (scene === "play" && inside(p, { x: SPD_BTN.x - 6, y: SPD_BTN.y - 8, w: SPD_BTN.w + 12, h: SPD_BTN.h + 16 })) { settings().speed = settings().speed >= 3 ? 1 : settings().speed + 1; store(); SFX.click(); return; }
@@ -3630,6 +3937,7 @@ function tapHero(k) {
   else if (!floats.some(f => f.mana === k)) floats.push({ x: heroX(k), y: HERO_Y - 80, text: heroes[k].cur > 0 ? "Mana " + Math.floor(heroes[k].ch) + "/" + CHARGE : "Padl", col: "#c9b8ff", t: 0.8, mana: k });
 }
 function move(ev) {
+  if (hg && scene === "hled") { hledMove(ev); return; }
   if (press) { const p = pos(ev); if (Math.hypot(p.x - press.x, p.y - press.y) > 28) press = null; return; }
   if (achDrag) { const p = pos(ev), now = performance.now(); const ns = Math.max(0, Math.min(achMax, achDrag.s - (p.y - achDrag.y))); achDrag.v = (ns - achScroll) / Math.max(1, now - achDrag.t) * 1000; achDrag.t = now; achScroll = ns; ev.preventDefault(); return; }
   if (scrollDrag) { const p = pos(ev), now = performance.now(); scrollTarget = Math.max(0, Math.min(scrollMax, scrollDrag.s - (p.y - scrollDrag.y))); scrollDrag.pts.push([now, p.y]); scrollDrag.moved = Math.max(scrollDrag.moved, Math.abs(p.y - scrollDrag.y)); while (scrollDrag.pts.length > 2 && now - scrollDrag.pts[0][0] > 100) scrollDrag.pts.shift(); ev.preventDefault(); return; }
@@ -3640,6 +3948,7 @@ function move(ev) {
   if (c2 >= 0 && c2 < COLS && r2 >= 0 && r2 < ROWS && !busy) playerSwap(d.c, d.r, c2, r2);
 }
 function up(ev) {
+  if (hg && scene === "hled") { hledEnd(ev); return; }
   if (achDrag) { achFly = achDrag.v; achDrag = null; }
   if (press) { const pr = press; press = null; if (pr.kind === "it") { if (!pr.shown) { if (bag[pr.i] && bag[pr.i].n > 0) useItem(pr.i); else SFX.bad(); } return; } if (pr.kind === "cur") { if (!pr.shown && pr.k === "m") tipBox = "m"; return; } if (!pr.shown && scene === "play" && !paused) { if (pr.kind === "h") tapHero(pr.i); else if (enemies[pr.i] && enemies[pr.i].cur > 0) target = pr.i; } return; }
   if (helpSwipe !== null) { const dx = ev && (ev.changedTouches || ev.clientX !== undefined) ? pos(ev).x - helpSwipe : 0; helpSwipe = null;
