@@ -749,7 +749,7 @@ PXC = document.createElement("canvas"); PXC.id = "px"; document.body.insertBefor
 PXR = new PIXI.Renderer({ view: PXC, backgroundAlpha: 0, antialias: false, resolution: DPR, autoDensity: true, powerPreference: "high-performance", width: W * scale, height: FH * scale });
 const PXS = new PIXI.Container(), PX = {}, TX = {}, TXI = {}, ADD = PIXI.BLEND_MODES.ADD;
 for (const k of ["bg", "en", "he", "bd", "fx"]) PXS.addChild(PX[k] = new PIXI.Container());
-PX.bdBg = PX.bd.addChild(new PIXI.Sprite()); PX.gems = PX.bd.addChild(new PIXI.Container()); PX.gemMask = PX.bd.addChild(new PIXI.Graphics()); PX.gems.mask = PX.gemMask;
+PX.bdBg = PX.bd.addChild(new PIXI.Sprite()); PX.gems = PX.bd.addChild(new PIXI.Container()); try { const cm = new PIXI.ColorMatrixFilter(); cm.saturate(0.28, true); cm.contrast(0.08, true); cm.resolution = Math.min(window.devicePixelRatio || 1, 2); PX.gems.filters = [cm]; } catch (e) {} PX.gemMask = PX.bd.addChild(new PIXI.Graphics()); PX.gems.mask = PX.gemMask;
 PXS.scale.set(scale); resize();
 const hx = c => { if (typeof c !== "string" || c[0] !== "#") return 0xffffff; if (c.length === 4) c = "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; return parseInt(c.slice(1, 7), 16); };
 // rázová vlna: kruh, který rozvlní obraz (bomba, diamant, schopnost bosse, smrt bosse)
@@ -808,11 +808,11 @@ const FACE = { alex: [0.51, 0.23, 0.145], amca: [0.53, 0.27, 0.15], luky: [0.50,
 function cardTex(k) {
   const id = "card" + k; if (TXI[id]) return TXI[id]; const h = HEROES[k], pi = img["por_" + h.id]; if (!ok(pi)) return null;
   return TXI[id] = bake(260, 300, x => { x.beginPath(); x.roundRect(0, 0, 260, 300, 26); x.clip();
-    const bg = x.createLinearGradient(0, 0, 0, 300); bg.addColorStop(0, shade(COLORS[HEROES[k].c], 1.15)); bg.addColorStop(1, shade(COLORS[HEROES[k].c], 0.3)); x.fillStyle = bg; x.fillRect(0, 0, 260, 300);
+    const bg = x.createLinearGradient(0, 0, 0, 300); bg.addColorStop(0, shade(COLORS[HEROES[k].c], 0.42)); bg.addColorStop(0.6, "#171030"); bg.addColorStop(1, "#0d0919"); x.fillStyle = bg; x.fillRect(0, 0, 260, 300);
     // obličej vždy na stejném místě: oči uprostřed ve stejné výšce, podobná velikost (FACE = střed očí x, y a jejich vzdálenost v portrétu)
     const [fx, fy, ed] = FACE[h.id] || [0.5, 0.35, 0.22], D = Math.max(290, (k < 2 ? 60 : 70) / ed, 130 / (1 - fy)); x.drawImage(pi, 130 - fx * D, 118 - fy * D, D, D);
     const lo = x.createLinearGradient(0, 170, 0, 262); lo.addColorStop(0, "rgba(10,6,20,0)"); lo.addColorStop(1, "rgba(10,6,20,.95)"); x.fillStyle = lo; x.fillRect(0, 170, 260, 92); x.fillStyle = "rgba(10,6,20,.95)"; x.fillRect(0, 262, 260, 38);
-    const hi = x.createLinearGradient(0, 0, 0, 60); hi.addColorStop(0, "rgba(255,255,255,.22)"); hi.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = hi; x.fillRect(0, 0, 260, 60); });
+    const hi = x.createLinearGradient(0, 0, 0, 60); hi.addColorStop(0, "rgba(255,255,255,.08)"); hi.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = hi; x.fillRect(0, 0, 260, 60); });
 }
 function porTex(k) {
   const id = "por" + k; if (TXI[id]) return TXI[id]; const h = HEROES[k], pi = img["por_" + h.id]; if (!ok(pi) && !ok(img[h.id])) return null;
@@ -821,22 +821,23 @@ function porTex(k) {
     else x.drawImage(img[h.id], 0, 0, 256, 256); });
 }
 // pozadí boje a podklad hracího pole – předkreslené jednou, ne v každém snímku
+function bgVignette(x, hh) { const v = x.createRadialGradient(W / 2, hh * 0.3, W * 0.25, W / 2, hh * 0.3, W * 0.95); v.addColorStop(0, "rgba(10,5,20,0)"); v.addColorStop(1, "rgba(10,5,20,.55)"); x.fillStyle = v; x.fillRect(0, 0, W, hh); }
 function pxStatic() {
   const key = battleBg(), BGI = ok(img[key]) ? img[key] : img.bg, f = Math.min(2, DPR * scale), id = key + "|" + Math.round(FH) + "|" + f;
   if (PX.bgId !== id && ok(BGI)) {
     const t = bake(Math.round(W * f), Math.round(FH * f), x => { x.scale(f, f);
       const fb = x.createLinearGradient(0, 0, 0, FH); fb.addColorStop(0, "#2a1b4a"); fb.addColorStop(0.5, "#1b1330"); fb.addColorStop(1, "#0f0b1c"); x.fillStyle = fb; x.fillRect(0, 0, W, FH);
-      if (DY > 0) { const iw = FH * BGI.naturalWidth / BGI.naturalHeight; x.globalAlpha = 0.9; x.drawImage(BGI, (W - iw) / 2, 0, iw, FH); x.globalAlpha = 1;
+      if (DY > 0) { const iw = FH * BGI.naturalWidth / BGI.naturalHeight; x.filter = "contrast(1.12) saturate(1.15) brightness(0.82)"; x.drawImage(BGI, (W - iw) / 2, 0, iw, FH); x.filter = "none"; bgVignette(x, FH);
         const lo = x.createLinearGradient(0, DY + 380, 0, FH); lo.addColorStop(0, "rgba(15,10,30,0)"); lo.addColorStop(0.35, "rgba(15,10,30,.8)"); lo.addColorStop(1, "rgba(10,6,20,.96)"); x.fillStyle = lo; x.fillRect(0, 0, W, FH); }
-      else { x.drawImage(BGI, 0, 0, W, 1270); const sh = x.createLinearGradient(0, 380, 0, H); sh.addColorStop(0, "rgba(15,10,30,0)"); sh.addColorStop(0.35, "rgba(15,10,30,.75)"); sh.addColorStop(1, "rgba(10,6,20,.95)"); x.fillStyle = sh; x.fillRect(0, 0, W, H); } });
+      else { x.filter = "contrast(1.12) saturate(1.15) brightness(0.82)"; x.drawImage(BGI, 0, 0, W, 1270); x.filter = "none"; bgVignette(x, H); const sh = x.createLinearGradient(0, 380, 0, H); sh.addColorStop(0, "rgba(15,10,30,0)"); sh.addColorStop(0.35, "rgba(15,10,30,.75)"); sh.addColorStop(1, "rgba(10,6,20,.95)"); x.fillStyle = sh; x.fillRect(0, 0, W, H); } });
     if (!PX.bgSpr) { PX.bgSpr = PX.bg.addChild(new PIXI.Sprite()); PX.bgSpr.anchor.set(0.5); PX.amb = PX.bg.addChild(new PIXI.Container()); }
     const old = PX.bgSpr.texture; PX.bgSpr.texture = t; if (PX.bgId) old.destroy(true); PX.bgId = id;
   }
   const bid = BX + "|" + BY + "|" + f;
   if (PX.bdId !== bid) {
     const bw = COLS * T + 20, bh = ROWS * T + 20, t = bake(Math.round(bw * f), Math.round(bh * f), x => { x.scale(f, f);
-      x.fillStyle = "rgba(8,5,20,.62)"; x.beginPath(); x.roundRect(0, 0, bw, bh, 22); x.fill();
-      x.strokeStyle = "rgba(255,255,255,.10)"; x.lineWidth = 2; x.beginPath(); x.roundRect(1, 1, bw - 2, bh - 2, 21); x.stroke();
+      x.fillStyle = "rgba(10,6,22,.8)"; x.beginPath(); x.roundRect(0, 0, bw, bh, 22); x.fill();
+      x.strokeStyle = "rgba(242,196,109,.55)"; x.lineWidth = 2.5; x.beginPath(); x.roundRect(1.5, 1.5, bw - 3, bh - 3, 21); x.stroke();
       for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const cx = 10 + c * T, cy = 10 + r * T;
         // zapuštěné políčko: tmavší střed, světlá spodní hrana, stín nahoře
         x.fillStyle = (c + r) % 2 ? "rgba(255,255,255,.035)" : "rgba(255,255,255,.075)"; x.beginPath(); x.roundRect(cx + 3, cy + 3, T - 6, T - 6, 12); x.fill();
@@ -853,12 +854,11 @@ function pxEnemy(e, i) {
   const breathe = Math.sin(ph * 1.3) * 0.028, sway = Math.sin(ph * 0.9) * (e.boss ? 0.025 : 0.045), bob = Math.sin(ph) * 5;
   const atk = e.atkA > 0 ? Math.sin((1 - e.atkA / 0.5) * Math.PI) : 0, rec = hitk ? e.hit / 0.3 : 0, dk = dying ? 1 - e.die / 1.0 : 0, fxOn = settings().fx;
   let sp;
-  if (e.boss && !dying) { sp = PE.get(TX.soft); sp.blendMode = ADD; sp.tint = 0xff4646; sp.alpha = 0.4 * (0.6 + 0.4 * Math.sin(perf * 3 + i)); sp.position.set(ox, oy + 80 - z * 0.45); sp.width = sp.height = z * 1.4; }
-  sp = PE.get(TX.shadow); sp.position.set(ox, oy + 78); sp.width = z * 0.66 * (1 - breathe); sp.height = 32;
+  sp = PE.get(TX.shadow); sp.position.set(ox, oy + 78); sp.width = z * 0.72 * (1 - breathe); sp.height = 36; sp.alpha = 0.9;
   if (i === target && !dying) { const pu = 0.5 + 0.5 * Math.sin(perf * 5);  // vybraný cíl: zlatý pulzující kroužek pod nohama
     sp = PE.get(TX.soft); sp.blendMode = ADD; sp.tint = 0xffb703; sp.alpha = 0.55 + 0.3 * pu; sp.position.set(ox, oy + 80); sp.width = z * 1.05; sp.height = 60;
     sp = PE.get(TX.ring); sp.tint = 0xffd166; sp.alpha = 0.9; sp.position.set(ox, oy + 80); sp.scale.set(z * (0.5 + 0.04 * pu) / 100, 1.35 + 0.1 * pu); }
-  if (e.c >= 0 && !dying) {
+  if (false) {
     const C = hx(COLORS[e.c]), pl = 0.5 + 0.5 * Math.sin(perf * 3 + i);
     sp = PE.get(TX.column); sp.blendMode = ADD; sp.tint = C; sp.alpha = 0.32 + 0.12 * pl; sp.position.set(ox, oy + 80 - z * 0.42); sp.width = z * 0.7; sp.height = z * 1.12;
     sp = PE.get(TX.soft); sp.blendMode = ADD; sp.tint = C; sp.alpha = 0.8 + 0.2 * pl; sp.position.set(ox, oy + 78); sp.width = z * 0.96; sp.height = 56;
@@ -886,7 +886,7 @@ function pxHero(h, k) {
     sp = PH.get(TX.rays); sp.blendMode = ADD; sp.tint = C; sp.alpha = 0.3 + 0.25 * pu; sp.position.set(x, y); sp.rotation = perf * 0.9 + k; sp.scale.set(cw / 110);
     card(TX.card, cw + 14 + 4 * pu, ch + 14 + 4 * pu, 0xffffff, 0.85, true); }
   sp = PH.get(TX.soft); sp.tint = 0; sp.alpha = 0.55; sp.position.set(x + 3, y + 10); sp.width = cw * 1.5; sp.height = ch * 1.4;
-  card(TX.card, cw + 8, ch + 8, C, 1);
+  card(TX.card, cw + 7, ch + 7, C, 1);
   const ct = cardTex(h.k); if (ct) card(ct, cw, ch, 0xffffff, 1); else { const pt = porTex(h.k); if (pt) { sp = PH.get(pt); sp.position.set(x, y); sp.width = sp.height = cw; } }
   if (hurt) card(TX.card, cw, ch, 0xff2828, 0.45 * hurt);
   if (dead) card(TX.card, cw, ch, 0x000000, 0.68);
@@ -2299,7 +2299,7 @@ function drawEnemy(e, i) {
     if (full) { g.strokeStyle = "rgba(224,170,255," + (0.45 + 0.5 * pu) + ")"; g.lineWidth = 3; rr(p.x - bw / 2 - 4, my - 4, bw + 8, 18, 9); g.stroke(); }
     if (m > 0) { const mg = g.createLinearGradient(p.x - bw / 2, 0, p.x + bw / 2, 0); mg.addColorStop(0, "#7b2ff7"); mg.addColorStop(1, full ? "#f3c4ff" : "#c77dff");
       g.fillStyle = mg; rr(p.x - bw / 2, my, Math.max(10, bw * m), 10, 5); g.fill(); g.fillStyle = "rgba(255,255,255,.4)"; rr(p.x - bw / 2 + 3, my + 1.5, Math.max(0, bw * m - 6), 3, 1.5); g.fill(); } }
-  g.fillStyle = e.c >= 0 ? shade(COLORS[e.c], 1.25) : e.boss ? "#ffd166" : "#fff"; g.textAlign = "center";
+  g.fillStyle = e.boss ? "#ffe2a8" : "#f4eee2"; g.textAlign = "center";
   { const nm = many && e.n.length > 14 ? e.n.split(" ")[0] : e.n, ny = p.y + (e.boss ? 136 : 118) + (many ? 0 : 4);  // jen jméno, pod lištami
     g.font = "800 " + (many ? 18 : 22) + "px Baloo, sans-serif"; g.lineJoin = "round"; g.strokeStyle = "rgba(10,5,22,.9)"; g.lineWidth = 5; g.strokeText(nm, p.x, ny); g.fillText(nm, p.x, ny);
     drawSts(e, p.x, ny + 24, many ? 20 : 24); }
@@ -2335,8 +2335,8 @@ function drawHero(h, k) {
   if (mf > 0) { const mg = g.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); mg.addColorStop(0, shade(COLORS[h.c], 0.75)); mg.addColorStop(1, ready ? "#ffffff" : COLORS[h.c]);
     g.globalAlpha = ready ? 0.75 + 0.25 * Math.sin(perf * 8) : 1; g.fillStyle = mg; rr(x - bw / 2, my, Math.max(9, bw * mf), 9, 4.5); g.fill(); g.globalAlpha = 1; }
   if (h.st && Object.keys(h.st).length && !dead) drawSts(h, x, top + 18, 20);
-  if (ready) { const pu = 1 + 0.06 * Math.sin(perf * 6); g.save(); g.translate(x, bot - 50); g.scale(pu, pu); g.fillStyle = "rgba(10,6,20,.75)"; rr(-44, -16, 88, 30, 15); g.fill(); g.strokeStyle = COLORS[h.c]; g.lineWidth = 2; rr(-44, -16, 88, 30, 15); g.stroke();
-    g.fillStyle = "#fff"; g.font = "800 17px 'Exo 2', sans-serif"; g.fillText("ťukni!", 0, 5); g.restore(); }
+  if (ready) { const pu = 1 + 0.07 * Math.sin(perf * 6); g.save(); g.translate(x, top - 12); g.scale(pu, pu); g.font = "800 22px Baloo, sans-serif"; g.lineJoin = "round"; g.strokeStyle = "rgba(10,5,22,.9)"; g.lineWidth = 5;
+    g.strokeText("ŤUKNI!", 0, 0); g.fillStyle = shade(COLORS[h.c], 1.2); g.fillText("ŤUKNI!", 0, 0); g.restore(); }
 }
 function drawBomb(t, x, y, s) {
   const bi = img["bomb" + t]; if (!ok(bi)) { drawSymbol(t, x, y, s); return; }
@@ -2623,7 +2623,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.7.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.7.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
