@@ -804,7 +804,7 @@ function animTex(key, f) {
   const c = a.c || a.n; return P.fr[f] || (P.fr[f] = new PIXI.Texture(P.base, new PIXI.Rectangle((f % c) * a.w, Math.floor(f / c) * a.h, a.w, a.h)));
 }
 function pxFreeAnim(key) { const P = pxAnim[key]; if (!P) return; P.fr.forEach(t => t && t.destroy(false)); P.base.destroy(); delete pxAnim[key]; }
-const FACE = { alex: [0.50, 0.37, 0.12], amca: [0.50, 0.37, 0.12], luky: [0.50, 0.39, 0.11], petr: [0.50, 0.39, 0.135], lucie: [0.24, 0.30, 0.10], hepina: [0.39, 0.50, 0.30], kefir: [0.51, 0.49, 0.18], nuna: [0.46, 0.43, 0.24], venous: [0.50, 0.38, 0.11], patrik: [0.40, 0.35, 0.13] };
+const FACE = { alex: [0.50, 0.37, 0.12], amca: [0.50, 0.37, 0.12], luky: [0.50, 0.39, 0.11], petr: [0.50, 0.31, 0.118], lucie: [0.24, 0.30, 0.10], hepina: [0.39, 0.50, 0.30], kefir: [0.51, 0.49, 0.18], nuna: [0.46, 0.43, 0.24], venous: [0.50, 0.38, 0.11], patrik: [0.40, 0.35, 0.13] };
 function cardTex(k) {
   const id = "card" + k; if (TXI[id]) return TXI[id]; const h = HEROES[k], pi = img["por_" + h.id]; if (!ok(pi)) return null;
   return TXI[id] = bake(260, 300, x => { x.beginPath(); x.roundRect(0, 0, 260, 300, 26); x.clip();
@@ -2624,7 +2624,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.1", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
