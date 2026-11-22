@@ -1888,7 +1888,7 @@ async function resolve(forced, swapCells) {
         const per = base * bonus * 0.55, byT = new Map(), miss = [];
         for (const pt of from[k]) { const ti = enemyAt(pt[0]); if (ti < 0) { miss.push(pt); continue; } const key = ti + (weakHit(ti, pt[0]) ? "w" : ""); if (!byT.has(key)) byT.set(key, []); byT.get(key).push(pt); }
         if (miss.length && !ai) fireMiss(miss, k);
-        for (const [key, pts] of byT) { const ti = parseInt(key), wk = key.endsWith("w"); fire(pts, ti, Math.round(per * pts.length * colorMult(k, enemies[ti].c) * (wk ? 1.5 : 1)), k, wk, h); }
+        for (const [key, pts] of byT) { const ti = parseInt(key), wk = key.endsWith("w"); if (wk && !ai) titanHit += pts.length; fire(pts, ti, Math.round(per * pts.length * colorMult(k, enemies[ti].c) * (wk ? 1.5 : 1)), k, wk, h); }
       });
     }
     save.stats.gems += count.reduce((a, b) => a + b, 0); count.forEach((n, k) => save.stats["g" + k] += n); if (combo === 4) save.stats.combo4++; save.stats.combo = Math.max(save.stats.combo, combo); for (const P of qPeriods()) P.combo = Math.max(P.combo || 0, combo);
@@ -1938,6 +1938,7 @@ function bodyOf(k) {
 }
 // nepřítel zasažený sloupcem: každý, jehož tělem sloupec prochází (překryv aspoň třetina políčka); při víc kandidátech největší překryv
 function enemyAt(x) {
+  if (titanMode && enemies.length === 1 && enemies[0].titan && enemies[0].cur > 0) { const c = Math.floor((x - BX) / T); return c >= 1 && c <= COLS - 2 ? 0 : -1; }  // obří titán: zasahují ho všechny sloupce kromě krajních
   let best = -1, bo = 0;
   enemies.forEach((e, i) => { if (e.cur <= 0) return; const z = enemySize(e), b = bodyOf(e.k), cx = enemyPos(i).x + b.off * z, hw = Math.max(48, b.hw * z);
     const ov = Math.min(cx + hw, x + T / 2) - Math.max(cx - hw, x - T / 2) - Math.abs(cx - x) * 0.01;
@@ -1957,7 +1958,7 @@ function hitEnemy(i, dmg, col, k, crit) {
   if (m > 1) floats.push({ x: p.x, y: p.y - 90, text: "Silný zásah!", col: "#fff", t: 0.9 });
   if (m === 0.5) floats.push({ x: p.x, y: p.y - 90, text: "Stejná barva", col: "#b8b0c8", t: 0.9 });
   if (e.cur <= 0) {
-    towerKill(e); save.stats.kills++; if (e.boss) save.stats.boss++; save.kinds[e.k] = 1; if (TRAIT[e.k]) save.stats.traitKills++; if (e.c >= 0) save.stats["kc" + e.c]++; save.chest.n = Math.min(CHEST_N, save.chest.n + 1);
+    towerKill(e); save.stats.kills++; if (e.boss) save.stats.boss++; save.kinds[e.k] = 1; if (TRAIT[e.k]) save.stats.traitKills++; if (e.c >= 0) save.stats["kc" + e.c]++; save.chest.n = save.chest.n + 1;
     for (let q = 0; q < 3; q++) burst(p.x, p.y, "#fff"); sparkBurst(p.x, p.y, col, e.boss ? 90 : 50, e.boss ? 1.6 : 1.2); pillarAt(p.x, p.y, col, e.boss ? 1 : 0.7, e.boss ? 220 : 140); panX(p.x); SFX.foeDie(e.k, e.boss);
     if (e.boss) { buzz(90, 255); shockAt(p.x, p.y, 1.3); }
     enemies.forEach((o, j) => { if (o.cur > 0 && TRAIT[o.k] === "rage") { addSt(o, "rage", 3); o.left = Math.max(1, o.left - 1); const q = enemyPos(j); floats.push({ x: q.x, y: q.y - 110, text: "💢 Zuřivost!", col: STS.rage.col, t: 1.1 }); } });
@@ -2133,11 +2134,14 @@ function bossHeal(e, i, frac) { if (e.titan) frac *= 0.12;  // titán má obří
 let bossBanner = null;
 async function enemyTurn() {
   if (slowT > 0) slowT--;
-  if (titanMode && enemies[0]) enemies[0].wx = (Math.random() - 0.5) * 0.56;  // slabé místo titána se přesune
+  const tHit = titanHit; titanHit = 0;  // kolik kostek v tomto tahu zasáhlo terč titána
   turn++; towerTurn();
   for (let i = 0; i < enemies.length; i++) {
     const e = enemies[i]; if (e.cur <= 0) continue;
     if (!heroes.some(h => h.cur > 0)) break;
+    if (e.titan) {  // titán: bez odpočtu – útočí každé kolo, jen zásah terče aspoň 3 kostkami ho zastaví
+      if (tHit >= 3) { const ep = enemyPos(i); floats.push({ x: ep.x, y: ep.y - 120, text: "🎯 ×" + tHit + " · titán neútočí", col: "#ffd166", t: 1.6, big: true }); sparkBurst(ep.x, ep.y, "#ffd166", 30, 1.2); await sleep(500); continue; }
+      e.left = 1; }
     if (e.boss) { if (e.mana >= 100) { e.mana = 0; await bossSkill(e, i); continue; } }
     e.left--;
     if (e.left <= 0) {
@@ -2148,6 +2152,7 @@ async function enemyTurn() {
       await sleep(260);
     }
   }
+  if (titanMode && enemies[0] && enemies[0].cur > 0) titanMoveTarget(enemies[0]);  // terč stojí 3 tahy, pak se přesune
   let ticked = false; heroes.forEach((h, k) => { if (tickSt(h, true, k)) ticked = true; }); if (ticked) await sleep(350);
   // Patrik – Domácí kuchyně: na konci kola tým +3 % energie
   if (heroes.some(h => h.id === "patrik" && h.cur > 0)) heroes.forEach((o, j) => { if (o.cur <= 0 || o.cur >= o.hp) return; const v = Math.min(o.hp - o.cur, Math.max(1, Math.round(o.hp * 0.03))); o.cur += v; save.stats.heal += v; floats.push({ x: heroX(j), y: HERO_Y + 40, text: "+" + v, col: "#ffb347", t: 0.9 }); });
@@ -2240,12 +2245,13 @@ function heroX(k) { const n = heroes ? heroes.length : 5; return W / 2 + (k - (n
 // nepřátelé v půlkruhu: krajní vpředu, prostřední vzadu (d = hloubka 0–1, vzadu o kousek menší)
 function enemyPos(i) {
   const n = enemies.length, front = EN_Y, arc = Math.max(20, Math.min(135, (front - TOP_Y - 250) * 0.7));
-  if (n <= 1) return { x: W / 2, y: front - arc * 0.6, d: 0.6 };
+  if (n <= 1) return { x: W / 2, y: front - arc * 0.6 + (enemies[0] && enemies[0].titan ? 70 : 0), d: 0.6 };  // titán níž, aby měl celou hlavu pod lištou
   const t = (i - (n - 1) / 2) / ((n - 1) / 2), span = n >= 5 ? 258 : n === 4 ? 238 : n === 3 ? 205 : 140;
   return { x: W / 2 + t * span, y: front - arc * (1 - t * t), d: 1 - t * t };
 }
 // velikost nepřítele podle počtu a bosse
 function enemySize(e) { const n = enemies.length, big = e.titan ? 1.9 : e.boss ? 1.5 : 1.08, p = enemyPos(Math.max(0, enemies.indexOf(e)));
+  if (e.titan) return Math.min(230 * 2.6 * EN_S, p.y + 80 - TOP_Y - 125);  // obří titán přes celou šířku pole (bez krajních sloupců), hlava těsně pod nápisem titána
   return Math.min(230 * big * EN_S, p.y + 80 - TOP_Y - 112, n >= 5 ? 250 : n === 4 ? 275 : n === 3 ? 310 : 999) * (1 - 0.1 * p.d); }
 function rr(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
 // zelená → žlutá → červená podle zbývající energie
@@ -2306,17 +2312,17 @@ function drawEnemy(e, i) {
   if (TRAIT[e.k]) { const tx = p.x + bw / 2 + 18, ty = p.y + 88; g.fillStyle = "rgba(10,6,20,.85)"; g.beginPath(); g.arc(tx, ty, 17, 0, 6.29); g.fill(); g.strokeStyle = "rgba(255,255,255,.5)"; g.lineWidth = 2; g.stroke();
     g.textAlign = "center"; g.font = "18px sans-serif"; g.fillStyle = "#fff"; g.fillText(TRAITS[TRAIT[e.k]].ic, tx, ty + 6.5); }
   const cx = p.x + Math.min(70, zz * 0.33), cy = p.y + 80 - zz * 0.78;
-  { // odpočet do útoku: tmavý odznak, prstenec s dílkem za každý tah, poslední tah červeně pulzuje
+  if (!e.titan) { // odpočet do útoku (titán ho nemá): tmavý odznak, prstenec s dílkem za každý tah, poslední tah červeně pulzuje
     const last = e.left <= 1, n = Math.max(1, e.cd || 3), sc = last ? 1 + 0.08 * Math.sin(perf * 8) : 1, R = 19 * sc, col = last ? "#ff4b5c" : "#ffd166";
     g.fillStyle = "rgba(0,0,0,.45)"; g.beginPath(); g.arc(cx + 1, cy + 3, R + 4, 0, 6.29); g.fill();
     g.fillStyle = "rgba(14,9,30,.92)"; g.beginPath(); g.arc(cx, cy, R + 3, 0, 6.29); g.fill();
     g.lineWidth = 4; g.lineCap = "round"; const gap = n > 1 ? 0.35 : 0, seg = (6.283 - gap * n) / n;
     for (let q = 0; q < n; q++) { const a0 = -1.571 + gap / 2 + q * (seg + gap); g.strokeStyle = q < e.left ? col : "rgba(255,255,255,.16)"; g.beginPath(); g.arc(cx, cy, R, a0, a0 + seg); g.stroke(); }
     g.fillStyle = last ? "#ffd6db" : "#fff"; g.font = "700 " + Math.round(18 * sc) + "px 'Exo 2', sans-serif"; g.fillText(e.left, cx, cy + 6.5 * sc); }
-  if (e.titan) { const wx = p.x + (e.wx || 0) * zz, wy = p.y + 80 - zz * 0.5, pu = 0.5 + 0.5 * Math.sin(perf * 6), R = 34 + 6 * pu;  // slabé místo titána
+  if (e.titan) { const wx = BX + (e.tc || 0) * T + T / 2, wy = p.y + 80 - zz * 0.5, pu = 0.5 + 0.5 * Math.sin(perf * 6), R = 34 + 6 * pu;  // slabé místo titána
     g.save(); g.strokeStyle = "rgba(255,209,102," + (0.6 + 0.4 * pu) + ")"; g.lineWidth = 4; g.beginPath(); g.arc(wx, wy, R, 0, 6.29); g.stroke(); g.lineWidth = 2; g.beginPath(); g.arc(wx, wy, R * 0.45, 0, 6.29); g.stroke();
     for (let q = 0; q < 4; q++) { const a = q * 1.571; g.beginPath(); g.moveTo(wx + Math.cos(a) * (R + 4), wy + Math.sin(a) * (R + 4)); g.lineTo(wx + Math.cos(a) * (R + 16), wy + Math.sin(a) * (R + 16)); g.stroke(); }
-    g.globalAlpha = 0.18 + 0.1 * pu; g.fillStyle = "#ffd166"; g.fillRect(wx - T * 0.75, wy + R, T * 1.5, BY - wy - R); g.restore(); }
+    g.globalAlpha = 0.18 + 0.1 * pu; g.fillStyle = "#ffd166"; g.fillRect(wx - T * 0.5, wy + R, T, BY - wy - R); g.globalAlpha = 1; g.fillStyle = "#fff"; g.font = "800 20px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText(e.tcLeft || 3, wx, wy + 7); g.restore(); }
   if (i === target) { // cíl: zlatá šipka nad hlavou (kroužek pod nohama kreslí GPU)
     const pu = 0.5 + 0.5 * Math.sin(perf * 5), top = p.y + 80 - zz, ay = Math.max(TOP_Y + 150, top - 14) - 9 * pu, cxm = p.x;
     g.save(); g.lineJoin = "round"; g.lineCap = "round";
@@ -2624,7 +2630,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.2", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.3", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
@@ -2635,7 +2641,7 @@ function drawIconBar() {  // ikony dole v menu: co je k vyzvednutí, svítí a m
     if (on) { const gl = g.createRadialGradient(x, y, 20, x, y, 70); gl.addColorStop(0, "rgba(255,209,102," + (0.35 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 70, y - 70, 140, 140); }
     g.fillStyle = "rgba(20,14,40,.85)"; g.beginPath(); g.arc(x, y, 46, 0, 6.29); g.fill(); g.strokeStyle = on ? "#ffd166" : "rgba(242,196,109,.4)"; g.lineWidth = on ? 2.5 : 1.5; g.stroke();
     drawItem(ic.im, x, y - 2, 80 * (on ? 1 + 0.05 * pu : 1));
-    if (ic.id === "chest" && !on) { g.strokeStyle = "rgba(255,255,255,.15)"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 50, 0, 6.29); g.stroke(); g.strokeStyle = "#ffd166"; g.beginPath(); g.arc(x, y, 50, -1.57, -1.57 + 6.283 * save.chest.n / CHEST_N); g.stroke(); }
+    if (ic.id === "chest" && !on) { g.strokeStyle = "rgba(255,255,255,.15)"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 50, 0, 6.29); g.stroke(); g.strokeStyle = "#ffd166"; g.beginPath(); g.arc(x, y, 50, -1.57, -1.57 + 6.283 * Math.min(1, save.chest.n / CHEST_N)); g.stroke(); }
     if (on) { const n = ic.id === "ach" ? canAch() : ic.id === "quest" ? qReady() : 1;
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 34, y - 32, 13, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 16px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText(n, x + 34, y - 26.5); }
     let lab = ic.t; if (ic.id === "titan") { const T1 = ensureTitan(); if (T1.done || T1.n >= TITAN_TRIES) lab = hms(toMidnight()); else for (let q = 0; q < TITAN_TRIES; q++) { g.fillStyle = q >= T1.n ? "#ffd166" : "rgba(255,255,255,.25)"; g.beginPath(); g.arc(x - 14 + q * 14, y + 44, 5, 0, 6.29); g.fill(); } }
@@ -2718,8 +2724,12 @@ function drawPanel() {
     drawItem(chestRew ? "ui_chest_open" : "ui_chest", W / 2 + shk, y + 220, 380);
     if (chestRew) { const ly = line("Získáváš: " + chestRew, y + 470, "#ffd166", "700 24px 'Exo 2', sans-serif", "center", W / 2);
       pbtn({ x: 190, y: Math.max(y + 580, ly + 40), w: 340, h: 78, t: "Jít bojovat" }, "glass", () => { menuPanel = null; chestRew = null; campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; }); }
-    else if (ready) pbtn({ x: 190, y: y + 470, w: 340, h: 84, t: "Otevřít truhlu" }, "gold", () => { if (chestOpen > 0) return; chestOpen = 1.2; SFX.chestOpen();
-      setTimeout(() => { const r = chestRoll(); save.chest.n = 0; save.stats.chests++; giveRew(r); chestRew = rewText(r); }, 700); });
+    else if (ready) { const kN = Math.floor(save.chest.n / CHEST_N), rest = save.chest.n - kN * CHEST_N;  // 22. 11. 2026: počítá dál, otevře všechny nasbírané, zbytek zůstane
+      line("Poraženo " + save.chest.n + " nepřátel = " + kN + " " + pl(kN, "truhla", "truhly", "truhel") + (rest ? " · " + rest + " zůstane do další" : ""), y + 448, "rgba(255,255,255,.85)", "600 21px 'Exo 2', sans-serif", "center", W / 2);
+      pbtn({ x: 160, y: y + 480, w: 400, h: 84, t: kN > 1 ? "Otevřít " + kN + " " + pl(kN, "truhlu", "truhly", "truhel") : "Otevřít truhlu" }, "gold", () => { if (chestOpen > 0) return; chestOpen = 1.2; SFX.chestOpen();
+      setTimeout(() => { const n = Math.floor(save.chest.n / CHEST_N); if (n < 1) return; const r = { i: 0, g: 0, c: 0, s: 0, h: 0, e: 0, ec: rnd(5), m: 0 };
+        for (let q = 0; q < n; q++) { const o = chestRoll(); for (const k of ["i", "g", "c", "s", "h", "e", "m"]) r[k] += o[k]; }
+        save.chest.n -= n * CHEST_N; save.stats.chests += n; giveRew(r); chestRew = (n > 1 ? n + " truhel: " : "") + rewText(r); store(); }, 700); }); }
     else { line("Každý poražený nepřítel přidá do truhly kořist.", y + 460, "rgba(255,255,255,.8)", "500 22px 'Exo 2', sans-serif", "center", W / 2); bar(160, y + 490, 400, save.chest.n / CHEST_N);
       line(save.chest.n + " / " + CHEST_N + " nepřátel", y + 540, "#fff", "700 22px 'Exo 2', sans-serif", "center", W / 2);
       pbtn({ x: 190, y: y + 580, w: 340, h: 78, t: "Jít bojovat" }, "glass", () => { menuPanel = null; campPop = 0; scene = "camps"; scrollY = 0; scrollV = 0; }); }
@@ -2744,7 +2754,7 @@ function drawPanel() {
     line("Titán " + f.n, y, "#ffd166", "800 30px 'Exo 2', sans-serif", "center", W / 2); y += 34; line("stupeň " + T1.lvl + "  ·  energie " + Math.round(mx * T1.f).toLocaleString("cs-CZ") + " / " + mx.toLocaleString("cs-CZ"), y, "rgba(255,255,255,.8)", "600 20px 'Exo 2', sans-serif", "center", W / 2);
     y += 18; g.fillStyle = "rgba(0,0,0,.5)"; rr(120, y, 480, 18, 9); g.fill(); g.fillStyle = hpCol(T1.f); rr(120, y, Math.max(18, 480 * T1.f), 18, 9); g.fill(); y += 56;
     y = line("Zabij ho do 3 útoků: " + rewText(titanRew()) + " (1. útok ×1,5 · 2. ×1,25)", y, "#f3c66e", "700 20px 'Exo 2', sans-serif", "center", W / 2) + 28;
-    y = line("Když uteče, dostaneš menší odměnu podle ubrané energie. Za každý útok kořist podle poškození. Zlatý terč = slabé místo (+50 %).", y, "rgba(255,255,255,.7)", "500 18px 'Exo 2', sans-serif", "center", W / 2) + 34;
+    y = line("Když uteče, dostaneš menší odměnu podle ubrané energie. Za každý útok kořist podle poškození. Zlatý terč stojí 3 tahy nad jedním sloupcem: trefíš-li ho aspoň 3 kostkami, titán neútočí, jinak útočí každé kolo (s plnou manou schopností). Terč +50 %.", y, "rgba(255,255,255,.7)", "500 18px 'Exo 2', sans-serif", "center", W / 2) + 34;
     for (let q = 0; q < TITAN_TRIES; q++) { const on = q >= T1.n && !T1.done; g.fillStyle = on ? "#ffd166" : "rgba(255,255,255,.18)"; g.beginPath(); g.arc(W / 2 - 24 + q * 24, y - 6, 8, 0, 6.29); g.fill(); } y += 30;
     line(T1.done ? (T1.f <= 0 ? "Dnešní titán je poražený!" : "Dnešní titán utekl.") + "  Nový za " + hms(toMidnight()) : "Útoky dnes: " + (TITAN_TRIES - T1.n) + "/" + TITAN_TRIES + "  ·  nový titán za " + hms(toMidnight()), y, T1.done ? "#3ddc84" : "#fff", "700 20px 'Exo 2', sans-serif", "center", W / 2);
     if (canTitan()) { pbtn({ x: 80, y: y + 26, w: 260, h: 80, t: "Tým" }, "glass", () => { teamPick = true; }); pbtn({ x: 360, y: y + 26, w: 280, h: 80, t: "Zaútočit" }, "gold", () => { menuPanel = null; startTitan(); }); }
@@ -2870,7 +2880,7 @@ function startTitan() {
   const T0 = ensureTitan(); if (T0.n >= TITAN_TRIES || T0.done) return; T0.n++; store();
   const f = FOES[T0.k], mx = titanMax(), def = { ...f, k: T0.k, n: "Titán " + f.n.split(" ")[0], hp: mx, atk: titanAtk(), cd: 2, boss: f.boss || 1, titan: true };
   diff = "e"; startGame(PER_ACT * ((f.act || 1) - 1) + 1, [[def]]); eventMode = false; titanMode = true; titanT = TITAN_TIME; titanUp = false;
-  const e = enemies[0]; e.cur = Math.max(1, Math.round(mx * T0.f)); e.c = T0.c; e.wx = 0; titanDmg0 = e.cur; bossIntro = { t: 0, names: ["Titán dne · stupeň " + T0.lvl] }; setTimeout(() => { if (titanMode) SFX.titanIn(); }, 120);
+  const e = enemies[0]; e.cur = Math.max(1, Math.round(mx * T0.f)); e.c = T0.c; { const cs = titanCols(); e.tc = cs[rnd(cs.length)]; } e.tcLeft = 3; titanHit = 0; titanDmg0 = e.cur; bossIntro = { t: 0, names: ["Titán dne · stupeň " + T0.lvl] }; setTimeout(() => { if (titanMode) SFX.titanIn(); }, 120);
 }
 // konec útoku: kořist podle poškození; zabití do 3 útoků = velká odměna (1. útok ×1,5, 2. ×1,25), útěk po 3. útoku = menší podle ubrané energie
 function finishTitan(killed) {
@@ -2884,7 +2894,10 @@ function finishTitan(killed) {
   save.ess[T0.c] += ne; lootE[T0.c] += ne; save.stats.essGot += ne;
   titanRes = { dmg, frac, killed, fin, mult, lvl, n: T0.n, left: T0.f }; levelUps = [gg, cr, 0, sc, true, 0, false, sh, rollItems(killed ? 3 : 1)]; winAnim = 0; store(); startEnd("win");
 }
-const weakHit = (ti, x) => { const e = enemies[ti]; return !!(e && e.titan && Math.abs(x - (enemyPos(ti).x + (e.wx || 0) * enemySize(e))) < T * 0.75); };
+const weakHit = (ti, x) => { const e = enemies[ti]; return !!(e && e.titan && Math.abs(x - (BX + (e.tc || 0) * T + T / 2)) < T * 0.5); };  // terč = jeden sloupec pole
+let titanHit = 0;
+const titanCols = () => { const i = enemies.findIndex(o => o.titan), cs = [...Array(COLS).keys()].filter(c => enemyAt(BX + c * T + T / 2) === i); return cs.length > 1 ? cs : [...Array(COLS).keys()]; };  // jen sloupce, kde kameny titána opravdu zasáhnou
+function titanMoveTarget(e) { e.tcLeft = (e.tcLeft || 3) - 1; if (e.tcLeft > 0) return; const cs = titanCols().filter(c => c !== e.tc); e.tc = cs[rnd(cs.length)]; e.tcLeft = 3; }
 function startEvent() { const E = eventWaves(); save.daily.event = true; store(); diff = "e"; startGame(E.st, E.w); }
 function heroRowY(k) { return 264 + k * 166 - (scene === "heroes" ? scrollY : 0); }  // seznam hrdinů se posouvá (od 10 hrdinů)
 function heroBtn(k) { return { x: 150, y: heroRowY(k) + 88, w: 340, h: 58 }; }
@@ -3144,7 +3157,7 @@ const HELP = [
     draw(y) { ["eq_collar", "eq_bell", "eq_claws"].forEach((k, j) => drawItem(k, 160 + j * 200, y + 240, 180));
       const sc = 1 + 0.06 * Math.sin(perf * 5); g.save(); g.translate(W / 2, y + 70); g.scale(sc, sc); g.textAlign = "center"; g.font = "800 46px Baloo, sans-serif"; g.lineJoin = "round"; g.strokeStyle = "#2a0f45"; g.lineWidth = 10;
       g.strokeText("KRITICKÝ ZÁSAH!", 0, 0); g.fillStyle = "#ffe066"; g.fillText("KRITICKÝ ZÁSAH!", 0, 0); g.restore(); } },
-  { t: "Titán dne", d: "Ikona Titán dole v menu: každý den nový obří boss a 3 útoky po 2:30 minuty (čas stojí při pauze). Energie titána se mezi útoky přenáší. Zabiješ-li ho do 3 útoků, dostaneš velkou odměnu – za 1. útok ×1,5, za 2. ×1,25 – a zítřejší bude silnější. Když uteče, dostaneš menší odměnu podle ubrané energie. Zlatý terč je slabé místo: kameny ve sloupci pod ním dávají o 50 % víc. Tečky pod ikonou ukazují zbylé útoky, po dohrání odpočet do nového titána.",
+  { t: "Titán dne", d: "Ikona Titán dole v menu: každý den nový obří boss a 3 útoky po 2:30 minuty (čas stojí při pauze). Energie titána se mezi útoky přenáší. Zabiješ-li ho do 3 útoků, dostaneš velkou odměnu – za 1. útok ×1,5, za 2. ×1,25 – a zítřejší bude silnější. Když uteče, dostaneš menší odměnu podle ubrané energie. Zlatý terč stojí 3 tahy nad jedním sloupcem, pak se přesune (číslo v terči = zbylé tahy). Kameny v jeho sloupci dávají o 50 % víc. Titán nemá odpočet – útočí každé kolo, a když má plnou manu, použije schopnost. Když terč v jednom tahu trefíš aspoň 3 kostkami, titán to kolo neútočí. Tečky pod ikonou ukazují zbylé útoky, po dohrání odpočet do nového titána.",
     draw(y) { drawItem("ui_titan", W / 2, y + 160, 300); const pu = 0.5 + 0.5 * Math.sin(perf * 6), wx = W / 2 + 60 * Math.sin(perf * 0.8), wy = y + 170;
       g.strokeStyle = "rgba(255,209,102," + (0.6 + 0.4 * pu) + ")"; g.lineWidth = 4; g.beginPath(); g.arc(wx, wy, 36 + 6 * pu, 0, 6.29); g.stroke(); g.globalAlpha = 0.25; g.fillStyle = "#ffd166"; g.fillRect(wx - 50, wy + 42, 100, 220); g.globalAlpha = 1; } },
   { t: "Sezónní kampaně", d: "V Kampaních je nahoře karta Sezónní kampaně: Masopust, Velikonoce, Léto u rybníka, Houbaření, Halloween a Vánoce. Hrají se zvlášť, jen v daném období (pak se změní i hlavní menu), mají 10 úrovní a jednu obtížnost – nepřátelé jsou silní podle týmu, se kterým jdeš do boje. Odměny jsou velké, za celou sezónu je sezónní truhla. Každý rok jdou znovu.",
@@ -3439,7 +3452,7 @@ function drawInfo(pr) {
   else { const tr = TRAIT[o.k], sk = o.boss && BOSS_SK[o.k];
     if (tr || sk || o.titan) { sec("SCHOPNOST"); if (tr) { txt(TRAITS[tr].ic + " " + TRAITS[tr].n, "#ffd166", "800 22px 'Exo 2', sans-serif"); txt(TRAITS[tr].d); }
       if (sk) { txt("✦ " + sk[0], "#c77dff", "800 22px 'Exo 2', sans-serif"); txt((BOSS_DESC[sk[1]] || "") + (sk[3] ? " Přidá stav: " + STS[sk[3]].n.toLowerCase() + "." : "") + " Mana roste, když ho zasáhneš."); }
-      if (o.titan) txt("Zlatý terč je slabé místo: kameny ve sloupci pod ním dávají o 50 % víc."); } }
+      if (o.titan) txt("Zlatý terč: 3 kostky do něj v jednom tahu = titán neútočí. Kameny v jeho sloupci +50 %."); } }
   const ks = o.st ? Object.keys(o.st).filter(k => o.st[k].n > 0) : [];
   sec("STAVY"); if (!ks.length) txt("Žádné aktivní stavy.", "rgba(255,255,255,.55)");
   ks.forEach(k => { const S = STS[k], v = o.st[k]; txt(S.ic + " " + S.n + " (" + v.n + " " + pl(v.n, "kolo", "kola", "kol") + ") – " + S.d(v.v), S.col, "600 20px 'Exo 2', sans-serif"); });
