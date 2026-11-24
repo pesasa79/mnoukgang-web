@@ -514,6 +514,23 @@ function autoLoad() { const has = id => ITM[id] && (save.inv[id] || 0) > 0 && ki
 const CR_REP = { e: 0.35, h: 0.6 }, IT_REP = { e: 0.3, h: 0.5 }, EX_MAX = 10, exPrice = () => Math.round(250 * rewScale() / 10) * 10;
 // 3 hvězdy = vždy 1 až 5 předmětů, každý jiný (11. 11. 2026, Petr: předmětů padalo málo)
 const star3Items = () => 1 + (Math.random() < 0.7) + (Math.random() < 0.45) + (Math.random() < 0.25) + (Math.random() < 0.12);
+// Kočičí směnárna: u = kolik výměn dnes u nabídky proběhlo; prvních o.free za základ, pak cena roste o o.up za každou další
+const exEssCol = () => { const e = save.ess || [0, 0, 0, 0, 0]; let b = 0; for (let c = 1; c < 5; c++) if (e[c] > e[b]) b = c; return b; };
+const EX_OFFERS = [
+  { id: "r", n: "Rohlíky", im: () => "ico_rohlik", key: "rohliky", base: () => exPrice(), free: 25, up: 0.06, food: 1, fmt: n => rohlN(n) },
+  { id: "g", n: "Granule", im: () => "ico_granule", key: "granule", base: () => exPrice(), free: 25, up: 0.06, food: 1, fmt: n => granN(n) },
+  { id: "h", n: "Střípky", im: () => "ui_shard", key: "shards", base: () => 12, free: 20, up: 0.06, fmt: n => n.toLocaleString("cs-CZ") + " ⚙" },
+  { id: "e", n: "Esence", im: () => "ess_" + exEssCol(), ess: 1, base: () => 6, free: 20, up: 0.06, fmt: n => essName(exEssCol(), n) },
+  { id: "s", n: "Svitky", im: () => "ico_scroll", key: "scrolls", base: () => 2, free: 10, up: 0.1, fmt: n => n + " " + pl(n, "svitek", "svitky", "svitků") }];
+const exDay = () => { if (!save.exch2 || save.exch2.d !== dayNum()) save.exch2 = { d: dayNum(), u: {} }; return save.exch2; };
+const exKurz = () => EX_OFFERS[(dayNum() * 7 + 3) % EX_OFFERS.length].id;
+const exHave = o => o.ess ? (save.ess || [])[exEssCol()] || 0 : save[o.key] || 0;
+const exPriceAt = (o, u) => { let p = o.base() * (u < o.free ? 1 : Math.pow(1 + o.up, u - o.free + 1)) * (exKurz() === o.id ? 0.5 : 1); return o.food ? Math.max(10, Math.round(p / 10) * 10) : Math.max(1, Math.ceil(p)); };
+// kolik krystalů (nejvýš n) si teď můžeš koupit a za kolik
+const exQuote = (o, n) => { const u0 = exDay().u[o.id] || 0, have = exHave(o); let c = 0, k = 0; while (k < n) { const p = exPriceAt(o, u0 + k); if (c + p > have) break; c += p; k++; } return { k, c, next: exPriceAt(o, u0 + k) }; };
+function exBuy(o, n) { const q = exQuote(o, n); if (!q.k) { SFX.bad(); toast = { t: 2, text: "Na to nemáš dost: " + o.fmt(q.next) }; return; }
+  if (o.ess) save.ess[exEssCol()] -= q.c; else save[o.key] -= q.c; const D = exDay(); D.u[o.id] = (D.u[o.id] || 0) + q.k; save.crystals += q.k;
+  save.stats.exchCr = (save.stats.exchCr || 0) + q.k; store(); SFX.star(); toast = { t: 1.8, text: "+" + q.k + " " + pl(q.k, "krystal", "krystaly", "krystalů") }; for (let i = 0; i < 14; i++) burst(W / 2, 440, "#7fe3ff"); }
 const exLeft = () => { if (!save.exch || save.exch.d !== dayNum()) save.exch = { d: dayNum(), n: 0 }; return EX_MAX - save.exch.n; };
 // obsah truhly (3. 11. 2026: méně krystalů a střípků)
 const chestRoll = () => ({ i: 1 + (Math.random() < 0.5 ? 1 : 0), g: 150 + rnd(250), c: Math.random() < 0.3 ? 1 : 0, s: Math.random() < 0.12 ? 1 : 0, h: 2 + rnd(4), e: 2 + rnd(3), ec: rnd(5), m: Math.random() < 0.4 ? 3 : 0 });
@@ -611,7 +628,7 @@ function tipText(k) {
   const hum = HEROES.filter(h => !isCat(h)).map(h => h.name).join(", "), cat = HEROES.filter(isCat).map(h => h.name).join(", ");
   if (k === "r") return "Jídlo lidí. Za rohlíky zvyšuješ úroveň lidských hrdinů: " + hum + ". Padají z bojů, truhel, úkolů a titána – čím víc lidí máš v týmu, tím víc rohlíků. Máš " + save.rohliky.toLocaleString("cs-CZ") + ".";
   if (k === "g") return "Jídlo koček. Za granule zvyšuješ úroveň koček: " + cat + ". Padají z bojů, truhel, úkolů a titána – čím víc koček máš v týmu, tím víc granulí. Máš " + save.granule.toLocaleString("cs-CZ") + ".";
-  if (k === "d") return "Za krystaly dáváš hrdinům hvězdy ★ (vyšší strop úrovní a víc síly) a kupuješ jim talenty. Padají z bossů, titána, Noci bossů, truhel, za první 3 hvězdy a při opakování úrovní (lehká 35 %, těžká 60 %). Jídlo navíc vyměníš za krystaly v menu Hrdinové (⇄). Máš " + save.crystals + ".";
+  if (k === "d") return "Za krystaly dáváš hrdinům hvězdy ★ (vyšší strop úrovní a víc síly) a kupuješ jim talenty. Padají z bossů, titána, Noci bossů, truhel, za první 3 hvězdy a při opakování úrovní (lehká 35 %, těžká 60 %). Přebytky (jídlo, střípky, esence, svitky) vyměníš za krystaly v Kočičí směnárně – tlačítko Směnárna v hlavním menu. Máš " + save.crystals + ".";
   if (k === "h") return "Materiál na výstroj hrdinů – útok, rychlost many a kritický zásah (menu Hrdinové). K vylepšení potřebuješ i esenci barvy hrdiny. Střípky padají z nepřátel, bossů, titána a truhel. Máš " + save.shards + ".";
   if (k === "s") return "Tlapkové svitky vylepšují kombo v menu Hrdinové: s každým stupněm sílí každé další spojení v jednom tahu. Padají z bossů, truhel a úkolů. Máš " + save.scrolls + ".";
   if (k === "lg") return "Rohlíky a granule, které jsi v tomto boji zatím získal. Po výhře se připíšou – lidé jedí rohlíky, kočky granule. Vedle jsou krystaly z boje.";
@@ -729,7 +746,7 @@ for (const h of HEROES) { const k = HEROES.indexOf(h); if (k >= 5) continue; loa
 load("granule", "img/ico_granule.png"); load("rohlik", "img/ico_rohlik.png"); applyTheme();
 for (const k of Object.keys(FOES)) load("e_" + k, "img/enemy_" + k + ".png");
 load("vez_bg", "img/vez_bg.webp"); load("hled_bg", "img/hled_bg.webp");
-for (const k of ["ui_minihry", "ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
+for (const k of ["ui_exch", "ui_minihry", "ui_quest", "ui_login", "ui_chest", "ui_chest_open", "ui_event", "ui_trophy", "ui_titan", "ui_shard", "eq_collar", "eq_bell", "eq_claws", "ico_crystal", "ico_scroll", "ico_gear", "ess_0", "ess_1", "ess_2", "ess_3", "ess_4", ...Object.keys(EQS).flatMap(id => ["o", "r", "d"].map(x => "eq_" + id + "_" + x)), ...ITEMS.map(it => "it_" + it.id)]) load(k, "img/" + k + ".png");
 load("bg", "img/bg_battle.jpg"); load("bg2", "img/bg_garden.jpg"); load("bg3", "img/bg_bedroom.jpg"); load("bg4", "img/bg_kidsroom.jpg"); load("bg5", "img/bg_forest.jpg"); load("bgH", "img/bg_halloween.jpg"); load("bgX", "img/bg_vanoce.jpg"); for (const s of ["halloween", "vanoce", "velikonoce", "masopust", "leto", "houby"]) load("menu_" + s, "img/bg_menu_" + s + ".jpg"); load("bgM", "img/bg_masopust.jpg"); load("bgE", "img/bg_velikonoce.jpg"); load("bgL", "img/bg_leto.jpg"); load("bgO", "img/bg_houby.jpg"); load("diamond", "img/gem_diamond.png");
 for (const h of HEROES) { load("full_" + h.id, "img/hero_" + h.id + ".png"); load("por_" + h.id, "img/por_" + h.id + ".png"); }
 // portrét do kolečka: render postavy na podkladu v barvě hrdiny, jinak původní fotka
@@ -2558,7 +2575,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 // ---------- menu ----------
-const BTN = { play: { x: 140, y: 786, w: 440, h: 88, t: "Hrát" }, heroes: { x: 170, y: 886, w: 226, h: 58, t: "Hrdinové" }, bag: { x: 404, y: 886, w: 146, h: 58, t: "Batoh" }, best: { x: 170, y: 952, w: 380, h: 58, t: "Bestiář" }, help: { x: 170, y: 1018, w: 380, h: 58, t: "Nápověda" }, credits: { x: 170, y: 1084, w: 380, h: 58, t: "O hře" } };
+const BTN = { play: { x: 140, y: 786, w: 440, h: 88, t: "Hrát" }, heroes: { x: 170, y: 886, w: 226, h: 58, t: "Hrdinové" }, bag: { x: 404, y: 886, w: 146, h: 58, t: "Batoh" }, best: { x: 170, y: 952, w: 186, h: 58, t: "Bestiář" }, exch: { x: 364, y: 952, w: 186, h: 58, t: "Směnárna" }, help: { x: 170, y: 1018, w: 380, h: 58, t: "Nápověda" }, credits: { x: 170, y: 1084, w: 380, h: 58, t: "O hře" } };
 const GEAR = { x: 650, y: 30, r: 40 };
 // na vysokém displeji jde obsah menu nahoru (víc místa dole pro ikony), ozubené kolo do horního rohu
 const menuOff = () => -DY * 0.62, gearY = () => -DY + 64;
@@ -2617,7 +2634,7 @@ function drawMenu() {
     if (ok(fi)) { const hh = tall(h), ww = hh * fi.naturalWidth / fi.naturalHeight, br = Math.sin(perf * 2.4 + j) * 0.02;
       g.save(); g.translate(x, base); g.rotate(Math.sin(perf * 1.1 + j * 2) * 0.025); g.scale(1 - br * 0.5, 1 + br); if (!drawAnim("h_" + h.id, 0, bob, hh, j * 4)) g.drawImage(fi, -ww / 2, -hh + bob, ww, hh); g.restore(); }
     else { const R = 54; g.beginPath(); g.arc(x, 560 + bob, R + 6, 0, 6.29); g.fillStyle = COLORS[h.c]; g.fill(); portrait(k, x, 560 + bob, R); } });
-  button(BTN.play, "gold"); button(BTN.heroes, "glass"); button(BTN.bag, "glass"); button(BTN.best, "glass"); button(BTN.help, "glass"); button(BTN.credits, "glass"); g.restore();
+  button(BTN.play, "gold"); button(BTN.heroes, "glass"); button(BTN.bag, "glass"); button(BTN.best, "glass"); button(BTN.exch, "glass"); button(BTN.help, "glass"); button(BTN.credits, "glass"); g.restore();
   // nastavení: skleněné kolečko s tenkým zlatým ozubeným kolem
   g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(GEAR.x, gearY(), 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
   { const ex = W - GEAR.x, ey = gearY(); g.fillStyle = "rgba(20,14,40,.8)"; g.beginPath(); g.arc(ex, ey, 34, 0, 6.29); g.fill(); g.strokeStyle = "rgba(242,196,109,.6)"; g.lineWidth = 1.5; g.stroke();
@@ -2630,21 +2647,22 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.4", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.5", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
 const iconPos = j => ({ x: 62 + j * (596 / (ICONS.length - 1)), y: Math.max(1200, H + DY - 150) });
 let menuPanel = null, panelBtns = [], chestOpen = 0, chestRew = null, questTab = "d", achScroll = 0, achMax = 0, achBox = null, achDrag = null;
 function drawIconBar() {  // ikony dole v menu: co je k vyzvednutí, svítí a má odznak
-  ICONS.forEach((ic, j) => { const { x, y } = iconPos(j), on = ic.can(), pu = 0.5 + 0.5 * Math.sin(perf * 4 + j);
+  const ISC = Math.min(1, (596 / (ICONS.length - 1) / 2 - 3) / 46);
+  ICONS.forEach((ic, j) => { const { x, y } = iconPos(j), on = ic.can(), pu = 0.5 + 0.5 * Math.sin(perf * 4 + j); g.save(); g.translate(x, y); g.scale(ISC, ISC); g.translate(-x, -y);
     if (on) { const gl = g.createRadialGradient(x, y, 20, x, y, 70); gl.addColorStop(0, "rgba(255,209,102," + (0.35 + 0.3 * pu) + ")"); gl.addColorStop(1, "rgba(255,209,102,0)"); g.fillStyle = gl; g.fillRect(x - 70, y - 70, 140, 140); }
     g.fillStyle = "rgba(20,14,40,.85)"; g.beginPath(); g.arc(x, y, 46, 0, 6.29); g.fill(); g.strokeStyle = on ? "#ffd166" : "rgba(242,196,109,.4)"; g.lineWidth = on ? 2.5 : 1.5; g.stroke();
     drawItem(ic.im, x, y - 2, 80 * (on ? 1 + 0.05 * pu : 1));
     if (ic.id === "chest" && !on) { g.strokeStyle = "rgba(255,255,255,.15)"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 50, 0, 6.29); g.stroke(); g.strokeStyle = "#ffd166"; g.beginPath(); g.arc(x, y, 50, -1.57, -1.57 + 6.283 * Math.min(1, save.chest.n / CHEST_N)); g.stroke(); }
     if (on) { const n = ic.id === "ach" ? canAch() : ic.id === "quest" ? qReady() : 1;
       g.fillStyle = "#e5484d"; g.beginPath(); g.arc(x + 34, y - 32, 13, 0, 6.29); g.fill(); g.fillStyle = "#fff"; g.font = "700 16px 'Exo 2', sans-serif"; g.textAlign = "center"; g.fillText(n, x + 34, y - 26.5); }
-    let lab = ic.t; if (ic.id === "titan") { const T1 = ensureTitan(); if (T1.done || T1.n >= TITAN_TRIES) lab = hms(toMidnight()); else for (let q = 0; q < TITAN_TRIES; q++) { g.fillStyle = q >= T1.n ? "#ffd166" : "rgba(255,255,255,.25)"; g.beginPath(); g.arc(x - 14 + q * 14, y + 44, 5, 0, 6.29); g.fill(); } }
+    g.restore(); let lab = ic.t; if (ic.id === "titan") { const T1 = ensureTitan(); if (T1.done || T1.n >= TITAN_TRIES) lab = hms(toMidnight()); else for (let q = 0; q < TITAN_TRIES; q++) { g.fillStyle = q >= T1.n ? "#ffd166" : "rgba(255,255,255,.25)"; g.beginPath(); g.arc(x - 14 + q * 14, y + 44, 5, 0, 6.29); g.fill(); } }
     g.textAlign = "center"; g.fillStyle = on ? "#ffd166" : "rgba(255,255,255,.7)"; g.font = "600 15px 'Exo 2', sans-serif"; g.fillText(lab, x, y + 66); });
 }
 function pbtn(b, style, fn) { button(b, style); panelBtns.push([b, fn]); }
@@ -2653,9 +2671,9 @@ function drawPanel() {
   g.fillStyle = "rgba(5,3,12,.82)"; g.fillRect(0, -DY, W, FH);
   const bg = g.createLinearGradient(0, P.y, 0, P.y + P.h); bg.addColorStop(0, "#1c1336"); bg.addColorStop(1, "#0c0818"); g.fillStyle = bg; rr(P.x, P.y, P.w, P.h, 30); g.fill();
   g.strokeStyle = "rgba(242,196,109,.7)"; g.lineWidth = 2; rr(P.x + 1, P.y + 1, P.w - 2, P.h - 2, 29); g.stroke();
-  const ic = ICONS.find(i => i.id === menuPanel); drawItem(ic.im, W / 2, P.y + 74, 124);
+  const ic = ICONS.find(i => i.id === menuPanel) || { im: "ui_exch" }; drawItem(ic.im, W / 2, P.y + 74, 124);
   g.textAlign = "center"; g.fillStyle = "#f3c66e"; g.font = "800 37px 'Exo 2', sans-serif";
-  const T0 = { quest: "Úkoly", login: "Odměna za přihlášení", chest: "Truhla s kořistí", event: "Noc bossů", ach: "Úspěchy", titan: "Titán dne" }[menuPanel]; g.fillText(T0, W / 2, P.y + 176);
+  const T0 = { quest: "Úkoly", login: "Odměna za přihlášení", chest: "Truhla s kořistí", event: "Noc bossů", ach: "Úspěchy", titan: "Titán dne", exch: "Kočičí směnárna" }[menuPanel]; g.fillText(T0, W / 2, P.y + 176);
   let y = P.y + 210; g.font = "500 19px 'Exo 2', sans-serif"; g.fillStyle = "rgba(255,255,255,.65)";
   // text v okně: když se nevejde do šířky okna, zalomí se (vrací y pod textem)
   const line = (t, yy, col = "rgba(255,255,255,.8)", f = "500 20px 'Exo 2', sans-serif", al = "left", x = P.x + 40) => { g.textAlign = al; g.fillStyle = col; g.font = f;
@@ -2745,6 +2763,20 @@ function drawPanel() {
     line("Odměna: " + rewText({ g: 500, c: 3, s: 1 }) + " + kořist", y + 20, "#f3c66e", "700 21px 'Exo 2', sans-serif", "center", W / 2);
     if (canEvent()) { pbtn({ x: 80, y: y + 60, w: 260, h: 84, t: "Tým" }, "glass", () => { teamPick = true; }); pbtn({ x: 360, y: y + 60, w: 280, h: 84, t: "Do boje" }, "gold", () => { menuPanel = null; startEvent(); }); }
     else line("Dnes už jsi Noc bossů hrál. Další zítra!", y + 100, "#3ddc84", "600 21px 'Exo 2', sans-serif", "center", W / 2);
+  }
+  if (menuPanel === "exch") {
+    y = line("Přebytky vyměníš za krystaly na hvězdy a talenty hrdinů. Pár výměn denně je za základní cenu, pak cena stoupá; o půlnoci se vrátí. Jedna nabídka má kurz dne za polovic.", y, "rgba(255,255,255,.75)", "500 19px 'Exo 2', sans-serif", "center", W / 2) + 54;
+    drawItem("ico_crystal", W / 2 - 110, y - 10, 56); g.textAlign = "left"; g.fillStyle = "#7fe3ff"; g.font = "800 32px Baloo, sans-serif"; g.fillText(save.crystals.toLocaleString("cs-CZ") + " " + pl(save.crystals, "krystal", "krystaly", "krystalů"), W / 2 - 74, y + 2);
+    y += 32; const kd = exKurz(), D = exDay();
+    EX_OFFERS.forEach((o, j) => { const ry = y + j * 112, hot = kd === o.id, u = D.u[o.id] || 0, q1 = exQuote(o, 1), q10 = exQuote(o, 10), have = exHave(o);
+      g.fillStyle = hot ? "rgba(255,209,102,.13)" : "rgba(255,255,255,.05)"; rr(P.x + 20, ry, P.w - 40, 102, 18); g.fill();
+      if (hot) { g.strokeStyle = "#ffd166"; g.lineWidth = 2; rr(P.x + 20, ry, P.w - 40, 102, 18); g.stroke(); }
+      if (o.id === "r") drawRohlik(P.x + 70, ry + 51, 70); else if (o.id === "g") drawGranule(P.x + 70, ry + 51, 70); else drawItem(o.im(), P.x + 70, ry + 51, 70);
+      g.textAlign = "left"; g.fillStyle = hot ? "#ffd166" : "#fff"; g.font = "800 24px 'Exo 2', sans-serif"; g.fillText(o.n + (hot ? " · kurz dne −50 %" : ""), P.x + 116, ry + 34);
+      g.fillStyle = "rgba(255,255,255,.72)"; fitText("Máš " + o.fmt(have), P.x + 116, ry + 62, 270, "500 17px 'Exo 2', sans-serif");
+      fitText("1 krystal za " + o.fmt(exPriceAt(o, u)) + (u < o.free ? " · základ ještě " + (o.free - u) + "×" : " · zdražuje"), P.x + 116, ry + 88, 270, "500 17px 'Exo 2', sans-serif");
+      const b1 = { x: P.x + P.w - 250, y: ry + 20, w: 104, h: 68, t: "+1" }, b10 = { x: P.x + P.w - 136, y: ry + 20, w: 112, h: 68, t: "+" + Math.max(1, q10.k) };
+      g.globalAlpha = q1.k ? 1 : 0.4; pbtn(b1, "glass", () => exBuy(o, 1)); g.globalAlpha = q10.k > 1 ? 1 : 0.4; pbtn(b10, "gold", () => exBuy(o, 10)); g.globalAlpha = 1; });
   }
   if (menuPanel === "titan") {
     const T1 = ensureTitan(), f = FOES[T1.k], ei = img["e_" + T1.k], mx = titanMax();
@@ -2967,7 +2999,7 @@ function drawHeroesInfo() {
   menuBg(); header("Hrdinové");
   g.fillStyle = "rgba(10,6,20,.7)"; rr(40, 104, 640, 54, 27); g.fill();
   gemIcon("r", 62, 131, 34); gemIcon("g", 222, 131, 32); gemIcon("d", 382, 131, 32); drawItem("ui_shard", 532, 131, 40);
-  g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; fitText(save.rohliky.toLocaleString("cs-CZ"), 84, 140, 124, g.font); fitText(save.granule.toLocaleString("cs-CZ"), 242, 140, 124, g.font); fitText(String(save.crystals), 402, 140, 112, g.font); fitText(String(save.shards), 556, 140, 44, g.font); button(EX_BTN, "gold");
+  g.textAlign = "left"; g.fillStyle = "#fff"; g.font = "800 22px Baloo, sans-serif"; fitText(save.rohliky.toLocaleString("cs-CZ"), 84, 140, 124, g.font); fitText(save.granule.toLocaleString("cs-CZ"), 242, 140, 124, g.font); fitText(String(save.crystals), 402, 140, 112, g.font); fitText(String(save.shards), 556, 140, 44, g.font);
   // kombo a tlapkové svitky
   g.fillStyle = "rgba(10,6,20,.7)"; rr(40, 166, 640, 54, 27); g.fill(); drawItem("ico_scroll", 70, 193, 38);
   g.textAlign = "left"; g.fillStyle = "#ffd1e3"; fitText("Kombo " + save.combo + "/" + COMBO_MAX + " · ×" + comboStep().toFixed(2).replace(".", ",") + " za krok · " + save.scrolls + " svitků", 92, 200, 368, "800 21px Baloo, sans-serif");
@@ -3004,21 +3036,6 @@ function drawHeroesInfo() {
   g.restore();
   backBtn(); teamSumLine(1152, 640);
   if (eqHero >= 0) drawEq(eqHero);
-  if (exchOpen) drawExch();
-}
-const EX_BTN = { x: 606, y: 110, w: 68, h: 42, t: "⇄" }; let exchOpen = false, exBtns = [];
-function drawExch() {
-  exBtns = []; const P = { x: 50, y: 360, w: 620, h: 560 }, left = exLeft(), pr = exPrice();
-  g.fillStyle = "rgba(5,3,12,.85)"; g.fillRect(0, -DY, W, FH); const bg = g.createLinearGradient(0, P.y, 0, P.y + P.h); bg.addColorStop(0, "#1c1336"); bg.addColorStop(1, "#0c0818"); g.fillStyle = bg; rr(P.x, P.y, P.w, P.h, 30); g.fill();
-  g.strokeStyle = "rgba(242,196,109,.7)"; g.lineWidth = 2; rr(P.x + 1, P.y + 1, P.w - 2, P.h - 2, 29); g.stroke();
-  g.textAlign = "center"; g.fillStyle = "#f3c66e"; fitText("Výměna za krystaly", W / 2, P.y + 62, P.w - 40, "800 34px 'Exo 2', sans-serif");
-  g.fillStyle = "rgba(255,255,255,.85)"; g.font = "500 20px 'Exo 2', sans-serif"; fillWrapC("Jídlo, které už nemáš kam dát, vyměníš za krystaly na hvězdy hrdinů. Dnes ještě " + left + " z " + EX_MAX + ".", W / 2, P.y + 122, P.w - 70, 28);
-  [["granule", granN(pr)], ["rohliky", rohlN(pr)]].forEach(([key, txt], j) => { const b = { x: P.x + 50, y: P.y + 200 + j * 100, w: P.w - 100, h: 80, t: "1 krystal za " + txt }, can = left > 0 && save[key] >= pr;
-    g.globalAlpha = can ? 1 : 0.45; button(b, j ? "#c47a2c" : "#8a5a2b"); g.globalAlpha = 1;
-    exBtns.push([b, () => { if (left <= 0) { toast = { t: 2.2, text: "Dnes už víc výměn nejde – zítra zase" }; SFX.bad(); return; } if (save[key] < pr) { SFX.bad(); return; }
-      save[key] -= pr; save.crystals++; save.exch.n++; store(); SFX.star(); toast = { t: 1.8, text: "+1 krystal" }; }]); });
-  g.fillStyle = "rgba(255,255,255,.6)"; g.font = "500 17px 'Exo 2', sans-serif"; fillWrapC("Cena roste s tím, jak daleko jsi ve hře. Máš " + granN(save.granule) + " a " + rohlN(save.rohliky) + ".", W / 2, P.y + 420, P.w - 70, 24);
-  const cb = { x: 230, y: P.y + P.h - 88, w: 260, h: 68, t: "Zavřít" }; button(cb, "glass"); exBtns.push([cb, () => { exchOpen = false; }]);
 }
 // okno výstroje hrdiny: tři předměty, úroveň, účinek teď → po vylepšení, cena
 function drawEq(k) {
@@ -3115,7 +3132,7 @@ const HELP = [
       row(["c1", "c2", "c3", "c4", "c5", "c6"], y + 80); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("kočičí (baňky)", W / 2, y + 140);
       row(["l1", "l2", "l3", "l4", "l5", "l6"], y + 200); g.fillText("lidské (láhve)", W / 2, y + 260);
       row(["c7", "c9", "c10", "c11", "l7", "l9", "l10"], y + 320); g.fillStyle = "rgba(255,255,255,.7)"; g.fillText("útoky, zdržení a ochrana – popis v Batohu", W / 2, y + 380); } },
-  { t: "Krystaly navíc", d: "Krystaly jsou na hvězdy hrdinů – bez nich se úroveň nezvedne nad 10. Padají i při opakování úrovní: na lehkou s 35% šancí, na těžkou s 60% šancí. Granule a rohlíky navíc vyměníš v menu Hrdinové tlačítkem ⇄, nejvýš za 10 krystalů denně.",
+  { t: "Krystaly navíc", d: "Krystaly jsou na hvězdy hrdinů – bez nich se úroveň nezvedne nad 10. Padají i při opakování úrovní: na lehkou s 35% šancí, na těžkou s 60% šancí. Přebytky vyměníš v Kočičí směnárně (tlačítko Směnárna v hlavním menu).",
     draw(y) { drawGranule(W / 2 - 230, y + 160, 90); drawRohlik(W / 2 - 110, y + 160, 90); g.textAlign = "center"; g.fillStyle = "#ffd166"; g.font = "800 70px 'Exo 2', sans-serif"; g.fillText("⇄", W / 2 + 20, y + 185); gemIcon("d", W / 2 + 170, y + 160, 110);
       g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText("opakování: lehká 35 % · těžká 60 %", W / 2, y + 330); } },
   { t: "Mlíčko", d: "Mlíčko je energie na hraní. Každá úroveň kampaně i sezónní kampaně stojí 1 mlíčko, rychlé dohrání taky. Titán, Noc bossů, truhla a odměny jsou zdarma. Mlíčko se doplňuje samo – za den přesně tolik, kolik je maximum (při 20 je to jedno za 72 minut). Maximum začíná na 20 a za každou dohranou kampaň, lehkou i těžkou, vyskočí o 5 (až na 70) – a 5 mlíček se rovnou přidá. Nad maximum se mlíčko nedoplní nikdy, ani lahvemi z úkolů, truhly a přihlášení. Když boj opustíš ještě v první vlně, mlíčko se vrátí. Zbývá-li 0, kočky odpočívají – odpočet uvidíš nahoře v menu.",
@@ -3157,6 +3174,9 @@ const HELP = [
     draw(y) { ["eq_collar", "eq_bell", "eq_claws"].forEach((k, j) => drawItem(k, 160 + j * 200, y + 240, 180));
       const sc = 1 + 0.06 * Math.sin(perf * 5); g.save(); g.translate(W / 2, y + 70); g.scale(sc, sc); g.textAlign = "center"; g.font = "800 46px Baloo, sans-serif"; g.lineJoin = "round"; g.strokeStyle = "#2a0f45"; g.lineWidth = 10;
       g.strokeText("KRITICKÝ ZÁSAH!", 0, 0); g.fillStyle = "#ffe066"; g.fillText("KRITICKÝ ZÁSAH!", 0, 0); g.restore(); } },
+  { t: "Kočičí směnárna", d: "Tlačítko Směnárna v hlavním menu (vedle Bestiáře). Rohlíky, granule, střípky ⚙, esence a svitky, které ti přebývají, vyměníš za krystaly na hvězdy a talenty hrdinů. Každá nabídka má denně několik výměn za základní cenu (jídlo 25×, střípky a esence 20×, svitky 10×), pak je každá další o kousek dražší. O půlnoci se ceny vrátí. Jedna nabídka denně má kurz dne za polovic. Tlačítko +10 koupí najednou až 10 krystalů. Esence bere tu barvu, které máš nejvíc.",
+    draw(y) { drawRohlik(W / 2 - 230, y + 160, 96); drawItem("ui_shard", W / 2 - 110, y + 160, 96); g.textAlign = "center"; g.fillStyle = "#ffd166"; g.font = "800 70px 'Exo 2', sans-serif"; g.fillText("→", W / 2 + 20, y + 185); drawItem("ico_crystal", W / 2 + 170, y + 160, 120);
+      g.fillStyle = "rgba(255,255,255,.75)"; g.font = "600 20px 'Exo 2', sans-serif"; g.fillText("základní cena denně · pak zdražuje · kurz dne −50 %", W / 2, y + 330); } },
   { t: "Titán dne", d: "Každý den nový obří boss a 3 útoky po 2:30 minuty (čas stojí při pauze), energie se mezi útoky přenáší. Zabiješ-li ho do 3 útoků, dostaneš velkou odměnu (za 1. útok ×1,5, za 2. ×1,25), jinak menší podle ubrané energie. Zasahují ho kameny ze všech sloupců kromě krajních. Zlatý terč stojí 3 tahy nad jedním sloupcem (číslo v terči) a dává +50 %. Titán útočí každé kolo, s plnou manou schopností – trefíš-li terč v jednom tahu aspoň 3 kostkami, to kolo neútočí.",
     draw(y) { drawItem("ui_titan", W / 2, y + 160, 300); const pu = 0.5 + 0.5 * Math.sin(perf * 6), wx = W / 2 + 60 * Math.sin(perf * 0.8), wy = y + 170;
       g.strokeStyle = "rgba(255,209,102," + (0.6 + 0.4 * pu) + ")"; g.lineWidth = 4; g.beginPath(); g.arc(wx, wy, 36 + 6 * pu, 0, 6.29); g.stroke(); g.globalAlpha = 0.25; g.fillStyle = "#ffd166"; g.fillRect(wx - 50, wy + 42, 100, 220); g.globalAlpha = 1; } },
@@ -3968,11 +3988,11 @@ function down(ev) { idleT = 0; hint = null;
   }
   if (scene === "menu" && menuPanel) { const hit = panelBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); return; }
     if ((menuPanel === "ach" || (menuPanel === "quest" && questTab === "c")) && achBox && inside(p, achBox)) achDrag = { y: p.y, s: achScroll, v: 0, t: performance.now() }; return; }
-  if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 48); if (j >= 0 && ICONS[j].id === "minihry") { SFX.click(); scene = "minihry"; return; } if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
+  if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 42); if (j >= 0 && ICONS[j].id === "minihry") { SFX.click(); scene = "minihry"; return; } if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
   if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); } exitAsk = false; SFX.click(); return; }
   if (scene === "menu") {
     const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; bestCat = null; };
-    if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.bag)) { SFX.click(); bagPick = true; bagInfo = null; } else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
+    if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.bag)) { SFX.click(); bagPick = true; bagInfo = null; } else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.exch)) { SFX.panel(); menuPanel = "exch"; chestRew = null; } else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
     else if (Math.hypot(p.x - GEAR.x, p.y - gearY()) < 50) go("settings");
     else if (Math.hypot(p.x - (W - GEAR.x), p.y - gearY()) < 50) { SFX.click(); exitAsk = true; }
     return;
@@ -4017,8 +4037,6 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "best" || scene === "credits") { if (inside(p, BACK)) { SFX.click(); if (scene === "best" && bestCat !== null) { bestCat = null; scrollY = bestScroll; scrollV = 0; } else scene = "menu"; return; } const fly = Math.abs(scrollV) > 60; scrollV = 0; scrollTarget = scrollY; scrollDrag = { x: p.x, y: p.y, s: scrollY, pts: [[performance.now(), p.y]], moved: 0, fly }; return; }
   if (scene === "heroes") {
     if (heroCard >= 0) { heroCard = -1; return; }
-    if (exchOpen) { const hit = exBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else exchOpen = false; return; }
-    if (inside(p, EX_BTN) && eqHero < 0) { exchOpen = true; SFX.click(); return; }
     if (eqHero >= 0) { const hit = eqBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); } else if (p.y < 130 || p.y > 1140) eqHero = -1; return; }
     if (inside(p, BACK)) { SFX.click(); scene = "menu"; return; }
     if (inside(p, { x: 470, y: 170, w: 200, h: 46 })) { const c = comboCost(save.combo); if (save.combo < COMBO_MAX && save.scrolls >= c) { save.scrolls -= c; save.combo++; store(); SFX.star(); } else SFX.bad(); return; }
