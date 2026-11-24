@@ -2064,7 +2064,7 @@ const hasSt = (o, k) => !!(o && o.st && o.st[k] && o.st[k].n > 0);
 function tickSt(o, hero, i) {
   if (!o.st || o.cur <= 0) return false; let any = false;
   for (const k of ["poison", "burn"]) if (hasSt(o, k)) { const v = o.st[k].v; any = true;
-    if (hero) { o.cur = Math.max(0, o.cur - v); o.hurt = 0.3; floats.push({ x: heroX(i), y: HERO_Y - 10, text: "-" + v, col: STS[k].col, t: 1 }); }
+    if (hero) { o.cur = Math.max(0, o.cur - v); if (o.cur <= 0) o.ch = 0; o.hurt = 0.3; floats.push({ x: heroX(i), y: HERO_Y - 10, text: "-" + v, col: STS[k].col, t: 1 }); }
     else { save.stats.dot += Math.min(v, o.cur); hitEnemy(i, v, STS[k].col); }
     SFX.dot(k);
     const x = hero ? heroX(i) : enemyPos(i).x, y = hero ? HERO_Y : enemyPos(i).y; for (let q = 0; q < 8; q++) particles.push({ x: x + (Math.random() - .5) * 70, y, vx: (Math.random() - .5), vy: -1.5 - Math.random() * 2, t: 0.8, col: STS[k].col, fl: true }); }
@@ -2175,7 +2175,7 @@ async function heroHit(e, i, h, dmg) {
   else if (st !== "slam") eatk.push({ st, x1: ep2.x, y1: ep2.y - 30, x2, y2, t: 0.22, d: 0.22, col, boss: e.boss });
   await sleep(200); panX(x2); atkImpact(st, x2, y2, col, e.boss);
   if (hasSt(h, "wool")) dmg = Math.round(dmg * 0.5); else if (hasSt(h, "guard")) dmg = Math.round(dmg * 0.6);
-  h.cur = Math.max(0, h.cur - dmg); towerNine(h); h.hurt = 0.4; shake = Math.max(shake, 0.3); if (blocked) SFX.block(); SFX.heroHurt(hk, h.k); if (e.boss) buzz(30, 140);
+  h.cur = Math.max(0, h.cur - dmg); towerNine(h); if (h.cur <= 0) h.ch = 0; h.hurt = 0.4; shake = Math.max(shake, 0.3); if (blocked) SFX.block(); SFX.heroHurt(hk, h.k); if (e.boss) buzz(30, 140);
   if (h.id === "amca" && h.cur > 0) { addSt(h, "sulk", 2); floats.push({ x: heroX(hk), y: HERO_Y - 100, text: "😤 Uražená!", col: STS.sulk.col, t: 1.1 }); }
   floats.push({ x: heroX(hk), y: HERO_Y - 10, text: "-" + dmg, col: "#ff4b4b", t: 1 });
 }
@@ -2706,7 +2706,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.6", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.7", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
@@ -3875,7 +3875,13 @@ async function useItemInner(j) {
   const mine = heroes.filter(h => h.cur > 0 && own(h)), dead = heroes.filter(h => h.cur <= 0 && own(h)), foes = enemies.map((e, i) => [e, i]).filter(([e]) => e.cur > 0);
   const alive = heroes.filter(h => h.cur > 0), A = alive.reduce((a, h) => a + h.atk, 0) / Math.max(1, alive.length), hurt = mine.filter(h => h.cur < h.hp);
   const can = { heal1: hurt.length, healAll: hurt.length, mana1: mine.some(h => h.ch < CHARGE), manaAll: mine.some(h => h.ch < CHARGE), revive: dead.length || hurt.length, clean: mine.length, guard: mine.length, paint: true, wand: true, shield: true }[it.k];
-  if (can === 0 || can === false || (can === undefined && !foes.length)) { toast = { t: 2, text: it.n + " by teď nepomohl" + (it.k === "mana1" || it.k === "manaAll" ? " – mana je plná" : "") }; SFX.bad(); return; }
+  if (can === 0 || can === false || (can === undefined && !foes.length)) { const forWho = ["heal1", "healAll", "mana1", "manaAll", "clean", "guard", "revive"].includes(it.k), grp = it.cat ? "kočky" : "lidi";
+    const why = forWho && !mine.length && !dead.length ? " – je pro " + grp + " a žádné " + (it.cat ? "kočky" : "lidi") + " v týmu nemáš"
+      : forWho && !mine.length ? " – je pro " + grp + " a všichni " + (it.cat ? "kočky" : "lidé") + " v týmu padli"
+      : it.k === "mana1" || it.k === "manaAll" ? " – " + (it.cat ? "kočky" : "lidé") + " mají manu plnou"
+      : it.k === "heal1" || it.k === "healAll" ? " – " + (it.cat ? "kočky" : "lidé") + " mají plnou energii"
+      : it.k === "revive" ? " – nikdo z nich nepadl ani není zraněný" : "";
+    toast = { t: 2.6, text: it.n + " by teď nepomohl" + why }; SFX.bad(); return; }
   busy = true; s.n--; save.inv[s.id] = Math.max(0, (save.inv[s.id] || 0) - 1); save.stats.itemsUsed = (save.stats.itemsUsed || 0) + 1; store();
   floats.push({ x: W / 2, y: BY - 60, text: it.n + "!", col, t: 1.3, big: true }); SFX.star(); buzz(25, 120);
   const heal = (h, f) => { const k = heroes.indexOf(h), n = Math.min(h.hp - h.cur, Math.round(h.hp * f)); if (n <= 0) return; h.cur += n; save.stats.heal += n; floats.push({ x: heroX(k), y: HERO_Y - 10, text: "+" + n, col: "#3ddc84", t: 1.1 }); rings.push({ x: heroX(k), y: HERO_Y, t: 0.8, d: 0.8, col, R: 140 }); };
