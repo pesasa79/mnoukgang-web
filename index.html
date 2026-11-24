@@ -1734,6 +1734,15 @@ function hledEnd(ev) {
   hg = null; if (!g0 || g0.pinch || g0.moved || performance.now() - hgLastPinch < 250) return;
   hledTap(toWorld({ x: g0.x, y: g0.y }));
 }
+// kolečko myši (PC, 24. 11. 2026): posouvá seznamy (hrdinové, kampaně, mapa, bestiář, o hře, úspěchy a úkoly v menu), v nápovědě listuje stránky
+let wheelHelpT = 0;
+window.addEventListener("wheel", e => {
+  if (scene === "hled" || scene === "play") return; const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1); if (!d) return;
+  if (scene === "menu") { if (menuPanel && achMax > 0 && (menuPanel === "ach" || (menuPanel === "quest" && questTab === "c"))) { e.preventDefault(); achFly = 0; achScroll = Math.max(0, Math.min(achMax, achScroll + d)); } return; }
+  if (scene === "help") { e.preventDefault(); const now = performance.now(); if (now - wheelHelpT > 250) { wheelHelpT = now; helpPg = Math.max(0, Math.min(HELP.length - 1, helpPg + (d > 0 ? 1 : -1))); SFX.click(); } return; }
+  if (levelPop || campPop || foeCard || teamPick || bagPick || (typeof heroCard !== "undefined" && heroCard >= 0) || (typeof eqHero !== "undefined" && eqHero >= 0) || seasonPop) return;
+  if (scrollMax > 0) { e.preventDefault(); scrollV = 0; scrollTarget = null; scrollY = Math.max(0, Math.min(scrollMax, scrollY + d)); }
+}, { passive: false });
 cv.addEventListener("wheel", e => { if (scene !== "hled" || !hled || hled.done) return; e.preventDefault(); const p = tPos(e); hvZoomAt(p.x, p.y, hv().z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
 function drawHled() {
   mgBtns = []; if (!hled) hledNew(); const H0 = hled; if (!H0.ready) hledReady();
@@ -4039,7 +4048,7 @@ function down(ev) { idleT = 0; hint = null;
   if (scene === "menu" && menuPanel) { const hit = panelBtns.find(([b]) => inside(p, b)); if (hit) { SFX.click(); hit[1](); return; }
     if ((menuPanel === "ach" || (menuPanel === "quest" && questTab === "c")) && achBox && inside(p, achBox)) achDrag = { y: p.y, s: achScroll, v: 0, t: performance.now() }; return; }
   if (scene === "menu") { const j = ICONS.findIndex((ic, j) => Math.hypot(p.x - iconPos(j).x, p.y - iconPos(j).y) < 42); if (j >= 0 && ICONS[j].id === "minihry") { SFX.click(); scene = "minihry"; return; } if (j >= 0) { SFX.panel(); menuPanel = ICONS[j].id; chestRew = null; return; } }
-  if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); } exitAsk = false; SFX.click(); return; }
+  if (scene === "menu" && exitAsk) { if (inside(p, EX_YES)) { if (window.Android) Android.exit(); else window.close(); } exitAsk = false; SFX.click(); return; }
   if (scene === "menu") {
     const q = { x: p.x, y: p.y - menuOff() }, go = sc => { SFX.click(); scene = sc; scrollY = 0; scrollV = 0; foeCard = null; bestCat = null; };
     if (inside(q, BTN.play)) { campPop = 0; go("camps"); } else if (inside(q, BTN.heroes)) go("heroes"); else if (inside(q, BTN.bag)) { SFX.click(); bagPick = true; bagInfo = null; } else if (inside(q, BTN.best)) go("best"); else if (inside(q, BTN.exch)) { SFX.panel(); menuPanel = "exch"; chestRew = null; } else if (inside(q, BTN.credits)) go("credits"); else if (inside(q, BTN.help)) { helpFrom = "menu"; helpPg = 0; go("help"); }
