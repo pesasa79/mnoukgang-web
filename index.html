@@ -16,7 +16,7 @@
 <style>
   html, body { margin: 0; height: 100%; background: #120d1f url('img/bg_battle.jpg') center / cover no-repeat; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
   canvas { display: block; position: absolute; left: 0; top: 0; }
-  #c { z-index: 2; } #px { z-index: 1; }
+  #c { z-index: 2; } #px { z-index: 1; } #sd { z-index: 0; position: fixed; }
   body::before { content: ''; position: fixed; inset: 0; background: rgba(15,8,32,.86); }
   @font-face { font-family: 'Baloo'; src: url('font/Baloo2.ttf') format('truetype'); font-weight: 400 800; }
   @font-face { font-family: 'Cinzel'; src: url('font/Cinzel.ttf') format('truetype'); font-weight: 400 900; }
@@ -24,6 +24,7 @@
 </style>
 </head>
 <body>
+<canvas id="sd"></canvas>
 <canvas id="c"></canvas>
 <script src="lib/pixi.min.js"></script>
 <script src="img/anim.js"></script>
@@ -45,7 +46,55 @@ function resize() {
   offX = (sw - W * scale) / 2; offY = (sh - FH * scale) / 2;
   for (const c of [cv, PXC]) if (c) { c.style.left = offX + "px"; c.style.top = offY + "px"; }
   if (PXR) { PXR.resize(W * scale, FH * scale); PXS.scale.set(scale); }
+  const SD = document.getElementById("sd"); if (SD) { SD.width = Math.round(sw * DPR); SD.height = Math.round(sh * DPR); SD.style.width = sw + "px"; SD.style.height = sh + "px"; SD.style.left = "0px"; SD.style.top = "0px"; sideT = 1; }
   if (layoutReady) layout();
+}
+// ---- boky na širokém monitoru ----
+let sideT = 1, sideBgKey = "";
+function drawSides(dt) {
+  const SD = document.getElementById("sd"); if (!SD) return; const s = SD.getContext("2d"), sw = SD.width, sh = SD.height, ox = offX * DPR;
+  if (ox < 60) { if (sideBgKey !== "off") { s.clearRect(0, 0, sw, sh); sideBgKey = "off"; } return; }
+  sideT += dt; if (sideT < 1 / 20) return; sideT = 0;
+  const play = scene === "play", BGI = playLike() && ok(img[battleBg()]) ? img[battleBg()] : playLike() ? img.bg : menuBgImg();
+  s.setTransform(1, 0, 0, 1, 0, 0); s.clearRect(0, 0, sw, sh);
+  if (ok(BGI)) { const k = Math.max(sw / BGI.naturalWidth, sh / BGI.naturalHeight) * 1.08, iw = BGI.naturalWidth * k, ih = BGI.naturalHeight * k;
+    s.filter = "blur(" + Math.round(10 * DPR) + "px) brightness(.55) saturate(1.1)"; s.drawImage(BGI, (sw - iw) / 2, (sh - ih) / 2, iw, ih); s.filter = "none"; }
+  else { s.fillStyle = "#120d1f"; s.fillRect(0, 0, sw, sh); }
+  // tma ke středu, aby hra vystoupila; zlatá linka u okraje hry
+  for (const [x0, x1] of [[0, ox], [sw - ox, sw]]) { const lg = s.createLinearGradient(x0, 0, x1, 0), inL = x0 === 0; lg.addColorStop(inL ? 0 : 1, "rgba(8,5,18,.15)"); lg.addColorStop(inL ? 1 : 0, "rgba(8,5,18,.75)"); s.fillStyle = lg; s.fillRect(x0, 0, x1 - x0, sh); }
+  s.strokeStyle = "rgba(242,196,109,.35)"; s.lineWidth = 2 * DPR; s.beginPath(); s.moveTo(ox, 0); s.lineTo(ox, sh); s.moveTo(sw - ox, 0); s.lineTo(sw - ox, sh); s.stroke();
+  const U = Math.min(ox, 520 * DPR), fs = n => Math.round(n * U / 420) + "px", font = (w, n, f = "'Exo 2'") => w + " " + fs(n) + " " + f + ", sans-serif";
+  const bar = (x, y, w, h, f, col) => { s.fillStyle = "rgba(0,0,0,.55)"; s.beginPath(); s.roundRect(x, y, w, h, h / 2); s.fill(); if (f > 0) { s.fillStyle = col; s.beginPath(); s.roundRect(x, y, Math.max(h, w * Math.min(1, f)), h, h / 2); s.fill(); } };
+  const panel = (x, y, w, h) => { s.fillStyle = "rgba(20,14,40,.72)"; s.beginPath(); s.roundRect(x, y, w, h, 18 * DPR); s.fill(); s.strokeStyle = "rgba(242,196,109,.45)"; s.lineWidth = 1.5 * DPR; s.stroke(); };
+  if (play && typeof heroes !== "undefined" && Array.isArray(heroes) && heroes.length) {
+    // vlevo: tým
+    const pw = U * 0.86, px = (ox - pw) / 2, ch = Math.min(sh * 0.13, U * 0.34), ph = 90 * U / 420 + heroes.length * (ch + 12 * DPR), py = Math.max(30 * DPR, (sh - ph) / 2);
+    panel(px, py, pw, ph); s.textAlign = "center"; s.fillStyle = "#f3c66e"; s.font = font(800, 30); s.fillText("Tým", px + pw / 2, py + 52 * U / 420);
+    heroes.forEach((h, j) => { const H0 = HEROES[h.k], col = COLORS[H0.c], y = py + 80 * U / 420 + j * (ch + 12 * DPR), R = ch * 0.38, cx = px + 22 * DPR + R, cy = y + ch / 2, dead = h.cur <= 0;
+      s.globalAlpha = dead ? 0.4 : 1; s.fillStyle = "rgba(255,255,255,.05)"; s.beginPath(); s.roundRect(px + 10 * DPR, y, pw - 20 * DPR, ch, 14 * DPR); s.fill();
+      s.save(); s.beginPath(); s.arc(cx, cy, R, 0, 6.29); s.clip(); s.fillStyle = col; s.fillRect(cx - R, cy - R, 2 * R, 2 * R); const pi = img["por_" + H0.id]; if (ok(pi)) s.drawImage(pi, cx - R * 1.08, cy - R * 1.02, R * 2.16, R * 2.16); s.restore();
+      s.strokeStyle = col; s.lineWidth = 3 * DPR; s.beginPath(); s.arc(cx, cy, R, 0, 6.29); s.stroke();
+      const tx = cx + R + 16 * DPR, tw = px + pw - 22 * DPR - tx; s.textAlign = "left"; s.fillStyle = col; s.font = font(800, 24); s.fillText(H0.name, tx, cy - R * 0.35);
+      bar(tx, cy - R * 0.12, tw, Math.max(8 * DPR, R * 0.22), h.cur / h.hp, "#58d68d"); bar(tx, cy + R * 0.32, tw, Math.max(6 * DPR, R * 0.16), (h.ch || 0) / CHARGE, (h.ch || 0) >= CHARGE ? "#ffd166" : col);
+      s.fillStyle = "rgba(255,255,255,.75)"; s.font = font(600, 16); s.fillText(Math.max(0, Math.round(h.cur)).toLocaleString("cs-CZ") + " / " + Math.round(h.hp).toLocaleString("cs-CZ"), tx, cy + R * 0.95); s.globalAlpha = 1; });
+    // vpravo: nepřátelé a vlna
+    const ex = sw - ox + (ox - pw) / 2, en = (typeof enemies !== "undefined" && Array.isArray(enemies)) ? enemies : [], rh = Math.min(sh * 0.09, U * 0.24), eh = 130 * U / 420 + en.length * (rh + 10 * DPR), ey = Math.max(30 * DPR, (sh - eh) / 2);
+    panel(ex, ey, pw, eh); s.textAlign = "center"; s.fillStyle = "#f3c66e"; s.font = font(800, 30);
+    s.fillText(typeof titanMode !== "undefined" && titanMode ? "Titán" : "Vlna " + (wave + 1) + " / " + WAVES.length, ex + pw / 2, ey + 52 * U / 420);
+    s.fillStyle = "rgba(255,255,255,.7)"; s.font = font(600, 18); s.fillText("Tah " + ((typeof turn !== "undefined" ? turn : 0) + 1), ex + pw / 2, ey + 86 * U / 420);
+    en.forEach((e, j) => { const y = ey + 110 * U / 420 + j * (rh + 10 * DPR), alive = e.cur > 0, col = e.c >= 0 ? COLORS[e.c] : "#ccc";
+      s.globalAlpha = alive ? 1 : 0.35; s.fillStyle = "rgba(255,255,255,.05)"; s.beginPath(); s.roundRect(ex + 10 * DPR, y, pw - 20 * DPR, rh, 12 * DPR); s.fill();
+      s.fillStyle = col; s.beginPath(); s.arc(ex + 34 * DPR, y + rh / 2, rh * 0.18, 0, 6.29); s.fill();
+      s.textAlign = "left"; s.fillStyle = e.boss ? "#ff8a8a" : "#fff"; s.font = font(700, 20); const nm = (e.boss ? "👑 " : "") + (e.n || "Nepřítel"); s.fillText(nm.length > 22 ? nm.slice(0, 21) + "…" : nm, ex + 56 * DPR, y + rh * 0.42);
+      bar(ex + 56 * DPR, y + rh * 0.58, pw - 86 * DPR, Math.max(8 * DPR, rh * 0.16), Math.max(0, e.cur) / e.hp, "#e5484d"); s.globalAlpha = 1; });
+  } else {
+    // jinde: velké postavy z týmu – lidé vlevo, kočky vpravo
+    const tm = teamHeroes(), L = tm.filter(h => h.c <= 1 || ["petr", "luky", "patrik", "alex", "amca"].includes(h.id)), Rr = tm.filter(h => !L.includes(h));
+    [[L, 0], [Rr, sw - ox]].forEach(([arr, x0]) => { arr.slice(0, 3).forEach((h, j) => { const fi = img["full_" + h.id]; if (!ok(fi)) return;
+      const n = Math.min(3, arr.length), hh = sh * (n === 1 ? 0.62 : n === 2 ? 0.5 : 0.42), ww = hh * fi.naturalWidth / fi.naturalHeight, bob = Math.sin(perf * 1.4 + j * 1.7 + x0) * 6 * DPR;
+      const cx = x0 + ox * (n === 1 ? 0.5 : n === 2 ? 0.3 + 0.4 * j : 0.22 + 0.28 * j), by = sh * (0.88 - (j % 2) * 0.05);
+      s.save(); s.globalAlpha = 0.95; s.shadowColor = "rgba(0,0,0,.6)"; s.shadowBlur = 30 * DPR; s.drawImage(fi, cx - ww / 2, by - hh + bob, ww, hh); s.restore(); }); });
+  }
 }
 let layoutReady = false;
 addEventListener("resize", resize); resize();
@@ -2571,6 +2620,7 @@ function frame(now) {
     const LL = L.flatMap(l => g.measureText(l).width > W - 120 ? wrapLines(l, W - 120) : [l]), tw = Math.min(W - 40, Math.max(...LL.map(l => g.measureText(l).width)) + 60), th = 56 + (LL.length - 1) * 30;
     g.fillStyle = "rgba(20,14,40,.95)"; rr(W / 2 - tw / 2, 60, tw, th, 28); g.fill(); g.strokeStyle = "#ffd166"; g.lineWidth = 2; rr(W / 2 - tw / 2, 60, tw, th, 28); g.stroke(); g.textAlign = "center"; g.fillStyle = "#ffd166"; LL.forEach((l, j) => g.fillText(l, W / 2, 96 + j * 30)); g.globalAlpha = 1; } }
   if (scene !== lastScene) { if (lastScene === "credits") creditsFree(); fadeT = 0.24; lastScene = scene; }  // nová obrazovka se prolne z tmy
+  drawSides(dt);
   if (fadeT > 0) { fadeT -= dt; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = "rgba(8,5,18," + Math.max(0, fadeT / 0.24) * 0.85 + ")"; g.fillRect(0, 0, cv.width, cv.height); }
   requestAnimationFrame(frame);
 }
@@ -2647,7 +2697,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.5", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.6", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
