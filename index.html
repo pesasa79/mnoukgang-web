@@ -2706,7 +2706,7 @@ function drawMenu() {
     drawMilk(b.x + 30, b.y + 24, 38); g.textAlign = "left"; g.fillStyle = M.v > 0 ? "#fff" : "#ff8a8a"; g.font = "800 25px Baloo, sans-serif"; g.fillText(M.v + "/" + mx, b.x + 58, b.y + 33);
     g.fillStyle = "rgba(255,255,255,.7)"; g.font = "600 17px 'Exo 2', sans-serif"; g.textAlign = "right"; g.fillText(nx ? "+1 za " + hms(nx) : "plné", b.x + b.w - 20, b.y + 31); }
   ensureExtra(); drawIconBar(); if (menuPanel) drawPanel();
-  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.7", W / 2, H + DY - 26); g.letterSpacing = "0px";
+  g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.42)"; g.font = "500 15px 'Exo 2', sans-serif"; g.letterSpacing = "1px"; if (DY > 40) g.fillText("PETR ŠAFAŘÍK © 2026 · S CLAUDE (ANTHROPIC) · VERZE 1.8.8", W / 2, H + DY - 26); g.letterSpacing = "0px";
 }
 const ICONS = [{ id: "quest", t: "Úkoly", im: "ui_quest", can: () => canQuest() }, { id: "login", t: "Odměna", im: "ui_login", can: () => canLogin() },
   { id: "chest", t: "Truhla", im: "ui_chest", can: () => canChest() }, { id: "event", t: "Noc bossů", im: "ui_event", can: () => canEvent() }, { id: "titan", t: "Titán", im: "ui_titan", can: () => canTitan() }, { id: "ach", t: "Úspěchy", im: "ui_trophy", can: () => canAch() > 0 }, { id: "minihry", t: "Minihry", im: "ui_minihry", can: () => !!(towerRun && towerRun.picks) }];
@@ -3306,6 +3306,7 @@ const BOSS_DESC = { all: "Udeří všechny hrdiny naráz.", allDrain: "Udeří v
   multi: "Rychlá série úderů na náhodné hrdiny.", one: "Drtivý úder na jednoho hrdinu.", rally: "Popožene spojence – zaútočí dřív a ostatní bossové nabijí manu.", weakest: "Udeří nejslabšího hrdinu." };
 function drawBestiary() {
   if (bestCat === null) return drawBestCats();
+  if (!bestCats()[bestCat]) { bestCat = null; return drawBestCats(); }  // pojistka: neplatná kategorie = zpět na přehled, ne prázdná obrazovka
   menuBg(); const CAT = bestCats()[bestCat];
   const grp = k => ((FOES[k].act || 1) - 1) * 2 + (FOES[k].boss ? 1 : 0);
   const list = bestList = CAT.keys.slice().sort((a, b) => grp(a) - grp(b) || (FOES[a].boss || 0) - (FOES[b].boss || 0) || (FOES[a].from || 0) - (FOES[b].from || 0));
@@ -4163,7 +4164,8 @@ function up(ev) {
         if (mapTaps.length > 8) mapTaps.shift(); break; } }
     // krátké ťuknutí (bez posunu a ne do rozjetého seznamu) otevře kartu nepřítele
     if (scene === "best" && scrollDrag.moved < 14 && !scrollDrag.fly && performance.now() - q[0][0] < 500) { const r = bestRows.find(r => scrollDrag.y >= r[1] && scrollDrag.y <= r[2] && scrollDrag.y > 150 && scrollDrag.y < 1155 && (r[3] === undefined || (scrollDrag.x >= r[3] && scrollDrag.x <= r[4])));
-      if (r && String(r[0]).startsWith("cat")) { SFX.click(); bestScroll = scrollY; bestCat = +r[0].slice(3); scrollY = 0; scrollV = 0; } else if (r) { scrollV = 0; foeCard = r[0]; SFX.foe(r[0], FOES[r[0]].boss, "attack"); } } }
+      if (r && /^cat\d+$/.test(String(r[0]))) {  // kategorie bestiáře (cat0…); nepřítel „catcher“ (Bohouš Síťka) není kategorie
+        SFX.click(); bestScroll = scrollY; bestCat = +r[0].slice(3); scrollY = 0; scrollV = 0; } else if (r) { scrollV = 0; foeCard = r[0]; SFX.foe(r[0], FOES[r[0]].boss, "attack"); } } }
   scrollDrag = null;
   if (drag && !busy && scene === "play" && board[drag.c][drag.r].sp === "diamond") tapDiamond(drag.c, drag.r);
   drag = null;
